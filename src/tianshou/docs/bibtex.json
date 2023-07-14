@@ -1,9 +1,0 @@
-{
-    "cited": {
-        "tutorials/dqn": [
-            "DQN",
-            "DDPG",
-            "PPO"
-        ]
-    }
-}
