@@ -92,7 +92,7 @@ def get_args_all():
 
     # state tracker
     parser.add_argument('--reward_handle', type=str, default='cat')  # in {"no", "cat", "cat2", "mul"}
-    parser.add_argument("--which_tracker", type=str, default="avg")  # in {"avg", "caser", "sasrec", "gru"}
+    parser.add_argument("--which_tracker", type=str, default="avg")  # in {"avg", "caser", "sasrec", "gru", "nextitnet"}
 
     parser.add_argument("--embedding_dim", type=int, default=32)
     parser.add_argument('--window_size', default=3, type=int)
@@ -104,6 +104,8 @@ def get_args_all():
     # State_tracker SASRec
     # parser.add_argument("--dropout_rate", type=float, default=0.1)
     parser.add_argument("--num_heads", type=int, default=1)
+    # State_tracker nextitnet
+    parser.add_argument("--dilations", type=str, default='[1, 2, 1, 2, 1, 2]')
 
     # Env
     parser.add_argument("--version", type=str, default="v1")
