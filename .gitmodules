@@ -1,0 +1,3 @@
+[submodule "tianshou"]
+	path = src/tianshou
+	url = https://github.com/chongminggao/tianshou.git
