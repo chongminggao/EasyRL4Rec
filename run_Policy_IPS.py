@@ -9,7 +9,7 @@ sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from src.core.configs import get_common_args
+from core.configs import get_common_args
 
 import logzero
 
