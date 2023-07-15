@@ -1,6 +1,10 @@
 
 # OpenRL4Rec
+
+**(Still under development)**
+
 OpenRL4Rec is a user-friendly, modular, and extensible library designed for the implementation of reinforcement learning (RL) algorithms in recommendation systems.
+
 [![LICENSE](https://img.shields.io/badge/license-MIT-green)](https://github.com/chongminggao/DORL-codes/blob/main/LICENSE)
 
 
@@ -28,21 +32,28 @@ Note that compared with the first setting, this setting has no planning stage in
 <img src="figs/pipeline2.png" alt="introduction" style="zoom:50%;" />
 </div>
 
-#### Evaluation Pipeline
+---
+#### Offline Evaluation
+
+Here, we emphasize the most notable difference between the interactive recommendation setting and traditional sequential recommendation settings.  The following figure illustrates the learning and evaluation processes in sequential and interactive recommendation settings. Sequential recommendation uses the philosophy of supervised learning, i.e., evaluating the top-$k$ results by comparing them with a set of "*correct*" answers in the test set and computing metrics such as Precision, Recall, NDCG, and Hit Rate. By contrast, interactive recommendation evaluates the results by accumulating the rewards along the interaction trajectories. There is no standard answer in interactive recommendation, which is challenging.
 
 <div style="text-align: center;">
 <img src="figs/irs_eval.png" alt="introduction" style="zoom:50%;" />
 </div>
 
+In offline evaluation, we cannot obtain users' real-time feedback towards the recommended items. The are two options that we can choose to construct the test environment:
+   1. Option 1: Use the offline test data to evaluate the policy directly through off-policy evaluation, such as [paper](https://arxiv.org/abs/2212.02779), [paper](https://arxiv.org/abs/2206.02620).
+   2. Option 2: Creat a simulated environment using a simulated model. For example, using a MF model to predict the missing values in the user-itemp matrix ([paper](https://dl.acm.org/doi/10.1145/3383313.3412252)) and define a certain quit mechanism for ending the interaction, such as [KuaiEnv](https://github.com/chongminggao/CIRS-codes/#kuaishouenv). 
+
+The implementation is as follows:
 <div style="text-align: center;">
 <img src="figs/eval_pipeline.png" alt="introduction" style="zoom:50%;" />
 </div>
 
 
 
-
 ---
-#### TODO: The following description is only for building this library. It follows its foundation repo [DORL-codes](https://github.com/chongminggao/DORL-codes): and will be changed in the future.
+#### TODO: The following description is only for development purposes. It follows its foundation repo [DORL-codes](https://github.com/chongminggao/DORL-codes): and will be changed in the future.
 
 <div style="text-align: center;">
 <img src="figs/DORL.png" alt="introduction" style="zoom:50%;" />
