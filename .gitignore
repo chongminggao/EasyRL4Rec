@@ -23,7 +23,7 @@ visualization/results
 results_for_paper/*.pdf
 *.pdf
 *.pth
-*.png
+# *.png
 #results_for_paper/
 
 *.egg*

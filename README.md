@@ -1,6 +1,48 @@
 
-# Alleviating Matthew Effect of Offline Reinforcement Learning in Interactive Recommendation
+# OpenRL4Rec
+OpenRL4Rec is a user-friendly, modular, and extensible library designed for the implementation of reinforcement learning (RL) algorithms in recommendation systems.
 [![LICENSE](https://img.shields.io/badge/license-MIT-green)](https://github.com/chongminggao/DORL-codes/blob/main/LICENSE)
+
+
+It consists of two Offline RL training pipelines:
+#### 1. Learning with a user model (i.e., reward model)
+This is similar to ChatGPT's RLHF learning paradigm, in which a reward model is learned in advanced to capture users' preferences and then is used to guide the learning of any RL policy.
+
+Its learning pipeline is as the following figure. We first learn a user model $\phi_M$ via supervised learning (which is a traditional recommendation model such as DeepFM), and use $\phi_M$ to provide rewards for learning the core policy $\pi_\theta$.
+<div style="text-align: center;">
+<img src="figs/two-stage-pipeline.png" alt="introduction" style="zoom:30%;" />
+</div>
+
+The implementation of this paradigm in this package is as follows:
+<div style="text-align: center;">
+<img src="figs/pipeline1.png" alt="introduction" style="zoom:50%;" />
+</div>
+
+
+#### 2. Learning directly from offline logs
+This setting assume all data are users' behavior logs (instead of ratings). Hence, the classic offline RL methods such as BCQ, CQL, and CRR can be learned directly on such data. 
+
+Note that compared with the first setting, this setting has no planning stage in training. And its implementation is as follows:
+
+<div style="text-align: center;">
+<img src="figs/pipeline2.png" alt="introduction" style="zoom:50%;" />
+</div>
+
+#### Evaluation Pipeline
+
+<div style="text-align: center;">
+<img src="figs/irs_eval.png" alt="introduction" style="zoom:50%;" />
+</div>
+
+<div style="text-align: center;">
+<img src="figs/eval_pipeline.png" alt="introduction" style="zoom:50%;" />
+</div>
+
+
+
+
+---
+#### TODO: The following description is only for building this library. It follows its foundation repo [DORL-codes](https://github.com/chongminggao/DORL-codes): and will be changed in the future.
 
 <div style="text-align: center;">
 <img src="figs/DORL.png" alt="introduction" style="zoom:50%;" />
@@ -79,6 +121,7 @@ If this work helps you, please kindly cite our papers:
    ```
    Please note that the decompressed file size is as high as 12GB. This is due to the large space occupied by the ground-truth of the user-item interaction matrix. 
    
+
 If things go well, you can run the following examples now！Or you can just reproduce the results in the paper.
 
 ---
