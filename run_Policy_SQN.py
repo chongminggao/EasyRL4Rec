@@ -21,11 +21,11 @@ from run_Policy_Main import get_args_all
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from core.collector_set import CollectorSet
 from core.evaluation.evaluator import Callback_Coverage_Count
-from core.layers import Actor_Linear
+from core.util.layers import Actor_Linear
 from core.policy.sqn import SQN
 from core.trainer.offline import offline_trainer
 from core.configs import get_common_args, get_val_data, get_training_item_domination
-from core.inputs import get_dataset_columns
+from core.util.inputs import get_dataset_columns
 
 
 from tianshou.utils.net.common import ActorCritic

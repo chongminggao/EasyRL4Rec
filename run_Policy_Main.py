@@ -28,10 +28,10 @@ from core.collector_set import CollectorSet
 from core.evaluation.evaluator import Callback_Coverage_Count
 from core.configs import get_true_env, get_common_args, get_val_data, get_training_item_domination
 from core.collector import Collector
-from core.inputs import get_dataset_columns
+from core.util.inputs import get_dataset_columns
 from core.policy.a2c import A2CPolicy_withEmbedding
 from core.trainer.onpolicy import onpolicy_trainer
-from core.worldModel.simulated_env import SimulatedEnv
+from core.userModel.simulated_env import SimulatedEnv
 
 from tianshou.data import VectorReplayBuffer
 from tianshou.env import DummyVectorEnv

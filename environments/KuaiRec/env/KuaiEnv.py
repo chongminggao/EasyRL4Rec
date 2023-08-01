@@ -23,9 +23,9 @@ from tqdm import tqdm
 
 import sys
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
-from core.util import get_sorted_domination_features
+from core.util.utils import get_sorted_domination_features
 
-# from core.util import get_similarity_mat, get_distance_mat
+# from core.util.utils import get_similarity_mat, get_distance_mat
 
 CODEPATH = os.path.dirname(__file__)
 ROOTPATH = os.path.dirname(CODEPATH)

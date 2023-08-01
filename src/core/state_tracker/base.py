@@ -7,8 +7,8 @@ import numpy as np
 import torch
 from torch import nn, Tensor
 
-from core.inputs import input_from_feature_columns
-from core.user_model import build_input_features
+from core.util.inputs import input_from_feature_columns
+from core.userModel.user_model import build_input_features
 from deepctr_torch.inputs import combined_dnn_input
 
 FLOAT = torch.FloatTensor

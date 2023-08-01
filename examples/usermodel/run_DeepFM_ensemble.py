@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/30 20:23
-# @Author  : Chongming GAO
-# @FileName: run_worldModel.py
-import argparse
 import functools
 import random
 import sys
@@ -13,32 +8,31 @@ import numpy as np
 import torch
 from torch import nn
 
-from run_worldModel_ensemble import get_datapath, prepare_dir_log, prepare_dataset, get_task, get_args_all, \
-    get_args_dataset_specific
+sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
-sys.path.extend(["./src", "./src/DeepCTR-Torch"])
 from core.evaluation.evaluator import test_static_model_in_RL_env
 from core.configs import get_common_args, get_features, get_true_env, \
     get_training_item_domination
-from core.user_model_ensemble import EnsembleModel
+from core.userModel.user_model_ensemble import EnsembleModel
 from core.evaluation.metrics import get_ranking_results
 
 from util.utils import LoggerCallback_Update
+from core.userModel.loss import loss_pointwise_negative, loss_pointwise, loss_pairwise, loss_pairwise_pointwise
+from core.userModel.utils import get_datapath, prepare_dir_log, load_dataset_train, load_dataset_val, get_task, get_args_all, \
+    get_args_dataset_specific
 
+def prepare_dataset(args, user_features, item_features, reward_features, MODEL_SAVE_PATH, DATAPATH):
+    dataset_train, df_user, df_item, x_columns, y_columns, ab_columns = \
+        load_dataset_train(args, user_features, item_features, reward_features,
+                           args.tau, args.entity_dim, args.feature_dim, MODEL_SAVE_PATH, DATAPATH)
+    if not args.is_ab:
+        ab_columns = None
 
+    dataset_val, df_user_val, df_item_val = load_dataset_val(args, user_features, item_features, reward_features,
+                                                             args.entity_dim, args.feature_dim)
+    return dataset_train, dataset_val, df_user, df_item, df_user_val, df_item_val, x_columns, y_columns, ab_columns
 
-def get_args_epsilonGreedy():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--user_model_name", type=str, default="EpsilonGreedy")
-    parser.add_argument('--epsilon', default=0.3, type=float)
-    parser.add_argument('--n_models', default=1, type=int)
-    parser.add_argument('--epoch', default=200, type=int)
-    parser.add_argument("--message", type=str, default="epsilon-greedy")
-    args = parser.parse_known_args()[0]
-    return args
-
-
-def setup_world_model(args, x_columns, y_columns, ab_columns, task, task_logit_dim, is_ranking, MODEL_SAVE_PATH):
+def setup_user_model(args, x_columns, y_columns, ab_columns, task, task_logit_dim, is_ranking, MODEL_SAVE_PATH):
     device = torch.device("cuda:{}".format(args.cuda) if torch.cuda.is_available() else "cpu")
     np.random.seed(args.seed)
     random.seed(args.seed)
@@ -51,13 +45,13 @@ def setup_world_model(args, x_columns, y_columns, ab_columns, task, task_logit_d
                                     dnn_activation=args.dnn_activation, init_std=0.001)
 
     if args.loss == "pair":
-        loss_fun = loss_pairwise_Standard
+        loss_fun = loss_pairwise
     if args.loss == "point":
-        loss_fun = loss_pointwise_Standard
+        loss_fun = loss_pointwise
     if args.loss == "pointneg":
-        loss_fun = loss_pointwise_negative_Standard
+        loss_fun = loss_pointwise_negative
     if args.loss == "pointpair" or args.loss == "pairpoint" or args.loss == "pp":
-        loss_fun = loss_pairwise_pointwise_Standard
+        loss_fun = loss_pairwise_pointwise
 
     ensemble_models.compile(optimizer=args.optimizer,
                             # loss_dict=task_loss_dict,
@@ -79,45 +73,14 @@ def setup_world_model(args, x_columns, y_columns, ab_columns, task, task_logit_d
                                               ) if is_ranking else None,
                             metrics=None)
 
+    # No evaluation step at offline stage
+    # model.compile_RL_test(
+    #     functools.partial(test_kuaishou, env=env, dataset_val=dataset_val, is_softmax=args.is_softmax,
+    #                       epsilon=args.epsilon, is_ucb=args.is_ucb))
+
     return ensemble_models
 
-
-
-
-sigmoid = nn.Sigmoid()
-def loss_pointwise_negative_Standard(y, y_deepfm_pos, y_deepfm_neg, score, alpha_u=None, beta_i=None, args=None, log_var=None, log_var_neg=None):
-
-
-    loss_y = (((y_deepfm_pos - y) ** 2)).sum()
-    loss_y_neg = (((y_deepfm_neg - 0) ** 2)).sum()
-
-    loss = loss_y + loss_y_neg
-    return loss
-
-
-def loss_pointwise_Standard(y, y_deepfm_pos, y_deepfm_neg, score, alpha_u=None, beta_i=None, args=None, log_var=None, log_var_neg=None):
-
-    loss_y = (((y_deepfm_pos - y) ** 2)).sum()
-
-    loss = loss_y
-
-    return loss
-
-
-def loss_pairwise_Standard(y, y_deepfm_pos, y_deepfm_neg, score, alpha_u=None, beta_i=None, args=None, log_var=None, log_var_neg=None):
-    bpr_click = - (sigmoid(y_deepfm_pos - y_deepfm_neg).log()).sum()
-    loss = bpr_click
-
-    return loss
-
-def loss_pairwise_pointwise_Standard(y, y_deepfm_pos, y_deepfm_neg, score, alpha_u=None, beta_i=None, args=None, log_var=None, log_var_neg=None):
-
-    loss_y = (((y_deepfm_pos - y) ** 2)).sum()
-    bpr_click = - (sigmoid(y_deepfm_pos - y_deepfm_neg).log()).sum()
-    loss = loss_y + args.bpr_weight * bpr_click
-    return loss
-
-def main(args, is_save=False):
+def main(args, is_save=True):
     # %% 1. Prepare dir
     DATAPATH = get_datapath(args.env)
     args = get_common_args(args)
@@ -131,7 +94,7 @@ def main(args, is_save=False):
 
     # %% 3. Setup model
     task, task_logit_dim, is_ranking = get_task(args.env, args.yfeat)
-    ensemble_models = setup_world_model(args, x_columns, y_columns, ab_columns,
+    ensemble_models = setup_user_model(args, x_columns, y_columns, ab_columns,
                                         task, task_logit_dim, is_ranking, MODEL_SAVE_PATH)
 
     env, env_task_class, kwargs_um = get_true_env(args, read_user_num=None)
@@ -141,7 +104,7 @@ def main(args, is_save=False):
         functools.partial(test_static_model_in_RL_env, env=env, dataset_val=dataset_val, is_softmax=args.is_softmax,
                           epsilon=args.epsilon, is_ucb=args.is_ucb, need_transform=args.need_transform,
                           num_trajectory=args.num_trajectory, item_feat_domination=item_feat_domination,
-                          force_length=args.force_length, top_rate=args.top_rate, draw_bar=args.draw_bar))
+                          force_length=args.force_length, top_rate=args.top_rate))
 
     # %% 5. Learn and evaluate model
 
@@ -156,16 +119,13 @@ def main(args, is_save=False):
                                         user_features, item_features, args.deterministic)
 
 
-
 if __name__ == '__main__':
     args_all = get_args_all()
     args = get_args_dataset_specific(args_all.env)
-    args_epsilon = get_args_epsilonGreedy()
     args_all.__dict__.update(args.__dict__)
-    args_all.__dict__.update(args_epsilon.__dict__)
 
     try:
-        main(args_all, is_save=False)
+        main(args_all)
     except Exception as e:
         var = traceback.format_exc()
         print(var)

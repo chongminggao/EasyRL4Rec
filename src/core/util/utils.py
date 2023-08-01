@@ -5,6 +5,7 @@
 import collections
 import os
 import pickle
+from logzero import logger
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,17 @@ from numba import njit
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
 
+def create_dir(create_dirs):
+    """
+    创建所需要的目录
+    """
+    for dir in create_dirs:
+        if not os.path.exists(dir):
+            logger.info('Create dir: %s' % dir)
+            try:
+                os.mkdir(dir)
+            except FileExistsError:
+                print("The dir [{}] already existed".format(dir))
 
 def get_sorted_domination_features(df_data, df_item, is_multi_hot, yname=None, threshold=None):
     item_feat_domination = dict()

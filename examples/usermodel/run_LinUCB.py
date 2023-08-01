@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2022/9/30 20:23
-# @Author  : Chongming GAO
-# @FileName: run_worldModel.py
 import argparse
 import os
 import sys
@@ -9,10 +5,10 @@ import traceback
 
 import logzero
 
-from run_worldModel_ensemble import get_args_all, get_args_dataset_specific
-from run_epsilongreedy import main
+sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
-sys.path.extend(["./src", "./src/DeepCTR-Torch"])
+from core.userModel.utils import get_args_all, get_args_dataset_specific
+from run_Egreedy import main
 
 
 def get_args_UCB():
@@ -26,12 +22,6 @@ def get_args_UCB():
     parser.add_argument("--message", type=str, default="LinUCB")
     args = parser.parse_known_args()[0]
     return args
-
-
-
-CODEPATH = os.path.dirname(__file__)
-
-
 
 
 if __name__ == '__main__':

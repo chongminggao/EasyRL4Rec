@@ -10,6 +10,8 @@ __pycache__/
 *.txt
 *.ascii
 
+src/tianshou
+
 environments/KuaiRec/data/*
 #!environments/KuaiRec/data/.gitkeep
 environments/VirtualTaobao
