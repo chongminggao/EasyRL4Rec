@@ -18,9 +18,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from core.configs import get_training_data
-from core.inputs import input_from_feature_columns
-from core.static_dataset import StaticDataset
-from core.user_model_pairwise_variance import UserModel_Pairwise_Variance
+from core.util.inputs import input_from_feature_columns
+from core.userModel.static_dataset import StaticDataset
+from core.userModel.user_model_pairwise_variance import UserModel_Pairwise_Variance
 from logzero import logger
 
 from deepctr_torch.inputs import combined_dnn_input, build_input_features

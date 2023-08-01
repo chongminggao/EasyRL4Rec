@@ -9,10 +9,10 @@ from deepctr_torch.inputs import combined_dnn_input
 from deepctr_torch.layers import DNN, PredictionLayer, FM
 from torch import nn
 
-from core.inputs import input_from_feature_columns
-from core.layers import MMOELayer, Linear
-from core.user_model import UserModel, compute_input_dim, create_embedding_matrix
-
+from core.util.inputs import input_from_feature_columns, create_embedding_matrix
+from core.util.layers import MMOELayer, Linear
+from core.userModel.user_model import UserModel
+from core.userModel.utils import compute_input_dim
 
 class UserModel_MMOE(UserModel):
     """Instantiates the Multi-gate Mixture-of-Experts architecture.

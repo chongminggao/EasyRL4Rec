@@ -10,7 +10,7 @@ import torch
 from torch import FloatTensor
 from tqdm import tqdm
 
-from core.util import compute_action_distance, clip0, compute_exposure
+from core.util.utils import compute_action_distance, clip0, compute_exposure
 
 
 # from virtualTB.model.UserModel import UserModel

@@ -14,8 +14,8 @@ from sklearn.metrics import *
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from core.inputs import SparseFeatP, create_embedding_matrix
-from core.layers import Linear
+from core.util.inputs import SparseFeatP, create_embedding_matrix
+from core.util.layers import Linear
 
 
 # try:
@@ -536,23 +536,4 @@ class UserModel_Variance(nn.Module):
         self.embedding_dict
 
 
-def compute_input_dim(feature_columns, include_sparse=True, include_dense=True, feature_group=False):
-    sparse_feature_columns = list(
-        filter(lambda x: isinstance(x, (SparseFeatP, VarLenSparseFeat)), feature_columns)) if len(
-        feature_columns) else []
-    dense_feature_columns = list(
-        filter(lambda x: isinstance(x, DenseFeat), feature_columns)) if len(feature_columns) else []
-
-    dense_input_dim = sum(
-        map(lambda x: x.dimension, dense_feature_columns))
-    if feature_group:
-        sparse_input_dim = len(sparse_feature_columns)
-    else:
-        sparse_input_dim = sum(feat.embedding_dim for feat in sparse_feature_columns)
-    input_dim = 0
-    if include_sparse:
-        input_dim += sparse_input_dim
-    if include_dense:
-        input_dim += dense_input_dim
-    return input_dim
 

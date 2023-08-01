@@ -13,20 +13,6 @@ import os
 # from util.upload import my_upload
 import re
 
-
-def create_dir(create_dirs):
-    """
-    创建所需要的目录
-    """
-    for dir in create_dirs:
-        if not os.path.exists(dir):
-            logger.info('Create dir: %s' % dir)
-            try:
-                os.mkdir(dir)
-            except FileExistsError:
-                print("The dir [{}] already existed".format(dir))
-
-
 # my nas docker path
 REMOTE_ROOT = "/root/Rethink_RL4RS"
 class LoggerCallback_Update():

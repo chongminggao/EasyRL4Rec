@@ -19,8 +19,8 @@ from core.state_tracker.Average import StateTrackerAvg
 from core.state_tracker.GRU import StateTracker_GRU
 from core.state_tracker.NextItNet import StateTracker_NextItNet
 from core.state_tracker.SASRec import StateTracker_SASRec
-from core.inputs import get_dataset_columns
-from core.user_model_ensemble import EnsembleModel
+from core.util.inputs import get_dataset_columns
+from core.userModel.user_model_ensemble import EnsembleModel
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -29,7 +29,7 @@ from core.configs import get_training_data, get_true_env
 from tianshou.data import VectorReplayBuffer, Batch
 from tianshou.env import DummyVectorEnv
 
-from util.utils import create_dir
+from core.util.utils import create_dir
 import logzero
 from logzero import logger
 
