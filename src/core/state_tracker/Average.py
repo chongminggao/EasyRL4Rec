@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from core.userModel.utils import compute_input_dim
+from core.util.utils import compute_input_dim
 
 FLOAT = torch.FloatTensor
 

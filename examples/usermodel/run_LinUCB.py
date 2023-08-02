@@ -7,7 +7,7 @@ import logzero
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
-from core.userModel.utils import get_args_all, get_args_dataset_specific
+from usermodel_utils import get_args_all, get_args_dataset_specific
 from run_Egreedy import main
 
 

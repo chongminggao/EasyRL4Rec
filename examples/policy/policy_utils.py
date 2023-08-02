@@ -22,7 +22,7 @@ from core.state_tracker.NextItNet import StateTracker_NextItNet
 from core.state_tracker.SASRec import StateTracker_SASRec
 from core.util.inputs import get_dataset_columns
 from core.userModel.user_model_ensemble import EnsembleModel
-from core.userModel.simulated_env import SimulatedEnv
+from core.simulated_env import SimulatedEnv
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
