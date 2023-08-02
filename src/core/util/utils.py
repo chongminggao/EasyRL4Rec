@@ -13,6 +13,10 @@ from numba import njit
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
 
+from core.util.inputs import SparseFeatP
+from deepctr_torch.inputs import DenseFeat, VarLenSparseFeat
+
+
 def create_dir(create_dirs):
     """
     创建所需要的目录
@@ -229,3 +233,24 @@ def negative_sampling(df_train, df_item, df_user, y_name, is_rand=True, neg_in_t
         df_pos, df_neg = align_pos_neg(df_positive, df_negative, can_divide=True)
 
     return df_pos, df_neg
+
+
+def compute_input_dim(feature_columns, include_sparse=True, include_dense=True, feature_group=False):
+    sparse_feature_columns = list(
+        filter(lambda x: isinstance(x, (SparseFeatP, VarLenSparseFeat)), feature_columns)) if len(
+        feature_columns) else []
+    dense_feature_columns = list(
+        filter(lambda x: isinstance(x, DenseFeat), feature_columns)) if len(feature_columns) else []
+
+    dense_input_dim = sum(
+        map(lambda x: x.dimension, dense_feature_columns))
+    if feature_group:
+        sparse_input_dim = len(sparse_feature_columns)
+    else:
+        sparse_input_dim = sum(feat.embedding_dim for feat in sparse_feature_columns)
+    input_dim = 0
+    if include_sparse:
+        input_dim += sparse_input_dim
+    if include_dense:
+        input_dim += dense_input_dim
+    return input_dim

@@ -19,7 +19,7 @@ from tqdm import tqdm
 
 from core.configs import get_training_data
 from core.util.inputs import input_from_feature_columns
-from core.userModel.static_dataset import StaticDataset
+from core.static_dataset import StaticDataset
 from core.userModel.user_model_pairwise_variance import UserModel_Pairwise_Variance
 from logzero import logger
 

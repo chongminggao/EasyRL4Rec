@@ -17,8 +17,8 @@ from core.userModel.user_model_ensemble import EnsembleModel
 from core.evaluation.metrics import get_ranking_results
 
 from util.utils import LoggerCallback_Update
-from core.userModel.loss import loss_pointwise_negative, loss_pointwise, loss_pairwise, loss_pairwise_pointwise
-from core.userModel.utils import get_datapath, prepare_dir_log, load_dataset_train, load_dataset_val, get_task, get_args_all, \
+from core.util.loss import loss_pointwise_negative, loss_pointwise, loss_pairwise, loss_pairwise_pointwise
+from usermodel_utils import get_datapath, prepare_dir_log, load_dataset_train, load_dataset_val, get_task, get_args_all, \
     get_args_dataset_specific
 
 def prepare_dataset(args, user_features, item_features, reward_features, MODEL_SAVE_PATH, DATAPATH):
