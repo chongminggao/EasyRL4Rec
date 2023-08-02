@@ -7,21 +7,22 @@ import traceback
 
 import torch
 
-from policy_utils import prepare_dir_log, prepare_buffer_via_offline_data, setup_offline_state_tracker
+sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
+
+from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, setup_offline_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from core.collector_set import CollectorSet
 from core.evaluation.evaluator import Callback_Coverage_Count
 from core.policy.discrete_cql import DiscreteCQLPolicy_withEmbedding
 from core.trainer.offline import offline_trainer
-from run_Policy_Main import prepare_user_model, get_args_all
 from core.configs import get_val_data, get_common_args, \
     get_training_item_domination
 
 from tianshou.utils.net.common import Net
 
+# from util.upload import my_upload
 from util.utils import LoggerCallback_Policy, save_model_fn
 import logzero
 from logzero import logger
@@ -46,11 +47,8 @@ def get_args_CQL():
     args = parser.parse_known_args()[0]
     return args
 
-    # %% 4. Setup model
-
 
 def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
-    # ensemble_models, _, _ = prepare_user_model(args)
 
     net = Net(
         args.state_dim,
@@ -131,10 +129,11 @@ def main(args):
     MODEL_SAVE_PATH, logger_path = prepare_dir_log(args)
 
     # %% 2. Prepare user model and environment
+    ensemble_models = prepare_user_model(args)
     env, buffer, test_envs_dict = prepare_buffer_via_offline_data(args)
 
     # %% 3. Setup policy
-    state_tracker = setup_offline_state_tracker(args, env, buffer, test_envs_dict)
+    state_tracker = setup_offline_state_tracker(args, ensemble_models, env, buffer, test_envs_dict)
     policy, test_collector_set, optim = setup_policy_model(args, state_tracker, buffer, test_envs_dict)
 
     # %% 4. Learn policy
