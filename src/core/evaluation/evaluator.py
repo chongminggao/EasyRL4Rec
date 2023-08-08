@@ -7,6 +7,7 @@ import torch
 
 
 from core.evaluation.utils import get_feat_dominate_dict
+from core.evaluation.metrics import get_diversity, get_novelty
 
 class Evaluator_Feat():
     def __init__(self, test_collector_set, df_item_val, need_transform, item_feat_domination, lbe_item, top_rate, draw_bar=False):
@@ -124,24 +125,18 @@ class Evaluator_Coverage_Count():
 
         return results
 
-class Callback_User_Experience():
-    def __init__(self, test_collector_set, df_item_val, need_transform, lbe_item):
+class Evaluator_User_Experience():
+    def __init__(self, test_collector_set, df_item_val, item_similarity, item_popularity, need_transform, lbe_item):
         self.collector_dict = test_collector_set.collector_dict
         self.num_items = test_collector_set.env.get_env_attr("mat")[0].shape[1]
         self.need_transform = need_transform
         self.lbe_item = lbe_item
 
-        # self.env = env
-        self.df_item_val = df_item_val  ## val_items 3327
-
-        # self.df_dist_small = test_collector_set.env.get_env_attr("df_dist_small")[0]
-        # self.df_similarity_small = 1.0 / self.df_dist_small
-
-        self.df_similarity_small = test_collector_set.env.get_env_attr("df_similarity_small")[0]
-
-        # self.list_feat = test_collector_set.env.get_env_attr("list_feat")[0]  ## all_items 10728
-        # self.list_users_history_category = test_collector_set.env.get_env_attr("list_users_history_category")[0]  ## all_users 7176
-        self.item_popularity = test_collector_set.env.get_env_attr("item_popularity")[0]
+        self.df_item_val = df_item_val
+        # self.item_similarity = test_collector_set.env.get_env_attr("df_similarity_small")[0]
+        # self.item_popularity = test_collector_set.env.get_env_attr("item_popularity")[0]
+        self.item_similarity = item_similarity
+        self.item_popularity = item_popularity
         
     def on_epoch_begin(self, epoch):
         pass
@@ -198,52 +193,20 @@ class Callback_User_Experience():
             #     all_acts_origin = all_acts
 
             return all_acts_origin, all_rews, buffer.obs[indices][:, 0]
-    
-        def cal_diversity(item_list):
-            l = len(item_list)
-            if l <= 1:
-                return 1.0
-            div = 0.0
-            for i in range(l):
-                for j in range(l):
-                    if i < j:
-                        div += (1-self.df_similarity_small.loc[item_list[i], item_list[j]])
-            div /= (l * (l-1) / 2)
-            return div
-        
-        def cal_serendipity(item_list, rew_list, user):
-            hist_feat = eval(self.list_users_history_category[user])
-            l = len(item_list)
-            ser = 0.0
-            for i in range(l):
-                item_feat = self.list_feat[item_list[i]]
-                # if rew_list[i] > 1.0 and not all(np.array(hist_feat)[item_feat]): ## TODO KuaiRec: reward_threshold serendipy_threshold
-                if not all(np.array(hist_feat)[item_feat]):
-                    ser += 1
-            ser /= l
-            return ser
 
-        def cal_novelty(item_list):
-            l = len(item_list)
-            nov = 0.0
-            for i in range(l):
-                item_pop = self.item_popularity[item_list[i]]
-                nov += (-np.log(item_pop))
-            nov /= l
-            return nov
         
         def get_results_for_one_collector(actions, rews, users):
             res = {}
             all_div = []
-            # all_ser = []
             all_nov = []
+            # all_ser = []
             for item_list, rew_list, user in zip(actions, rews, users):
-                all_div.append(cal_diversity(item_list))
-                # all_ser.append(cal_serendipity(item_list, rew_list, user))
-                all_nov.append(cal_novelty(item_list))
-            res["div"] = np.array(all_div).mean()
+                all_div.append(get_diversity(item_list, self.item_similarity))
+                all_nov.append(get_novelty(item_list, self.item_popularity))
+                # all_ser.append(get_serendipity(item_list, rew_list, user))
+            res["Diversity"] = np.array(all_div).mean()
+            res["Novelty"] = np.array(all_nov).mean()
             # res["ser"] = np.array(all_ser).mean()
-            res["nov"] = np.array(all_nov).mean()
             return res
 
         results_all = {}
@@ -251,7 +214,7 @@ class Callback_User_Experience():
             buffer = collector.buffer
             indices = results[name + "_idxs"] if name != "FB" else results["idxs"]
             actions, rews, users = get_actions(buffer, indices)
-            # assert False
+            
             res = get_results_for_one_collector(actions, rews, users)
             res_k = {name + "_" + k: v for k, v in res.items()} if name != "FB" else res
             results_all.update(res_k)

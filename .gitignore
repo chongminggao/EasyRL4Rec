@@ -12,6 +12,7 @@ __pycache__/
 
 src/tianshou
 
+environments/KuaiRec/env/*.pickle
 environments/KuaiRec/data/*
 #!environments/KuaiRec/data/.gitkeep
 environments/VirtualTaobao
