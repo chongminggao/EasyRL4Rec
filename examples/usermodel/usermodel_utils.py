@@ -10,8 +10,8 @@ import pandas as pd
 
 from core.util.inputs import SparseFeatP
 from deepctr_torch.inputs import DenseFeat
-from core.static_dataset import StaticDataset
-from core.configs import get_training_data, get_val_data
+from core.util.static_dataset import StaticDataset
+from core.util.data import get_training_data, get_val_data
 from core.util.utils import negative_sampling, create_dir
 
 from environments.KuaiRec.env.KuaiEnv import compute_exposure_effect_kuaiRec

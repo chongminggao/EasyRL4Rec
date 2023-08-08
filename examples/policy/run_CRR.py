@@ -14,11 +14,11 @@ from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prep
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.collector_set import CollectorSet
+from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Callback_Coverage_Count
 from core.policy.discrete_crr import DiscreteCRRPolicy_withEmbedding
 from core.trainer.offline import offline_trainer
-from core.configs import get_val_data, get_common_args, \
+from core.util.data import get_val_data, get_common_args, \
     get_training_item_domination
 
 from tianshou.utils.net.common import ActorCritic, Net
