@@ -12,13 +12,13 @@ from torch import nn
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
-from core.evaluation.evaluator import test_static_model_in_RL_env
+from core.evaluation.evaluator_static import test_static_model_in_RL_env
+from core.evaluation.loggers import LoggerEval_UserModel
 from core.util.data import get_common_args, get_features, get_true_env, \
     get_training_item_domination
 from core.userModel.user_model_ensemble import EnsembleModel
 from core.evaluation.metrics import get_ranking_results
 
-from util.utils import LoggerCallback_Update
 from core.util.loss import loss_pointwise_negative_IPS, loss_pointwise_IPS, loss_pairwise_IPS, loss_pairwise_pointwise_IPS
 from usermodel_utils import get_datapath, prepare_dir_log, load_dataset_train_IPS, load_dataset_val, get_task, get_args_all, \
     get_args_dataset_specific
@@ -124,7 +124,7 @@ def main(args):
 
     history_list = ensemble_models.fit_data(dataset_train, dataset_val,
                                             batch_size=args.batch_size, epochs=args.epoch, shuffle=True,
-                                            callbacks=[LoggerCallback_Update(logger_path)])
+                                            callbacks=[LoggerEval_UserModel()])
 
     # %% 6. Save model
     # ensemble_models.get_save_entropy_mat(args.env, args.entropy_window)

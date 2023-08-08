@@ -5,7 +5,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from core.evaluation.evaluator import test_static_model_in_RL_env
+from core.evaluation.evaluator_static import test_static_model_in_RL_env
 
 
 class linucb_disjoint_arm():
