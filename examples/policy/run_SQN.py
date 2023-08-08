@@ -14,7 +14,8 @@ from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prep
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
-from core.evaluation.evaluator import Callback_Coverage_Count
+from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, save_model_fn
+from core.evaluation.loggers import LoggerEval_Policy
 from core.util.layers import Actor_Linear
 from core.policy.sqn import SQN
 from core.trainer.offline import offline_trainer
@@ -24,7 +25,6 @@ from core.util.data import get_val_data, get_common_args, \
 from tianshou.utils.net.common import ActorCritic
 
 # from util.upload import my_upload
-from util.utils import LoggerCallback_Policy, save_model_fn
 import logzero
 from logzero import logger
 
@@ -101,10 +101,14 @@ def learn_policy(args, env, policy, buffer, test_collector_set, state_tracker, o
 
     df_val, df_user_val, df_item_val, list_feat = get_val_data(args.env)
     item_feat_domination = get_training_item_domination(args.env)
+
+    # set metrics and related evaluator
+    metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_']
     policy.callbacks = [
-        Callback_Coverage_Count(test_collector_set, df_item_val, args.need_transform, item_feat_domination,
+        Evaluator_Feat(test_collector_set, df_item_val, args.need_transform, item_feat_domination,
                                 lbe_item=env.lbe_item if args.need_transform else None, top_rate=args.top_rate, draw_bar=args.draw_bar),
-        LoggerCallback_Policy(logger_path, args.force_length)]
+        Evaluator_Coverage_Count(test_collector_set, df_item_val, args.need_transform),
+        LoggerEval_Policy(args.force_length, metrics)]
     model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
     model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
 

@@ -7,7 +7,7 @@ from tianshou.data import Batch, VectorReplayBuffer, ReplayBuffer
 
 import sys
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
-from core.collector import Collector
+from core.collector.collector import Collector
 
 # class Exec_Each_Collector(object):
 #     def __init__(self, func):
