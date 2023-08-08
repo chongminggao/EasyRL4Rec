@@ -13,10 +13,10 @@ from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prep
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.collector_set import CollectorSet
+from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Callback_Coverage_Count
-from core.configs import get_common_args, get_val_data, get_training_item_domination
-from core.collector import Collector
+from core.util.data import get_common_args, get_val_data, get_training_item_domination
+from core.collector.collector import Collector
 from core.policy.dqn import DQNPolicy_with_Embedding
 from core.trainer.offpolicy import offpolicy_trainer
 

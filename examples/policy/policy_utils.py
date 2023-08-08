@@ -22,11 +22,11 @@ from core.state_tracker.NextItNet import StateTracker_NextItNet
 from core.state_tracker.SASRec import StateTracker_SASRec
 from core.util.inputs import get_dataset_columns
 from core.userModel.user_model_ensemble import EnsembleModel
-from core.simulated_env import SimulatedEnv
+from environments.simulated_env import SimulatedEnv
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.configs import get_training_data, get_true_env
+from core.util.data import get_training_data, get_true_env
 
 from tianshou.data import VectorReplayBuffer, Batch
 from tianshou.env import DummyVectorEnv

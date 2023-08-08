@@ -11,7 +11,7 @@ from torch import nn
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
 from core.evaluation.evaluator import test_static_model_in_RL_env
-from core.configs import get_common_args, get_features, get_true_env, \
+from core.util.data import get_common_args, get_features, get_true_env, \
     get_training_item_domination
 from core.userModel.user_model_ensemble import EnsembleModel
 from core.evaluation.metrics import get_ranking_results
