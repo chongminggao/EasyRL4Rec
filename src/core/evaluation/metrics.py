@@ -2,6 +2,29 @@
 import numpy as np
 import pandas as pd
 
+def get_diversity(item_list, similarity_mat):
+    l = len(item_list)
+    if l <= 1:
+        return 1.0
+    div = 0.0
+    for i in range(l):
+        for j in range(l):
+            if i < j:
+                div += (1-similarity_mat[item_list[i], item_list[j]])
+    div /= (l * (l-1) / 2)
+    return div
+
+def get_novelty(item_list, popularity_list):
+    l = len(item_list)
+    nov = 0.0
+    for i in range(l):
+        item_pop = popularity_list[item_list[i]]
+        nov += (-np.log(item_pop))
+    nov /= l
+    return nov
+
+def get_serendipity(): # TODO
+    pass
 
 
 def get_MRR(rec_list, true_list, true_rel):

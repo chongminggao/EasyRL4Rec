@@ -59,6 +59,34 @@ def get_training_item_domination(env):
 
     return item_feat_domination
 
+def get_item_similarity(env):
+    item_similarity = None
+    if env == "CoatEnv-v0":
+        raise TypeError("Please implement corresponding function in dataset")
+    elif env == "KuaiRand-v0":
+        raise TypeError("Please implement corresponding function in dataset")
+    elif env == "KuaiEnv-v0":
+        from environments.KuaiRec.env.KuaiEnv import KuaiEnv
+        item_similarity = KuaiEnv.get_item_similarity()
+    elif env == "YahooEnv-v0":
+        raise TypeError("Please implement corresponding function in dataset")
+
+    return item_similarity
+
+def get_item_popularity(env):
+    item_popularity = None
+    if env == "CoatEnv-v0":
+        raise TypeError("Please implement corresponding function in dataset")
+    elif env == "KuaiRand-v0":
+        raise TypeError("Please implement corresponding function in dataset")
+    elif env == "KuaiEnv-v0":
+        from environments.KuaiRec.env.KuaiEnv import KuaiEnv
+        item_popularity = KuaiEnv.get_item_popularity()
+    elif env == "YahooEnv-v0":
+        raise TypeError("Please implement corresponding function in dataset")
+
+    return item_popularity
+
 
 def get_val_data(env):
     df_train, df_user, df_item, list_feat = None, None, None, None

@@ -97,10 +97,50 @@ class KuaiEnv(gym.Env):
         if os.path.isfile(feature_domination_path):
             item_feat_domination = pickle.load(open(feature_domination_path, 'rb'))
         else:
-            item_feat_domination = get_sorted_domination_features(
-                df_data, df_item, is_multi_hot=True, yname="watch_ratio_normed", threshold=0.6)
+            # item_feat_domination = get_sorted_domination_features(
+            #     df_data, df_item, is_multi_hot=True, yname="watch_ratio_normed", threshold=0.6)
             pickle.dump(item_feat_domination, open(feature_domination_path, 'wb'))
         return item_feat_domination
+    
+    @staticmethod
+    def get_item_similarity():
+        df_data, df_user, df_item, list_feat = KuaiEnv.get_df_kuairec("big_matrix_processed.csv")
+        CODEDIRPATH = os.path.dirname(__file__)
+        item_similarity_path = os.path.join(CODEDIRPATH, "item_similarity.pickle")
+
+        if os.path.isfile(item_similarity_path):
+            item_similarity = pickle.load(open(item_similarity_path, 'rb'))
+        else:
+            item_similarity = get_similarity_mat(list_feat, DATAPATH)
+            pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
+        return item_similarity
+
+    @staticmethod
+    def get_item_popularity():
+        # df_data, df_user, df_item, list_feat = KuaiEnv.get_df_kuairec("big_matrix_processed.csv")
+        filename = os.path.join(DATAPATH, "big_matrix_processed.csv")
+        df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'timestamp', 'watch_ratio'])
+        n_users = df_data['user_id'].nunique()
+        n_items = df_data['item_id'].nunique()
+
+        CODEDIRPATH = os.path.dirname(__file__)
+        item_popularity_path = os.path.join(CODEDIRPATH, "item_popularity.pickle")
+
+        if os.path.isfile(item_popularity_path):
+            item_popularity = pickle.load(open(item_popularity_path, 'rb'))
+        else:
+            df_data_filtered = df_data[df_data['watch_ratio']>=1.]
+            
+            groupby = df_data_filtered.loc[:, ["user_id", "item_id"]].groupby(by="item_id")
+            df_pop = groupby.user_id.apply(list).reset_index()
+            df_pop["popularity"] = df_pop['user_id'].apply(lambda x: len(x) / n_users)
+
+            item_pop_df = pd.DataFrame(np.arange(n_items), columns=["item_id"])
+            item_pop_df = item_pop_df.merge(df_pop, how="left", on="item_id")
+            item_pop_df['popularity'].fillna(0, inplace=True)
+            item_popularity = item_pop_df['popularity']
+            pickle.dump(item_popularity, open(item_popularity_path, 'wb'))
+        return item_popularity
 
     @staticmethod
     def load_user_feat(only_small=False):
