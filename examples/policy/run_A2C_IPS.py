@@ -9,7 +9,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_envs, setup_state_tracker
+from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_train_envs, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -47,9 +47,7 @@ def get_args_ips_policy():
     parser.add_argument('--gae-lambda', type=float, default=1.)
     parser.add_argument('--rew-norm', action="store_true", default=False)
     
-    parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
-    parser.add_argument('--lambda_variance', default=0, type=float)
-    parser.add_argument('--lambda_entropy', default=0, type=float)
+    parser.add_argument("--entropy_window", type=int, nargs="*", default=[])  ## TODO
 
     parser.add_argument("--read_message", type=str, default="DeepFM-IPS")
     parser.add_argument("--message", type=str, default="IPS")
@@ -171,7 +169,8 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, train_envs, test_envs_dict = prepare_envs(args, ensemble_models)
+    env, train_envs = prepare_train_envs(args, ensemble_models)
+    test_envs_dict = prepare_test_envs(args)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)
