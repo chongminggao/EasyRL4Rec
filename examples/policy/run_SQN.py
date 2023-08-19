@@ -9,7 +9,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, setup_offline_state_tracker
+from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, prepare_test_envs, setup_offline_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -145,7 +145,8 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, buffer, test_envs_dict = prepare_buffer_via_offline_data(args)
+    env, buffer = prepare_buffer_via_offline_data(args)
+    test_envs_dict = prepare_test_envs(args)
 
     # %% 3. Setup policy
     state_tracker = setup_offline_state_tracker(args, ensemble_models, env, buffer, test_envs_dict)

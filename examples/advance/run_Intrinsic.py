@@ -4,26 +4,29 @@ import os
 import pprint
 import sys
 import traceback
+import pickle
+import random
 
+import numpy as np
 import torch
 
-sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
+sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_train_envs, prepare_test_envs, setup_state_tracker
+from policy.policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
-from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity
+from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity, get_true_env
 from core.collector.collector import Collector
 from core.policy.a2c import A2CPolicy_withEmbedding
 from core.trainer.onpolicy import onpolicy_trainer
-
+from environments.Simulated_Env.intrinsic import IntrinsicSimulatedEnv
 
 from tianshou.data import VectorReplayBuffer
-
+from tianshou.env import DummyVectorEnv
 from tianshou.utils.net.common import ActorCritic, Net
 from tianshou.utils.net.discrete import Actor, Critic
 
@@ -37,20 +40,55 @@ except ImportError:
     envpool = None
 
 
-def get_args_A2C():
+def get_args_Intrinsic():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="A2C_with_emb")
+    parser.add_argument("--model_name", type=str, default="Intrinsic")
     parser.add_argument('--vf-coef', type=float, default=0.5)
     parser.add_argument('--ent-coef', type=float, default=0.0)
     parser.add_argument('--max-grad-norm', type=float, default=None)
     parser.add_argument('--gae-lambda', type=float, default=1.)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 
+    # Env
+    parser.add_argument('--lambda_diversity', default=0.1, type=float)
+    parser.add_argument('--lambda_novelty', default=0.1, type=float)
+    
     parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="A2C_with_emb")
+    parser.add_argument("--message", type=str, default="Intrinsic")
 
     args = parser.parse_known_args()[0]
     return args
+
+def prepare_train_envs(args, ensemble_models):
+    env, env_task_class, kwargs_um = get_true_env(args)
+
+    with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
+        predicted_mat = pickle.load(file)
+
+    item_similarity, item_popularity = get_item_similarity(args.env), get_item_popularity(args.env)
+
+    kwargs = {
+        "ensemble_models": ensemble_models,
+        "env_task_class": env_task_class,
+        "task_env_param": kwargs_um,
+        "task_name": args.env,
+        "predicted_mat": predicted_mat,
+
+        "item_similarity": item_similarity,
+        "item_popularity": item_popularity,
+        "lambda_diversity": args.lambda_diversity,
+        "lambda_novelty": args.lambda_novelty,
+    }
+
+    train_envs = DummyVectorEnv(
+        [lambda: IntrinsicSimulatedEnv(**kwargs) for _ in range(args.training_num)])
+    
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    train_envs.seed(args.seed)
+
+    return env, train_envs
 
 
 def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
@@ -182,9 +220,9 @@ def main(args):
 if __name__ == '__main__':
     args_all = get_args_all()
     args = get_common_args(args_all)
-    args_A2C = get_args_A2C()
+    args_Intrinsic = get_args_Intrinsic()
     args_all.__dict__.update(args.__dict__)
-    args_all.__dict__.update(args_A2C.__dict__)
+    args_all.__dict__.update(args_Intrinsic.__dict__)
     try:
         main(args_all)
     except Exception as e:

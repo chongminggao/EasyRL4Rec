@@ -22,7 +22,7 @@ from core.state_tracker.NextItNet import StateTracker_NextItNet
 from core.state_tracker.SASRec import StateTracker_SASRec
 from core.util.inputs import get_dataset_columns
 from core.userModel.user_model_ensemble import EnsembleModel
-from environments.simulated_env import SimulatedEnv
+from environments.Simulated_Env.base import BaseSimulatedEnv
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -90,18 +90,6 @@ def get_args_all():
     parser.add_argument("--num_heads", type=int, default=1)
     # State_tracker nextitnet
     parser.add_argument("--dilations", type=str, default='[1, 2, 1, 2, 1, 2]')
-
-    # Env
-    parser.add_argument("--version", type=str, default="v1")
-    parser.add_argument('--tau', default=0, type=float)
-    parser.add_argument('--gamma_exposure', default=10, type=float)
-
-    parser.add_argument('--lambda_variance', default=0.05, type=float)
-    parser.add_argument('--lambda_entropy', default=5, type=float)
-
-    parser.add_argument('--is_exposure_intervention', dest='use_exposure_intervention', action='store_true')
-    parser.add_argument('--no_exposure_intervention', dest='use_exposure_intervention', action='store_false')
-    parser.set_defaults(use_exposure_intervention=False)
 
     # tianshou
     parser.add_argument('--buffer-size', type=int, default=100000)
@@ -299,6 +287,42 @@ def prepare_buffer_via_offline_data(args):
     buffer = construct_buffer_from_offline_data(args, df_train, env)
     env.max_turn = args.max_turn
 
+    args.device = torch.device("cuda:{}".format(args.cuda) if torch.cuda.is_available() else "cpu")
+    # seed
+    np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
+    return env, buffer
+
+def prepare_train_envs(args, ensemble_models):
+    env, env_task_class, kwargs_um = get_true_env(args)
+
+    with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
+        predicted_mat = pickle.load(file)
+
+    kwargs = {
+        "ensemble_models": ensemble_models,
+        "env_task_class": env_task_class,
+        "task_env_param": kwargs_um,
+        "task_name": args.env,
+        "predicted_mat": predicted_mat,
+    }
+
+    train_envs = DummyVectorEnv(
+        [lambda: BaseSimulatedEnv(**kwargs) for _ in range(args.training_num)])
+    
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    train_envs.seed(args.seed)
+
+    return env, train_envs
+
+
+def prepare_test_envs(args):
+    env, env_task_class, kwargs_um = get_true_env(args)
+    # test_envs = gym.make(args.task)
     test_envs = DummyVectorEnv(
         [lambda: env_task_class(**kwargs_um) for _ in range(args.test_num)])
     test_envs_NX_0 = DummyVectorEnv(
@@ -308,30 +332,19 @@ def prepare_buffer_via_offline_data(args):
 
     test_envs_dict = {"FB": test_envs, "NX_0": test_envs_NX_0, f"NX_{args.force_length}": test_envs_NX_x}
 
-    args.device = torch.device("cuda:{}".format(args.cuda) if torch.cuda.is_available() else "cpu")
     # seed
-    np.random.seed(args.seed)
     random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    test_envs.seed(args.seed)
 
-    return env, buffer, test_envs_dict
+    return test_envs_dict
+
 
 def prepare_envs(args, ensemble_models, alpha_u=None, beta_i=None):
     env, env_task_class, kwargs_um = get_true_env(args)
 
-    # user_features, item_features, reward_features = get_features(args.env, args.is_userinfo)
-    # embedding_dim = ensemble_models.user_models[0].feature_columns[0].embedding_dim
-
-    # dataset_val, df_user_val, df_item_val = load_dataset_val(args, user_features, item_features, reward_features, embedding_dim, embedding_dim)
-
-    # entropy_user, map_entropy = ensemble_models.get_save_entropy_mat(args.env, args.entropy_window)
-
     entropy_dict = dict()
-    # if 0 in args.entropy_window:
-    #     entropy_path = os.path.join(ensemble_models.Entropy_PATH, "user_entropy.csv")
-    #     entropy = pd.read_csv(entropy_path)
-    #     entropy.set_index("user_id", inplace=True)
-    #     entropy_mat_0 = entropy.to_numpy().reshape([-1])
-    #     entropy_dict.update({"on_user": entropy_mat_0})
     if len(set(args.entropy_window) - set([0])):
         savepath = os.path.join(ensemble_models.Entropy_PATH, "map_entropy.pickle")
         map_entropy = pickle.load(open(savepath, 'rb'))

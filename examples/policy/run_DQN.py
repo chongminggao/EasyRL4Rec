@@ -48,8 +48,10 @@ def get_args_DQN():
     parser.add_argument('--is-double', type=bool, default=True)
     parser.add_argument('--clip-loss-grad', action="store_true", default=False)
 
-    parser.add_argument('--step-per-collect', type=int, default=1000)
-    parser.add_argument('--step-per-epoch', type=int, default=1000)
+    parser.add_argument('--step-per-collect', type=int, default=2000)
+    parser.add_argument('--training-num', type=int, default=100)
+    parser.add_argument('--batch-size', type=int, default=64)
+
     parser.add_argument('--update-per-step', type=float, default=0.1)
     parser.add_argument('--prioritized-replay', action="store_true", default=False)
     parser.add_argument('--alpha', type=float, default=0.6)
@@ -110,6 +112,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         VectorReplayBuffer(args.buffer_size, len(train_envs)),
         preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
+        force_length=args.step_per_collect / args.training_num,
     )
     # test_collector = Collector(
     #     policy, test_envs_dict,

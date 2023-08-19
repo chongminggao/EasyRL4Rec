@@ -402,6 +402,9 @@ class KuaiEnv(gym.Env):
 
         return False
 
+    def seed(self, sd=0):
+        torch.manual_seed(sd)
+
     def _reset_history(self):
         self.history_action = {}
         self.sequence_action = []

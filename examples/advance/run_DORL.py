@@ -4,26 +4,29 @@ import os
 import pprint
 import sys
 import traceback
+import pickle
+import random
 
+import numpy as np
 import torch
 
-sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
+sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_train_envs, prepare_test_envs, setup_state_tracker
+from policy.policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
-from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity
+from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity, get_true_env
 from core.collector.collector import Collector
 from core.policy.a2c import A2CPolicy_withEmbedding
 from core.trainer.onpolicy import onpolicy_trainer
-
+from environments.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv
 
 from tianshou.data import VectorReplayBuffer
-
+from tianshou.env import DummyVectorEnv
 from tianshou.utils.net.common import ActorCritic, Net
 from tianshou.utils.net.discrete import Actor, Critic
 
@@ -37,20 +40,90 @@ except ImportError:
     envpool = None
 
 
-def get_args_A2C():
+def get_args_DORL():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="A2C_with_emb")
+    parser.add_argument("--model_name", type=str, default="MOPO")
     parser.add_argument('--vf-coef', type=float, default=0.5)
     parser.add_argument('--ent-coef', type=float, default=0.0)
     parser.add_argument('--max-grad-norm', type=float, default=None)
     parser.add_argument('--gae-lambda', type=float, default=1.)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 
+    # Env
+    parser.add_argument('--is_exposure_intervention', dest='use_exposure_intervention', action='store_true')
+    parser.add_argument('--no_exposure_intervention', dest='use_exposure_intervention', action='store_false')
+    parser.set_defaults(use_exposure_intervention=False)
+
+    parser.add_argument("--version", type=str, default="v1")
+    parser.add_argument('--tau', default=0, type=float)
+    parser.add_argument('--gamma_exposure', default=10, type=float)
+
+    parser.add_argument('--lambda_entropy', default=5, type=float)
+
     parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="A2C_with_emb")
+    parser.add_argument("--message", type=str, default="DORL")
 
     args = parser.parse_known_args()[0]
     return args
+
+def prepare_train_envs(args, ensemble_models):
+    env, env_task_class, kwargs_um = get_true_env(args)
+
+    entropy_dict = dict()
+    # if 0 in args.entropy_window:
+    #     entropy_path = os.path.join(ensemble_models.Entropy_PATH, "user_entropy.csv")
+    #     entropy = pd.read_csv(entropy_path)
+    #     entropy.set_index("user_id", inplace=True)
+    #     entropy_mat_0 = entropy.to_numpy().reshape([-1])
+    #     entropy_dict.update({"on_user": entropy_mat_0})
+    if len(set(args.entropy_window) - set([0])):
+        savepath = os.path.join(ensemble_models.Entropy_PATH, "map_entropy.pickle")
+        map_entropy = pickle.load(open(savepath, 'rb'))
+        entropy_dict.update({"map": map_entropy})
+
+    entropy_set = set(args.entropy_window)
+    entropy_min = 0
+    entropy_max = 0
+    if len(entropy_set):
+        for entropy_term in entropy_set:
+            entropy_min += min([v for k, v in entropy_dict["map"].items() if len(k) == entropy_term])
+            entropy_max += max([v for k, v in entropy_dict["map"].items() if len(k) == entropy_term])
+
+    with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
+        predicted_mat = pickle.load(file)
+
+    alpha_u, beta_i = None, None  ## TODO
+
+    kwargs = {
+        "ensemble_models": ensemble_models,
+        "env_task_class": env_task_class,
+        "task_env_param": kwargs_um,
+        "task_name": args.env,
+        "predicted_mat": predicted_mat,
+
+        "version": args.version,
+        "tau": args.tau,
+        "use_exposure_intervention": args.use_exposure_intervention,
+        "gamma_exposure": args.gamma_exposure,
+        "alpha_u": alpha_u,
+        "beta_i": beta_i,
+        "entropy_dict": entropy_dict,
+        "entropy_window": args.entropy_window,
+        "lambda_entropy": args.lambda_entropy,
+        "step_n_actions": max(args.entropy_window) if len(args.entropy_window) else 0,
+        "entropy_min": entropy_min,
+        "entropy_max": entropy_max,
+    }
+
+    train_envs = DummyVectorEnv(
+        [lambda: PenaltyEntExpSimulatedEnv(**kwargs) for _ in range(args.training_num)])
+    
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    train_envs.seed(args.seed)
+
+    return env, train_envs
 
 
 def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
@@ -182,9 +255,9 @@ def main(args):
 if __name__ == '__main__':
     args_all = get_args_all()
     args = get_common_args(args_all)
-    args_A2C = get_args_A2C()
+    args_DORL = get_args_DORL()
     args_all.__dict__.update(args.__dict__)
-    args_all.__dict__.update(args_A2C.__dict__)
+    args_all.__dict__.update(args_DORL.__dict__)
     try:
         main(args_all)
     except Exception as e:
