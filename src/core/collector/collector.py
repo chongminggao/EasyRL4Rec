@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import time
 import torch
 import warnings
@@ -100,7 +100,8 @@ class Collector(object):
         """Reset all related variables in the collector."""
         # use empty Batch for "state" so that self.data supports slicing
         # convert empty Batch to None when passing data to policy
-        self.data = Batch(obs={}, act={}, rew={}, done={},
+        self.data = Batch(obs={}, act={}, rew={}, 
+                          terminated={}, truncated={},  ## TODO , done={}
                           obs_next={}, info={}, policy={})
         self.reset_env()
         self.reset_buffer()
@@ -128,7 +129,7 @@ class Collector(object):
         if self.preprocess_fn:
             self.preprocess_fn(dim_batch=self.env_num, reset=True)
 
-        obs = self.env.reset()
+        obs, info = self.env.reset()
         if self.preprocess_fn:
             obs = self.preprocess_fn(
                 obs=obs, env_id=np.arange(self.env_num)).get("obs", obs)
@@ -269,22 +270,23 @@ class Collector(object):
 
             # self.env.get_env_attr("cur_user")
 
-            obs_next, rew, done, info = self.env.step(
+            obs_next, rew, terminated, truncated, info = self.env.step(
                 action_remap, ready_env_ids)
 
             cnt_loop += 1
             if self.force_length > 0:
                 if cnt_loop >= self.force_length:
-                    done = np.ones_like(done, dtype=bool)
+                    terminated = np.ones_like(terminated, dtype=bool)
                 else:
-                    done = np.zeros_like(done, dtype=bool)
+                    terminated = np.zeros_like(terminated, dtype=bool)
 
-            self.data.update(obs_next=obs_next, rew=rew, done=done, info=info)
+            self.data.update(obs_next=obs_next, rew=rew, terminated=terminated, truncated=truncated, info=info)
             if self.preprocess_fn:
                 self.data.update(self.preprocess_fn(
                     obs_next=self.data.obs_next,
                     rew=self.data.rew,
-                    done=self.data.done,
+                    terminated=self.data.terminated,
+                    truncated=self.data.truncated,
                     info=self.data.info,
                     policy=self.data.policy,
                     env_id=ready_env_ids,
@@ -297,14 +299,14 @@ class Collector(object):
                 #     time.sleep(render)
 
             # add data into the buffer
-            ptr, ep_rew, ep_len, ep_idx = self.buffer.add(
+            ptr, ep_rew, ep_len, ep_idx = self.buffer.add(  # Bug
                 self.data, buffer_ids=ready_env_ids)
 
             # collect statistics
             step_count += len(ready_env_ids)
 
-            if np.any(done):
-                env_ind_local = np.where(done)[0]
+            if np.any(terminated):
+                env_ind_local = np.where(terminated)[0]
                 env_ind_global = ready_env_ids[env_ind_local]
                 episode_count += len(env_ind_local)
                 episode_lens.append(ep_len[env_ind_local])
@@ -314,7 +316,7 @@ class Collector(object):
                 # finished episodes, we have to reset finished envs first.
 
                 # # Delete for efficiency
-                # obs_reset = self.env.reset(env_ind_global)
+                # obs_reset, info_reset = self.env.reset(env_ind_global)
                 # if self.preprocess_fn:
                 #     obs_reset = self.preprocess_fn(
                 #         obs=obs_reset, env_id=env_ind_global).get("obs", obs_reset)

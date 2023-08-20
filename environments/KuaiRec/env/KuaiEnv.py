@@ -6,7 +6,7 @@ import json
 import os
 import pickle
 
-import gym
+import gymnasium as gym
 import torch
 from gym import spaces
 from numba import njit
@@ -349,9 +349,9 @@ class KuaiEnv(gym.Env):
         # Action: tensor with shape (32, )
         self.action = action
         t = self.total_turn
-        done = self._determine_whether_to_leave(t, action)
+        terminated = self._determine_whether_to_leave(t, action)
         if t >= (self.max_turn - 1):
-            done = True
+            terminated = True
         self._add_action_to_history(t, action)
 
         reward = self.mat[self.cur_user, action]
@@ -359,10 +359,10 @@ class KuaiEnv(gym.Env):
         self.cum_reward += reward
         self.total_turn += 1
 
-        # if done:
+        # if terminated:
         #     self.cur_user = self.__user_generator()
 
-        return self.state, reward, done, {'cum_reward': self.cum_reward}
+        return self.state, reward, terminated, False, {'cum_reward': self.cum_reward}
 
     def reset(self):
         self.cum_reward = 0
@@ -372,7 +372,7 @@ class KuaiEnv(gym.Env):
         self.action = None  # Add by Chongming
         self._reset_history()
 
-        return self.state
+        return self.state, {'key': 1, 'env': self}
 
     def render(self, mode='human', close=False):
         history_action = self.history_action

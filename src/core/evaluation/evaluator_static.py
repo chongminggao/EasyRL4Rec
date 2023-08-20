@@ -13,22 +13,22 @@ def interactive_evaluation(model, env, dataset_val, is_softmax, epsilon, is_ucb,
     all_acts = []
 
     for i in tqdm(range(num_trajectory), desc=f"evaluate static method in {env.__str__()}"):
-        user_ori = env.reset()
+        user_ori, info = env.reset()
         if need_transform:
             user = env.lbe_user.inverse_transform(user_ori)[0]
         else:
             user = user_ori
 
         acts = []
-        done = False
-        while not done:
+        terminated = False
+        while not terminated:
             recommended_id_transform, recommended_id_raw, reward_pred = model.recommend_k_item(
                 user, dataset_val, k=k, is_softmax=is_softmax, epsilon=epsilon, is_ucb=is_ucb,
                 recommended_ids=acts if remove_recommended else [])
             if need_transform:
                 assert recommended_id_transform == env.lbe_item.transform([recommended_id_raw])[0]
             acts.append(recommended_id_transform)
-            state, reward, done, info = env.step(recommended_id_transform)
+            state, reward, terminated, truncated, info = env.step(recommended_id_transform)
             total_turns += 1
             # metric 1
             cumulative_reward += reward
@@ -36,14 +36,14 @@ def interactive_evaluation(model, env, dataset_val, is_softmax, epsilon, is_ucb,
             click_loss = np.absolute(reward_pred - reward)
             total_click_loss += click_loss
 
-            if done:
+            if terminated:
                 if force_length > 0:  # do not end here
                     env.cur_user = user_ori
-                    done = False
+                    terminated = False
                 else:
                     break
             if force_length > 0 and len(acts) >= force_length:
-                done = True
+                terminated = True
                 break
 
         all_acts.extend(acts)
@@ -112,9 +112,9 @@ def test_taobao(model, env, epsilon=0):
     num_trajectory = 100
 
     for i in range(num_trajectory):
-        features = env.reset()
-        done = False
-        while not done:
+        features, info = env.reset()
+        terminated = False
+        while not terminated:
             res = model(torch.FloatTensor(features).to(model.device).unsqueeze(0)).to('cpu').squeeze()
             item_feat_predict = res[model.y_index['feat_item'][0]:model.y_index['feat_item'][1]]
             action = item_feat_predict.detach().numpy()
@@ -125,7 +125,7 @@ def test_taobao(model, env, epsilon=0):
 
             reward_pred = res[model.y_index['y'][0]:model.y_index['y'][1]]
 
-            features, reward, done, info = env.step(action)
+            features, reward, terminated, truncated, info = env.step(action)
 
             total_turns += 1
 
@@ -136,7 +136,7 @@ def test_taobao(model, env, epsilon=0):
             click_loss = np.absolute(float(reward_pred.detach().numpy()) - reward)
             total_click_loss += click_loss
 
-            if done:
+            if terminated:
                 break
 
     ctr = cumulative_reward / total_turns  # /10

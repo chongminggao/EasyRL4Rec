@@ -206,21 +206,26 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
             env.reset()
             env.cur_user = dummy_user
-            dones = np.zeros(len(rewards), dtype=bool)
+            terminateds = np.zeros(len(rewards), dtype=bool)
+            truncateds = np.zeros(len(rewards), dtype=bool)
 
             for k, item in enumerate(items[1:]):
-                obs_next, rew, done, info = env.step(item)
-                if done:
+                obs_next, rew, terminated, truncated, info = env.step(item)
+                if terminated or truncated:  
                     env.reset()
                     env.cur_user = dummy_user
-                dones[k] = done
-                dones[-1] = True
+                terminateds[k] = terminated
+                truncateds[k] = truncated
+                terminateds[-1] = True
                 # print(env.cur_user, obs_next, rew, done, info)
 
             batch = Batch(obs=np_ui_pair[:-1], obs_next=np_ui_pair[1:], act=items[1:],
-                          policy={}, info={}, rew=rewards, done=dones)
+                          policy={}, info={}, rew=rewards, terminated=terminateds, truncated=truncateds)
 
+            # print(batch)
+            # assert False
             ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * ind_buffer)
+            
 
         return buffer
 
@@ -254,18 +259,21 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
             env.reset()
             env.cur_user = user
-            dones = np.zeros(len(rewards), dtype=bool)
+            terminateds = np.zeros(len(rewards), dtype=bool)
+            truncateds = np.zeros(len(rewards), dtype=bool)
 
             for k, item in enumerate(items[1:]):
-                obs_next, rew, done, info = env.step(item)
-                if done:
+                obs_next, rew, terminated, truncated, info = env.step(item)
+                if terminated or truncated:  
                     env.reset()
-                    env.cur_user = user
-                dones[k] = done
-                dones[-1] = True
+                    env.cur_user = dummy_user
+                terminateds[k] = terminated
+                truncateds[k] = truncated
+                terminateds[-1] = True
                 # print(env.cur_user, obs_next, rew, done, info)
+
             batch = Batch(obs=np_ui_pair[:-1], obs_next=np_ui_pair[1:], act=items[1:],
-                          policy={}, info={}, rew=rewards, done=dones)
+                          policy={}, info={}, rew=rewards, terminated=terminateds, truncated=truncateds)
             ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * indices)
 
     return buffer

@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import numpy as np
 import torch
 
@@ -9,7 +9,6 @@ from torch import FloatTensor
 # from environments.VirtualTaobao.virtualTB.utils import *
 
 class BaseSimulatedEnv(gym.Env):
-
     def __init__(self, ensemble_models,
                  env_task_class, task_env_param: dict, task_name: str,
                  predicted_mat=None, 
@@ -46,14 +45,14 @@ class BaseSimulatedEnv(gym.Env):
         self.reward = 0
         self.action = None
         self.env_task.action = None
-        self.state = self.env_task.reset()
+        self.state, self.info = self.env_task.reset()
 
         self._reset_history()
         if self.env_name == "VirtualTB-v0":
             self.cur_user = self.state[:-3]
         else:  # elif self.env_name == "KuaiEnv-v0":
             self.cur_user = self.state
-        return self.state
+        return self.state, {'key': 1, 'env': self}  ## TODO key
 
     def render(self, mode='human', close=False):
         self.env_task.render(mode)
@@ -77,7 +76,8 @@ class BaseSimulatedEnv(gym.Env):
     def step(self, action: FloatTensor):
         # 1. Collect ground-truth transition info
         self.action = action
-        real_state, real_reward, real_done, real_info = self.env_task.step(action)
+        # real_state, real_reward, real_done, real_info = self.env_task.step(action)
+        real_state, real_reward, real_terminated, real_truncated, real_info = self.env_task.step(action)
 
         t = int(self.total_turn)
 
@@ -91,13 +91,13 @@ class BaseSimulatedEnv(gym.Env):
         self.cum_reward += pred_reward
         self.total_turn = self.env_task.total_turn
 
-        done = real_done
+        terminated = real_terminated
         # Rethink commented, do not use new user as new state
-        # if done:
-        #     self.state = self.env_task.reset()
+        # if terminated:
+        #     self.state, self.info = self.env_task.reset()
 
         self.state = self._construct_state(pred_reward)
-        return self.state, pred_reward, done, {'CTR': self.cum_reward / self.total_turn / 10}
+        return self.state, pred_reward, terminated, False, {'CTR': self.cum_reward / self.total_turn / 10}
 
     def _reset_history(self):
         # self.history_action = {}
