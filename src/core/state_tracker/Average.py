@@ -84,7 +84,7 @@ class StateTrackerAvg(StateTracker_Base):
             first_flag = True
 
             '''
-            Logic: Always use obs_next(t) and reward(t) to construct state(t+1), since obs_next(t) == obs(t+1).
+            Logic: Always use obs_next(t) and reward(t) to construct state(t+1) or obs(t+1), since obs_next(t) == obs(t+1).
             Note: The inital obs(0) == obs_next(-1) and reward(-1) are not recorded. So we have to initialize them.  
             '''
             while not all(flag_has_init) and len(live_mat) < self.window_size:
