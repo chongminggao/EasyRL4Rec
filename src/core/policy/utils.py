@@ -19,12 +19,12 @@ import torch
 #     return obs_emb, recommended_ids
 
 def get_emb(state_tracker, buffer, indices=None, is_obs=None, obs=None, is_train=True):
-    if len(buffer) == 0:
+    if len(buffer) == 0: # initialization: only user_id is given, obs = user_id, no items yet.
         obs_emb = state_tracker.forward(obs=obs, reset=True)
     else:
         if indices is None:  # collector collects data
-            indices = buffer.last_index[~buffer[buffer.last_index].done]
-            is_obs = False
+            indices = buffer.last_index[~buffer[buffer.last_index].done] # ids of not terminated trajectories.
+            is_obs = False # is_obs = False means we use obs_next[t-1] instead of obs[t] to compute the state. TODO: Consider to deprecate this variable.
 
         obs_emb = state_tracker.forward(buffer=buffer, indices=indices, reset=False, is_obs=is_obs, is_train=is_train)
 
