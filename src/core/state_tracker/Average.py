@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
+from typing import Any, Dict
 
 from core.util.utils import compute_input_dim
 
@@ -41,9 +42,11 @@ class StateTrackerAvg(StateTracker_Base):
         if self.use_userEmbedding:
             self.ffn_user = nn.Linear(compute_input_dim(self.user_columns), self.dim_model, device=self.device)
 
-    def forward(self, buffer=None, indices=None, obs=None, reset=None, is_obs=None, is_train=True):
+    def forward(self, buffer=None, indices=None, obs=None, is_obs=None, is_train=True,
+                state: Any = None,  # for final_net
+                info: Dict[str, Any] = {}):
 
-        if reset:  # get user embedding
+        if len(buffer) == 0:  # if reset, get user embedding
 
             users = np.expand_dims(obs[:, 0], -1)
             items = np.expand_dims(obs[:, 1], -1)
@@ -62,17 +65,19 @@ class StateTrackerAvg(StateTracker_Base):
 
             r0 = torch.ones(len(s0), 1).to(s0.device) # todo: define init reward as 1
             if self.reward_handle == "mul":
-                state_res = s0 * 1
+                state_final = s0 * 1
             elif self.reward_handle == "cat":
-                state_res = torch.cat([s0, r0], 1)
+                state_final = torch.cat([s0, r0], 1)
             elif self.reward_handle == "cat2":
-                state_res = torch.cat([s0, r0], 1)
+                state_final = torch.cat([s0, r0], 1)
             else:
-                state_res = s0
-
-            return state_res
+                state_final = s0
 
         else:
+            if indices is None:  # collector collects data
+                indices = buffer.last_index[~buffer[buffer.last_index].done]
+                is_obs = False
+
             index = indices
             flag_has_init = np.zeros_like(index, dtype=bool)
 
@@ -172,5 +177,8 @@ class StateTrackerAvg(StateTracker_Base):
             #     return state_final, recommended_ids
             # else:
             #     return state_final, None
-
+        if self.final_net is None:
             return state_final
+        else:
+            outputs, hidden = self.final_net(state_final, state=state, info=info)
+            return outputs, hidden

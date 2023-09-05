@@ -16,12 +16,12 @@ from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prep
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
-from core.policy.discrete_cql import DiscreteCQLPolicy_withEmbedding
 from core.trainer.offline import offline_trainer
 from core.util.data import get_val_data, get_common_args, \
     get_training_item_domination, get_item_similarity, get_item_popularity
 
 from tianshou.utils.net.common import Net
+from tianshou.policy import DiscreteCQLPolicy
 
 # from util.upload import my_upload\
 import logzero
@@ -58,18 +58,18 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         softmax=False,
         num_atoms=args.num_quantiles
     )
-    optim = torch.optim.Adam(net.parameters(), lr=args.lr)
+    state_tracker.set_final_net(net)
+    optim = torch.optim.Adam(state_tracker.parameters(), lr=args.lr)
 
-    policy = DiscreteCQLPolicy_withEmbedding(
-        net,
+    policy = DiscreteCQLPolicy(
+        state_tracker,
         optim,
         args.gamma,
         args.num_quantiles,
         args.n_step,
         args.target_update_freq,
-        min_q_weight=args.min_q_weight,
-        state_tracker=state_tracker,
         buffer=buffer,
+        min_q_weight=args.min_q_weight,
     ).to(args.device)
 
     # collector

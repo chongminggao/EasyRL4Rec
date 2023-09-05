@@ -25,7 +25,8 @@ class CollectorSet(object):
                  force_length=10):
         self.collector_dict = {}
 
-        remove_recommended_ids_dict = {"FB": False, "NX_0": True, f"NX_{force_length}": True}
+        # remove_recommended_ids_dict = {"FB": False, "NX_0": True, f"NX_{force_length}": True}
+        remove_recommended_ids_dict = {"FB": False, "NX_0": False, f"NX_{force_length}": False}
         force_length_dict = {"FB": 0, "NX_0": 0, f"NX_{force_length}": force_length}
 
         for name, envs in envs_dict.items():

@@ -56,6 +56,7 @@ class StateTracker_Base(nn.Module):
         self.dim_model = dim_model
         self.window_size = window_size
         self.device = device
+        self.final_net = None
 
     def get_embedding(self, X, type):
         if type == "user":
@@ -184,6 +185,8 @@ class StateTracker_Base(nn.Module):
 
             return seq, mask, len_states
 
+    def set_final_net(self, final_net):
+        self.final_net = final_net
 
 
 
