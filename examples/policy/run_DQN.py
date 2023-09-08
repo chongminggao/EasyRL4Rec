@@ -9,7 +9,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_envs, setup_state_tracker
+from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_train_envs, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -18,13 +18,13 @@ from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, 
 from core.evaluation.loggers import LoggerEval_Policy
 from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity
 from core.collector.collector import Collector
-from core.policy.dqn import DQNPolicy_with_Embedding
 from core.trainer.offpolicy import offpolicy_trainer
 
 
 from tianshou.data import VectorReplayBuffer, PrioritizedVectorReplayBuffer
 
 from tianshou.utils.net.common import Net
+from tianshou.policy import DQNPolicy
 
 # from util.upload import my_upload
 import logzero
@@ -81,7 +81,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     optim_RL = torch.optim.Adam(net.parameters(), lr=args.lr)
     optim_state = torch.optim.Adam(state_tracker.parameters(), lr=args.lr)
     optim = [optim_RL, optim_state]
-    policy = DQNPolicy_with_Embedding(  ## TODO
+    policy = DQNPolicy(
         net,
         optim,
         state_tracker=state_tracker,
@@ -188,8 +188,9 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, train_envs, test_envs_dict = prepare_envs(args, ensemble_models)
-
+    env, train_envs = prepare_train_envs(args, ensemble_models)
+    test_envs_dict = prepare_test_envs(args)
+    
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)
     policy, train_collector, test_collector_set, optim = setup_policy_model(args, state_tracker, train_envs, test_envs_dict)

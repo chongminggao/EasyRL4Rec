@@ -58,9 +58,9 @@ class StateTracker_NextItNet(StateTracker_Base):
         # self.s_fc = nn.Linear(self.hidden_size, self.num_item)
 
     def forward(
-        self, buffer=None, indices=None, obs=None, reset=None, is_obs=None, **kwargs
+        self, buffer=None, indices=None, obs=None, is_obs=None, **kwargs
     ):
-        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, reset, is_obs)
+        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, is_obs)
         # seq *= mask
         conv_out = seq
         for cnn in self.cnns:

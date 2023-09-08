@@ -101,8 +101,8 @@ class StateTracker_Base(nn.Module):
 
         return res
     
-    def convert_to_k_state_embedding(self, buffer=None, indices=None, obs=None, reset=None, is_obs=None):
-        if reset:  # get user embedding
+    def convert_to_k_state_embedding(self, buffer=None, indices=None, obs=None, is_obs=None):
+        if len(buffer) == 0:  # initialization: only user_id is given, obs = user_id, no items yet.
             # users = np.expand_dims(obs[:, 0], -1)
             items = np.expand_dims(obs[:, 1], -1)
 
@@ -121,6 +121,10 @@ class StateTracker_Base(nn.Module):
             return seq, mask, len_states
 
         else:
+            if indices is None:  # collector collects data
+                indices = buffer.last_index[~buffer[buffer.last_index].done] # ids of not terminated trajectories.
+                is_obs = False # is_obs = False means we use obs_next[t-1] instead of obs[t] to compute the state. TODO: Consider to deprecate this variable.
+
             index = indices
             flag_has_init = np.zeros_like(index, dtype=bool)
 

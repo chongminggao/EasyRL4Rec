@@ -17,12 +17,12 @@ from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
 from core.util.layers import Actor_Linear
-from core.policy.sqn import SQN
 from core.trainer.offline import offline_trainer
 from core.util.data import get_val_data, get_common_args, \
     get_training_item_domination, get_item_similarity, get_item_popularity
 
 from tianshou.utils.net.common import ActorCritic
+from tianshou.policy import SQNPolicy
 
 # from util.upload import my_upload
 import logzero
@@ -61,9 +61,11 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
     imitation_final_layer = Actor_Linear(args.state_dim, args.action_shape, device=args.device).to(args.device)
 
     actor_critic = ActorCritic(model_final_layer, imitation_final_layer)
-    optim = torch.optim.Adam(actor_critic.parameters(), lr=args.lr)
+    optim_RL = torch.optim.Adam(actor_critic.parameters(), lr=args.lr)
+    optim_state = torch.optim.Adam(state_tracker.parameters(), lr=args.lr)
+    optim = [optim_RL, optim_state]
 
-    policy = SQN(
+    policy = SQNPolicy(
         model_final_layer,
         imitation_final_layer,
         optim,
