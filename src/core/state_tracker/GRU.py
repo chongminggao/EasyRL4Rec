@@ -33,9 +33,9 @@ class StateTracker_GRU(StateTracker_Base):
             batch_first=True
         )
 
-    def forward(self, buffer=None, indices=None, obs=None, reset=None, is_obs=None, **kwargs):
+    def forward(self, buffer=None, indices=None, obs=None, is_obs=None, **kwargs):
 
-        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, reset, is_obs)
+        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, is_obs)
 
         emb_packed = torch.nn.utils.rnn.pack_padded_sequence(seq, len_states, batch_first=True, enforce_sorted=False)
 

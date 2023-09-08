@@ -21,7 +21,6 @@ from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, 
 from core.evaluation.loggers import LoggerEval_Policy
 from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity, get_true_env
 from core.collector.collector import Collector
-from core.policy.a2c import A2CPolicy_withEmbedding
 from core.trainer.onpolicy import onpolicy_trainer
 from environments.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv
 
@@ -29,6 +28,7 @@ from tianshou.data import VectorReplayBuffer
 from tianshou.env import DummyVectorEnv
 from tianshou.utils.net.common import ActorCritic, Net
 from tianshou.utils.net.discrete import Actor, Critic
+from tianshou.policy import A2CPolicy
 
 # from util.upload import my_upload
 import logzero
@@ -141,7 +141,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     optim = [optim_RL, optim_state]
 
     dist = torch.distributions.Categorical
-    policy = A2CPolicy_withEmbedding(
+    policy = A2CPolicy(
         actor,
         critic,
         optim,

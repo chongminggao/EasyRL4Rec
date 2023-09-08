@@ -131,9 +131,9 @@ class StateTracker_SASRec(StateTracker_Base):
         self.feed_forward = PositionwiseFeedForward(self.hidden_size, self.hidden_size, dropout_rate)
 
 
-    def forward(self, buffer=None, indices=None, obs=None, reset=None, is_obs=None, **kwargs):
+    def forward(self, buffer=None, indices=None, obs=None, is_obs=None, **kwargs):
 
-        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, reset, is_obs)
+        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, is_obs)
         inputs_emb = seq * self.hidden_size ** 0.5	
         inputs_pos_emb = inputs_emb + self.positional_embeddings(torch.arange(self.window_size).to(self.device))	
         seq = self.emb_dropout(inputs_pos_emb)

@@ -41,9 +41,9 @@ class StateTrackerAvg(StateTracker_Base):
         if self.use_userEmbedding:
             self.ffn_user = nn.Linear(compute_input_dim(self.user_columns), self.dim_model, device=self.device)
 
-    def forward(self, buffer=None, indices=None, obs=None, reset=None, is_obs=None, is_train=True):
+    def forward(self, buffer=None, indices=None, obs=None, is_obs=None, is_train=True):
 
-        if reset:  # get user embedding
+        if len(buffer) == 0:  # initialization: only user_id is given, obs = user_id, no items yet.
 
             users = np.expand_dims(obs[:, 0], -1)
             items = np.expand_dims(obs[:, 1], -1)
@@ -73,6 +73,10 @@ class StateTrackerAvg(StateTracker_Base):
             return state_res
 
         else:
+            if indices is None:  # collector collects data
+                indices = buffer.last_index[~buffer[buffer.last_index].done] # ids of not terminated trajectories.
+                is_obs = False # is_obs = False means we use obs_next[t-1] instead of obs[t] to compute the state. TODO: Consider to deprecate this variable.
+
             index = indices
             flag_has_init = np.zeros_like(index, dtype=bool)
 
