@@ -66,7 +66,7 @@ class DiscreteBCQPolicy_withEmbedding(DiscreteBCQPolicy):
         act = self(batch, buffer, indices=indices, is_obs=False, input="obs_next").act
 
         obs = batch["obs_next"]
-        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, obs=obs, is_obs=False)
+        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, is_obs=False, batch=batch)
         target_q, _ = self.model_old(obs_emb)
 
         # target_q, _ = self.model_old(batch.obs_next)
@@ -82,12 +82,13 @@ class DiscreteBCQPolicy_withEmbedding(DiscreteBCQPolicy):
             remove_recommended_ids=False,
             state: Optional[Union[dict, Batch, np.ndarray]] = None,
             input: str = "obs",
+            use_batch_in_statetracker=False,
             **kwargs: Any,
     ) -> Batch:
         # assert input == "obs"
         is_obs = True if input == "obs" else False
-        obs = batch[input]
-        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, obs=obs, is_obs=is_obs)
+        # obs = batch[input]
+        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, batch=batch, is_obs=is_obs, use_batch_in_statetracker=use_batch_in_statetracker)
         recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None
 
         # if recommended_ids is None:

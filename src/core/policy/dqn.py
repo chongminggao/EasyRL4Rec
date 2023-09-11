@@ -88,7 +88,8 @@ class DQNPolicy_with_Embedding(DQNPolicy):
         remove_recommended_ids=False,
         state: Optional[Union[dict, Batch, np.ndarray]] = None,
         model: str = "model",
-        input: str = "obs",
+        # input: str = "obs",
+        use_batch_in_statetracker=False,
         **kwargs: Any,
     ) -> Batch:
         """Compute action over the given batch data.
@@ -127,7 +128,7 @@ class DQNPolicy_with_Embedding(DQNPolicy):
         # print(indices)
         # print(buffer)
         
-        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, obs=batch.obs, is_obs=is_obs)  ## TODO is_train=is_train
+        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, batch=batch, is_obs=is_obs, use_batch_in_statetracker=use_batch_in_statetracker)  ## TODO is_train=is_train
         # print(obs_emb)
         # assert False
         recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None

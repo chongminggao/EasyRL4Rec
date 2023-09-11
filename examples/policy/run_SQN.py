@@ -19,7 +19,7 @@ from core.evaluation.loggers import LoggerEval_Policy
 from core.util.layers import Actor_Linear
 from core.policy.sqn import SQN
 from core.trainer.offline import offline_trainer
-from core.util.data import get_val_data, get_common_args, \
+from core.util.data import get_val_data, get_env_args, \
     get_training_item_domination, get_item_similarity, get_item_popularity
 
 from tianshou.utils.net.common import ActorCritic
@@ -80,7 +80,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
 
 
     test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
-                                      preprocess_fn=state_tracker.build_state,
+                                    #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
@@ -158,7 +158,7 @@ def main(args):
 
 if __name__ == '__main__':
     args_all = get_args_all()
-    args = get_common_args(args_all)
+    args = get_env_args(args_all)
     args_SQN = get_args_SQN()
     args_all.__dict__.update(args.__dict__)
     args_all.__dict__.update(args_SQN.__dict__)
