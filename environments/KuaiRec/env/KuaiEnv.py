@@ -8,7 +8,7 @@ import pickle
 
 import gymnasium as gym
 import torch
-from gym import spaces
+# from gym import spaces
 from numba import njit
 from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix
@@ -22,6 +22,8 @@ import random
 from tqdm import tqdm
 
 import sys
+
+from environments.BaseEnv import BaseEnv
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from core.util.utils import get_sorted_domination_features
 
@@ -32,13 +34,11 @@ ROOTPATH = os.path.dirname(CODEPATH)
 DATAPATH = os.path.join(ROOTPATH, "data")
 
 
-class KuaiEnv(gym.Env):
+class KuaiEnv(BaseEnv):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, mat=None, lbe_user=None, lbe_item=None, list_feat=None, df_video_env=None, df_dist_small=None,
-                 num_leave_compute=5, leave_threshold=1, max_turn=100):
-
-        self.max_turn = max_turn
+                 num_leave_compute=5, leave_threshold=1, max_turn=100, random_init=False):
 
         if mat is not None:
             self.mat = mat
@@ -54,13 +54,7 @@ class KuaiEnv(gym.Env):
 
         # smallmat shape: (1411, 3327)
 
-        self.observation_space = spaces.Box(low=0, high=len(self.mat) - 1, shape=(1,), dtype=np.int32)
-        self.action_space = spaces.Box(low=0, high=self.mat.shape[1] - 1, shape=(1,), dtype=np.int32)
-
-        self.num_leave_compute = num_leave_compute
-        self.leave_threshold = leave_threshold
-
-        self.reset()
+        super(KuaiEnv, self).__init__(num_leave_compute, leave_threshold, max_turn, random_init)
 
     @staticmethod
     def get_df_kuairec(name="big_matrix_processed.csv"):
@@ -329,50 +323,49 @@ class KuaiEnv(gym.Env):
 
         return normed_mat
 
-    @property
-    def state(self):
-        if self.action is None:
-            res = self.cur_user
-        else:
-            res = self.action
-        return np.array([res])
 
-    def __user_generator(self):
-        user = random.randint(0, len(self.mat) - 1)
-        # # todo for debug
-        # user = 0
-        return user
+    
+    # @property
+    # def state(self):
+    #     if self.action is None:
+    #         res = self.cur_user
+    #     else:
+    #         res = self.action
+    #     return np.array([self.cur_user, ])
 
-    def step(self, action):
-        # action = int(action)
+    # def __user_generator(self):
+    #     user = random.randint(0, len(self.mat) - 1)
+    #     # # todo for debug
+    #     # user = 0
+    #     return user
 
-        # Action: tensor with shape (32, )
-        self.action = action
-        t = self.total_turn
-        terminated = self._determine_whether_to_leave(t, action)
-        if t >= (self.max_turn - 1):
-            terminated = True
-        self._add_action_to_history(t, action)
+    # def step(self, action):
+    #     self.action = action
+    #     t = self.total_turn
+    #     terminated = self._determine_whether_to_leave(t, action)
+    #     if t >= (self.max_turn - 1):
+    #         terminated = True
+    #     self._add_action_to_history(t, action)
 
-        reward = self.mat[self.cur_user, action]
+    #     reward = self.mat[self.cur_user, action]
 
-        self.cum_reward += reward
-        self.total_turn += 1
+    #     self.cum_reward += reward
+    #     self.total_turn += 1
 
-        # if terminated:
-        #     self.cur_user = self.__user_generator()
+    #     # if terminated:
+    #     #     self.cur_user = self.__user_generator()
 
-        return self.state, reward, terminated, False, {'cum_reward': self.cum_reward}
+    #     return self.state, reward, terminated, False, {'cum_reward': self.cum_reward}
 
-    def reset(self):
-        self.cum_reward = 0
-        self.total_turn = 0
-        self.cur_user = self.__user_generator()
+    # def reset(self):
+    #     self.cum_reward = 0
+    #     self.total_turn = 0
+    #     self.cur_user = self.__user_generator()
+    #     self.action = None
+    #     self._reset_history()
 
-        self.action = None  # Add by Chongming
-        self._reset_history()
-
-        return self.state, {'key': 1, 'env': self}
+    #     # return self.state, {'key': 1, 'env': self}
+    #     return self.state, {'cum_reward': 0.0}
 
     def render(self, mode='human', close=False):
         history_action = self.history_action
@@ -402,21 +395,21 @@ class KuaiEnv(gym.Env):
 
         return False
 
-    def seed(self, sd=0):
-        torch.manual_seed(sd)
+    # def seed(self, sd=0):
+    #     torch.manual_seed(sd)
 
-    def _reset_history(self):
-        self.history_action = {}
-        self.sequence_action = []
-        self.max_history = 0
+    # def _reset_history(self):
+    #     self.history_action = {}
+    #     self.sequence_action = []
+    #     self.max_history = 0
 
-    def _add_action_to_history(self, t, action):
+    # def _add_action_to_history(self, t, action):
 
-        self.sequence_action.append(action)
-        self.history_action[t] = action
+    #     self.sequence_action.append(action)
+    #     self.history_action[t] = action
 
-        assert self.max_history == t
-        self.max_history += 1
+    #     assert self.max_history == t
+    #     self.max_history += 1
 
 
 # For loading KuaishouRec Data

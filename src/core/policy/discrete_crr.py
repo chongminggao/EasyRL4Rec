@@ -70,10 +70,11 @@ class DiscreteCRRPolicy_withEmbedding(DiscreteCRRPolicy):
             is_obs=None,
             remove_recommended_ids=False,
             state: Optional[Union[dict, Batch, np.ndarray]] = None,
+            use_batch_in_statetracker=False,
             **kwargs: Any,
     ) -> Batch:
 
-        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, obs=batch.obs, is_obs=is_obs)
+        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, batch=batch, is_obs=is_obs, use_batch_in_statetracker=use_batch_in_statetracker)
         recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None
 
         logits, hidden = self.actor(obs_emb, state=state)

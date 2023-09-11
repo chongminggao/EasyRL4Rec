@@ -63,11 +63,12 @@ class DiscreteCQLPolicy_withEmbedding(DiscreteCQLPolicy):
         state: Optional[Union[dict, Batch, np.ndarray]] = None,
         model: str = "model",
         input: str = "obs",
+        use_batch_in_statetracker = False,
         **kwargs: Any,
     ) -> Batch:
         model = getattr(self, model)
 
-        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, obs=batch.obs, is_obs=is_obs)
+        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, batch=batch, is_obs=is_obs, use_batch_in_statetracker=use_batch_in_statetracker)
         recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None
 
         logits, hidden = model(obs_emb, state=state, info=batch.info)

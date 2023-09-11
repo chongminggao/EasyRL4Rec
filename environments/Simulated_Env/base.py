@@ -52,7 +52,8 @@ class BaseSimulatedEnv(gym.Env):
             self.cur_user = self.state[:-3]
         else:  # elif self.env_name == "KuaiEnv-v0":
             self.cur_user = self.state
-        return self.state, {'key': 1, 'env': self}  ## TODO key
+        # return self.state, {'key': 1, 'env': self}  ## TODO key
+        return self.state, {'cum_reward': 0.0}
 
     def render(self, mode='human', close=False):
         self.env_task.render(mode)
@@ -97,7 +98,12 @@ class BaseSimulatedEnv(gym.Env):
         #     self.state, self.info = self.env_task.reset()
 
         self.state = self._construct_state(pred_reward)
-        return self.state, pred_reward, terminated, False, {'CTR': self.cum_reward / self.total_turn / 10}
+        
+        # info =  {'CTR': self.cum_reward / self.total_turn / 10}
+        info =  {'cum_reward': self.cum_reward}
+        truncated = False
+
+        return self.state, pred_reward, terminated, truncated, info
 
     def _reset_history(self):
         # self.history_action = {}

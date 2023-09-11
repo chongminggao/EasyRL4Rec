@@ -9,14 +9,14 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_envs, setup_state_tracker
+from policy_utils import get_args_all, prepare_dir_log, prepare_test_envs, prepare_train_envs, prepare_user_model, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
-from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity
+from core.util.data import get_env_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity
 from core.collector.collector import Collector
 from core.policy.dqn import DQNPolicy_with_Embedding
 from core.trainer.offpolicy import offpolicy_trainer
@@ -25,6 +25,12 @@ from core.trainer.offpolicy import offpolicy_trainer
 from tianshou.data import VectorReplayBuffer, PrioritizedVectorReplayBuffer
 
 from tianshou.utils.net.common import Net
+
+def custom_repr(self):
+    return f'{{Tensor:{tuple(self.shape)}}} {original_repr(self)}'
+
+original_repr = torch.Tensor.__repr__
+torch.Tensor.__repr__ = custom_repr
 
 # from util.upload import my_upload
 import logzero
@@ -109,22 +115,16 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     # Prepare the collectors and logs
     train_collector = Collector(
         policy, train_envs,
-        VectorReplayBuffer(args.buffer_size, len(train_envs)),
-        preprocess_fn=state_tracker.build_state,
+        buffer=buf,
+        # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
-        force_length=args.step_per_collect / args.training_num,
     )
-    # test_collector = Collector(
-    #     policy, test_envs_dict,
-    #     VectorReplayBuffer(args.buffer_size, len(test_envs)),
-    #     preprocess_fn=state_tracker.build_state,
-    #     exploration_noise=args.exploration_noise,
-    # )
+
     policy.set_collector(train_collector)  ## TODO
     # train_collector.collect(n_step=args.batch_size * args.training_num)  ## TODO
 
     test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
-                                      preprocess_fn=state_tracker.build_state,
+                                    #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
@@ -188,7 +188,8 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, train_envs, test_envs_dict = prepare_envs(args, ensemble_models)
+    env, train_envs = prepare_train_envs(args, ensemble_models)
+    test_envs_dict = prepare_test_envs(args)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)
@@ -201,7 +202,7 @@ def main(args):
 
 if __name__ == "__main__":
     args_all = get_args_all()
-    args = get_common_args(args_all)
+    args = get_env_args(args_all)
     args_DQN = get_args_DQN()
     args_all.__dict__.update(args.__dict__)
     args_all.__dict__.update(args_DQN.__dict__)

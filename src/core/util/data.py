@@ -106,7 +106,7 @@ def get_val_data(env):
     return df_val, df_user_val, df_item_val, list_feat
 
 
-def get_common_args(args):
+def get_env_args(args):
     env = args.env
 
     parser = argparse.ArgumentParser()
@@ -197,7 +197,8 @@ def get_true_env(args, read_user_num=None):
                      "mat_distance": mat_distance,
                      "num_leave_compute": args.num_leave_compute,
                      "leave_threshold": args.leave_threshold,
-                     "max_turn": args.max_turn}
+                     "max_turn": args.max_turn,
+                     "random_init": args.random_init}
         env = CoatEnv(**kwargs_um)
         env_task_class = CoatEnv
     elif args.env == "YahooEnv-v0":
@@ -207,7 +208,8 @@ def get_true_env(args, read_user_num=None):
                      "mat_distance": mat_distance,
                      "num_leave_compute": args.num_leave_compute,
                      "leave_threshold": args.leave_threshold,
-                     "max_turn": args.max_turn}
+                     "max_turn": args.max_turn,
+                     "random_init": args.random_init}
 
         env = YahooEnv(**kwargs_um)
         env_task_class = YahooEnv
@@ -220,7 +222,8 @@ def get_true_env(args, read_user_num=None):
                      "list_feat": list_feat,
                      "num_leave_compute": args.num_leave_compute,
                      "leave_threshold": args.leave_threshold,
-                     "max_turn": args.max_turn}
+                     "max_turn": args.max_turn,
+                     "random_init": args.random_init}
         env = KuaiRandEnv(**kwargs_um)
         env_task_class = KuaiRandEnv
     elif args.env == "KuaiEnv-v0":
@@ -232,6 +235,7 @@ def get_true_env(args, read_user_num=None):
                      "num_leave_compute": args.num_leave_compute,
                      "leave_threshold": args.leave_threshold,
                      "max_turn": args.max_turn,
+                     "random_init": args.random_init,
                      "list_feat": list_feat,
                      "df_video_env": df_video_env,
                      "df_dist_small": df_dist_small}

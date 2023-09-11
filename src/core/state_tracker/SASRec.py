@@ -97,24 +97,35 @@ class MultiHeadAttention(nn.Module):
 
 
 class StateTracker_SASRec(StateTracker_Base):
-    def __init__(self, user_columns, action_columns, feedback_columns, dim_model, device,
+    def __init__(self, user_columns, action_columns, feedback_columns,
+                 dim_model,
+                 train_max=None, 
+                 train_min=None, 
+                 test_max=None, 
+                 test_min=None, 
+                 reward_handle=None,
+                 saved_embedding=None,
+                 device="cpu",
                  use_userEmbedding=False, window_size=10, dropout_rate=0.1, num_heads=1):
         super().__init__(user_columns=user_columns, action_columns=action_columns,
-                         feedback_columns=feedback_columns, dim_model=dim_model, device=device,
-                         window_size=window_size)
+                         feedback_columns=feedback_columns,
+                         dim_model=dim_model,
+                         train_max=train_max,
+                         train_min=train_min,
+                         test_max=test_max,
+                         test_min=test_min,
+                         reward_handle=reward_handle,
+                         saved_embedding=saved_embedding,
+                         device=device,
+                         window_size=window_size, use_userEmbedding=use_userEmbedding)
 
-        self.hidden_size = action_columns[0].embedding_dim
-        self.num_item = action_columns[0].vocabulary_size
+        
+        
         self.dropout_rate = dropout_rate
 
         self.final_dim = self.hidden_size
 
-        # Item embedding
-        embedding_dict = torch.nn.ModuleDict(
-            {"feat_item": torch.nn.Embedding(num_embeddings=self.num_item + 1,
-                                             embedding_dim=self.hidden_size)})
-        self.embedding_dict = embedding_dict.to(device)
-        nn.init.normal_(self.embedding_dict.feat_item.weight, mean=0, std=0.1)
+        
 
         self.positional_embeddings = nn.Embedding(
             num_embeddings=window_size,
@@ -131,9 +142,9 @@ class StateTracker_SASRec(StateTracker_Base):
         self.feed_forward = PositionwiseFeedForward(self.hidden_size, self.hidden_size, dropout_rate)
 
 
-    def forward(self, buffer=None, indices=None, obs=None, reset=None, is_obs=None, **kwargs):
+    def forward(self, buffer=None, indices=None, is_obs=None, batch=None, is_train=True, use_batch_in_statetracker=False, **kwargs):
 
-        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices, obs, reset, is_obs)
+        seq, mask, len_states = self.convert_to_k_state_embedding(buffer, indices=indices, is_obs=is_obs, batch=batch, use_batch_in_statetracker=use_batch_in_statetracker, is_train=is_train)
         inputs_emb = seq * self.hidden_size ** 0.5	
         inputs_pos_emb = inputs_emb + self.positional_embeddings(torch.arange(self.window_size).to(self.device))	
         seq = self.emb_dropout(inputs_pos_emb)

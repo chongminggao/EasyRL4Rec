@@ -131,6 +131,7 @@ class A2CPolicy_withEmbedding(A2CPolicy):
             remove_recommended_ids=False,
             state: Optional[Union[dict, Batch, np.ndarray]] = None,
             is_train=True,
+            use_batch_in_statetracker=False,
             **kwargs: Any,
     ) -> Batch:
         """Compute action over the given batch data.
@@ -148,7 +149,7 @@ class A2CPolicy_withEmbedding(A2CPolicy):
             more detailed explanation.
         """
 
-        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, obs=batch.obs, is_obs=is_obs, is_train=is_train)
+        obs_emb = get_emb(self.state_tracker, buffer, indices=indices, is_obs=is_obs, batch=batch, is_train=is_train, use_batch_in_statetracker=use_batch_in_statetracker)
         recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None
 
         logits, hidden = self.actor(obs_emb, state=state)

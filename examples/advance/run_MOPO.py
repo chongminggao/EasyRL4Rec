@@ -19,7 +19,7 @@ from policy.policy_utils import get_args_all, prepare_dir_log, prepare_user_mode
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
-from core.util.data import get_common_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity, get_true_env
+from core.util.data import get_env_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity, get_true_env
 from core.collector.collector import Collector
 from core.policy.a2c import A2CPolicy_withEmbedding
 from core.trainer.onpolicy import onpolicy_trainer
@@ -126,19 +126,14 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     train_collector = Collector(
         policy, train_envs,
         VectorReplayBuffer(args.buffer_size, len(train_envs)),
-        preprocess_fn=state_tracker.build_state,
+        # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
     )
-    # test_collector = Collector(
-    #     policy, test_envs_dict,
-    #     VectorReplayBuffer(args.buffer_size, len(test_envs)),
-    #     preprocess_fn=state_tracker.build_state,
-    #     exploration_noise=args.exploration_noise,
-    # )
+    
     policy.set_collector(train_collector)
 
     test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
-                                      preprocess_fn=state_tracker.build_state,
+                                    #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
@@ -217,7 +212,7 @@ def main(args):
 
 if __name__ == '__main__':
     args_all = get_args_all()
-    args = get_common_args(args_all)
+    args = get_env_args(args_all)
     args_MOPO = get_args_MOPO()
     args_all.__dict__.update(args.__dict__)
     args_all.__dict__.update(args_MOPO.__dict__)
