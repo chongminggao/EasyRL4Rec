@@ -20,6 +20,8 @@ import random
 
 from tqdm import tqdm
 
+from environments.BaseEnv import BaseEnv
+
 CODEPATH = os.path.dirname(__file__)
 ROOTPATH = os.path.dirname(CODEPATH)
 DATAPATH = ROOTPATH
@@ -27,13 +29,11 @@ DATAPATH = ROOTPATH
 
 
 
-class YahooEnv(gym.Env):
+class YahooEnv(BaseEnv):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, mat=None, mat_distance=None,
-                 num_leave_compute=5, leave_threshold=1, max_turn=100):
-
-        self.max_turn = max_turn
+                 num_leave_compute=5, leave_threshold=1, max_turn=100, random_init=False):
 
         if mat is not None:
             self.mat = mat
@@ -43,14 +43,8 @@ class YahooEnv(gym.Env):
 
         # smallmat shape: (1411, 3327)
 
-        self.observation_space = spaces.Box(low=0, high=len(self.mat) - 1, shape=(1,), dtype=np.int32)
-        self.action_space = spaces.Box(low=0, high=self.mat.shape[1] - 1, shape=(1,), dtype=np.int32)
-
-        self.num_leave_compute = num_leave_compute
-        self.leave_threshold = leave_threshold
-
-        self.reset()
-
+        super(YahooEnv, self).__init__(num_leave_compute, leave_threshold, max_turn, random_init)
+        
     @staticmethod
     def get_df_yahoo(name):
         # read interaction
@@ -175,7 +169,8 @@ class YahooEnv(gym.Env):
         self.action = None  # Add by Chongming
         self._reset_history()
 
-        return self.state, {'key': 1, 'env': self}
+        # return self.state, {'key': 1, 'env': self}
+        return self.state, {'cum_reward': 0.0}
 
     def render(self, mode='human', close=False):
         # history_action = self.history_action
@@ -205,35 +200,6 @@ class YahooEnv(gym.Env):
         self.history_action[t] = action
         assert self.max_history == t
         self.max_history += 1
-
-
-# @njit
-# def find_negative(user_ids, item_ids, mat_train, df_negative, K=1):
-#     for i in range(len(user_ids)):
-#         user, item = user_ids[i], item_ids[i]
-#         value = mat_train[user, item]
-#
-#         neg = item + 1
-#         # neg_v = mat_train[user, neg]
-#
-#         while neg < mat_train.shape[1]:
-#             neg_v = mat_train[user, neg]
-#             if neg_v > 0:
-#                 neg += 1
-#             else:
-#                 df_negative[i, 0] = user
-#                 df_negative[i, 1] = neg
-#                 break
-#         else:
-#             neg = item - 1
-#             while neg >= 0:
-#                 neg_v = mat_train[user, neg]
-#                 if neg_v > 0:
-#                     neg -= 1
-#                 else:
-#                     df_negative[i, 0] = user
-#                     df_negative[i, 1] = neg
-#                     break
 
 
 @njit

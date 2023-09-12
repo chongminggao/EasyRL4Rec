@@ -13,7 +13,7 @@ sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
 from core.evaluation.evaluator_static import test_static_model_in_RL_env
 from core.evaluation.loggers import LoggerEval_UserModel
-from core.util.data import get_common_args, get_features, get_true_env, \
+from core.util.data import get_env_args, get_features, get_true_env, \
     get_training_item_domination
 from core.userModel.user_model_ensemble import EnsembleModel
 from core.evaluation.metrics import get_ranking_results
@@ -93,7 +93,7 @@ def setup_user_model(args, x_columns, y_columns, ab_columns, task, task_logit_di
 def main(args, is_save=False):
     # %% 1. Prepare dir
     DATAPATH = get_datapath(args.env)
-    args = get_common_args(args)
+    args = get_env_args(args)
     MODEL_SAVE_PATH, logger_path = prepare_dir_log(args)
 
     # %% 2. Prepare dataset

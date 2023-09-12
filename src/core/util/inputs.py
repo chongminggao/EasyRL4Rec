@@ -35,7 +35,7 @@ def get_dataset_columns(dim_user, dim_action, num_user, num_action, envname="Vir
         has_user_embedding = True
         has_action_embedding = True
         has_feedback_embedding = True
-    else: # for kuairecenv, coat
+    else: # for kuairecenv, coat, yahoo
         user_columns = [SparseFeatP("feat_user", num_user, embedding_dim=dim_user)]
         action_columns = [SparseFeatP("feat_item", num_action, embedding_dim=dim_action)]
         feedback_columns = [DenseFeat("feat_feedback", 1)]
