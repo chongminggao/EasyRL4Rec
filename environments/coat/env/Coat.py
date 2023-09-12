@@ -18,6 +18,8 @@ import random
 
 from tqdm import tqdm
 import sys
+
+from environments.BaseEnv import BaseEnv
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from core.util.utils import get_sorted_domination_features
 
@@ -26,11 +28,10 @@ ROOTPATH = os.path.dirname(CODEPATH)
 DATAPATH = ROOTPATH
 
 
-class CoatEnv(gym.Env):
+class CoatEnv(BaseEnv):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, mat=None, df_item=None, mat_distance=None, num_leave_compute=5, leave_threshold=1, max_turn=100):
-        self.max_turn = max_turn
+    def __init__(self, mat=None, df_item=None, mat_distance=None, num_leave_compute=5, leave_threshold=1, max_turn=100, random_init=False):
 
         if mat is not None:
             self.mat = mat
@@ -39,13 +40,7 @@ class CoatEnv(gym.Env):
         else:
             self.mat, self.df_item, self.mat_distance = self.load_mat()
 
-        self.observation_space = spaces.Box(low=0, high=len(self.mat) - 1, shape=(1,), dtype=np.int32)
-        self.action_space = spaces.Box(low=0, high=self.mat.shape[1] - 1, shape=(1,), dtype=np.int32)
-
-        self.num_leave_compute = num_leave_compute
-        self.leave_threshold = leave_threshold
-
-        self.reset()
+        super(CoatEnv, self).__init__(num_leave_compute, leave_threshold, max_turn, random_init)
 
     @staticmethod
     def get_df_coat(name):
@@ -216,7 +211,8 @@ class CoatEnv(gym.Env):
         self.action = None  # Add by Chongming
         self._reset_history()
 
-        return self.state, {'key': 1, 'env': self}
+        # return self.state, {'key': 1, 'env': self}
+        return self.state, {'cum_reward': 0.0}
 
     def render(self, mode='human', close=False):
         history_action = self.history_action

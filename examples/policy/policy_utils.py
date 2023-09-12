@@ -65,6 +65,10 @@ def get_args_all():
     parser.add_argument('--no_use_userEmbedding', dest='use_userEmbedding', action='store_false')
     parser.set_defaults(use_userEmbedding=False)
 
+    parser.add_argument('--is_use_pretrained_embedding', dest='use_pretrained_embedding', action='store_true')
+    parser.add_argument('--no_use_pretrained_embedding', dest='use_pretrained_embedding', action='store_false')
+    parser.set_defaults(use_pretrained_embedding=True)
+
     parser.add_argument('--is_exploration_noise', dest='exploration_noise', action='store_true')
     parser.add_argument('--no_exploration_noise', dest='exploration_noise', action='store_false')
     parser.set_defaults(exploration_noise=False)
@@ -80,6 +84,10 @@ def get_args_all():
 
     parser.add_argument("--embedding_dim", type=int, default=32)
     parser.add_argument('--window_size', default=3, type=int)
+
+    parser.add_argument('--is_random_init', dest='random_init', action='store_true')
+    parser.add_argument('--no_random_init', dest='random_init', action='store_false')
+    parser.set_defaults(random_init=False)
 
     # State_tracker Caser
     parser.add_argument('--filter_sizes', type=int, nargs='*', default=[2, 3, 4])
@@ -194,6 +202,7 @@ def construct_buffer_from_offline_data(args, df_train, env):
         env.max_turn = num_each
         buffer_size = num_each * num_bins
         buffer = VectorReplayBuffer(buffer_size, num_bins)
+
 
         ind_pair = zip(np.arange(0, buffer_size, num_each), np.arange(num_each, buffer_size + num_each, num_each))
         for ind_buffer, (left, right) in tqdm(enumerate(ind_pair), total=num_bins,
@@ -349,9 +358,11 @@ def prepare_test_envs(args):
     return test_envs_dict
 
 
+
 def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict):
     saved_embedding = ensemble_models.load_val_user_item_embedding(freeze_emb=args.freeze_emb)
-    if args.which_tracker.lower() == "avg":
+    if args.use_pretrained_embedding:
+    # if args.which_tracker.lower() == "avg":
         user_columns, action_columns, feedback_columns, have_user_embedding, have_action_embedding, have_feedback_embedding = \
             get_dataset_columns(saved_embedding["feat_user"].weight.shape[1], saved_embedding["feat_item"].weight.shape[1],
                                 env.mat.shape[0], env.mat.shape[1], envname=args.env)
@@ -371,37 +382,39 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict):
     test_min = test_envs_dict['FB'].get_env_attr("mat")[0].min()
 
     if args.which_tracker.lower() == "caser":
+        assert args.window_size >= max(args.filter_sizes)
         state_tracker = StateTracker_Caser(user_columns, action_columns, feedback_columns, args.state_dim,
+                                           train_max, train_min, test_max, test_min, reward_handle=args.reward_handle, saved_embedding=saved_embedding,
                                            device=args.device,
                                            window_size=args.window_size,
                                            filter_sizes=args.filter_sizes, num_filters=args.num_filters,
                                            dropout_rate=args.dropout_rate).to(args.device)
-        args.state_dim = state_tracker.final_dim
     elif args.which_tracker.lower() == "gru":
         state_tracker = StateTracker_GRU(user_columns, action_columns, feedback_columns, args.state_dim,
+                                         train_max, train_min, test_max, test_min, reward_handle=args.reward_handle, saved_embedding=saved_embedding,
                                          device=args.device,
                                          window_size=args.window_size).to(args.device)
-        args.state_dim = state_tracker.final_dim
     elif args.which_tracker.lower() == "sasrec":
         state_tracker = StateTracker_SASRec(user_columns, action_columns, feedback_columns, args.state_dim,
+                                            train_max, train_min, test_max, test_min, reward_handle=args.reward_handle, saved_embedding=saved_embedding,
                                             device=args.device, window_size=args.window_size,
                                             dropout_rate=args.dropout_rate, num_heads=args.num_heads).to(args.device)
-        args.state_dim = state_tracker.final_dim
     elif args.which_tracker.lower() == "nextitnet":
         state_tracker = StateTracker_NextItNet(user_columns, action_columns, feedback_columns, args.state_dim,
+                                               train_max, train_min, test_max, test_min, reward_handle=args.reward_handle, saved_embedding=saved_embedding,
                                                device=args.device, window_size=args.window_size,
                                                dilations=args.dilations).to(args.device)
-        args.state_dim = state_tracker.final_dim
     elif args.which_tracker.lower() == "avg":
+        assert args.use_pretrained_embedding
         state_tracker = StateTrackerAvg(user_columns, action_columns, feedback_columns, args.state_dim,
-                                         saved_embedding,
-                                         train_max, train_min, test_max, test_min, reward_handle=args.reward_handle,
+                                         train_max, train_min, test_max, test_min, reward_handle=args.reward_handle, saved_embedding=saved_embedding,
                                          device=args.device, window_size=args.window_size,
                                          use_userEmbedding=args.use_userEmbedding).to(args.device)
-        if args.reward_handle == "cat" or args.reward_handle == "cat2":
-            args.state_dim += 1
     else:
         return None
+    
+    args.state_dim = state_tracker.final_dim
+    
 
     return state_tracker
 
