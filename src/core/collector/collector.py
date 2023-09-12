@@ -63,12 +63,6 @@ class Collector(object):
         self.env_num = len(self.env)
         self.exploration_noise = exploration_noise
 
-        buffer._reserved_keys = list(buffer._reserved_keys) + ["is_start", "rew_prev"]
-        buffer._input_keys = list(buffer._input_keys) + ["is_start", "rew_prev"]
-        for buf in buffer.buffers:
-            buf._reserved_keys = list(buf._reserved_keys) + ["is_start", "rew_prev"]
-            buf._input_keys = list(buf._input_keys) + ["is_start", "rew_prev"]
-
         self._assign_buffer(buffer)
         self.policy = policy
         self.preprocess_fn = preprocess_fn

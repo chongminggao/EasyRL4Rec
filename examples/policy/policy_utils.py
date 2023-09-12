@@ -1,7 +1,9 @@
 import datetime
+import functools
 import json
 import os
 import pickle
+import pprint
 import random
 import socket
 import sys
@@ -12,6 +14,7 @@ from collections import defaultdict
 import numpy as np
 import torch
 from tqdm import tqdm
+
 
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
@@ -26,7 +29,11 @@ from environments.Simulated_Env.base import BaseSimulatedEnv
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.util.data import get_training_data, get_true_env
+from core.util.data import get_val_data, get_training_item_domination, get_item_similarity, get_training_data, get_true_env, get_item_popularity
+from core.trainer.onpolicy import onpolicy_trainer
+from core.trainer.offpolicy import offpolicy_trainer
+from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
+from core.evaluation.loggers import LoggerEval_Policy
 
 from tianshou.data import VectorReplayBuffer, Batch
 from tianshou.env import DummyVectorEnv
@@ -72,7 +79,7 @@ def get_args_all():
     parser.add_argument('--is_exploration_noise', dest='exploration_noise', action='store_true')
     parser.add_argument('--no_exploration_noise', dest='exploration_noise', action='store_false')
     parser.set_defaults(exploration_noise=False)
-    parser.add_argument('--eps', default=0.1, type=float)
+    parser.add_argument('--eps', default=0.2, type=float)
 
     parser.add_argument('--is_freeze_emb', dest='freeze_emb', action='store_true')
     parser.add_argument('--no_freeze_emb', dest='freeze_emb', action='store_false')
@@ -359,7 +366,11 @@ def prepare_test_envs(args):
 
 
 
-def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict):
+def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict, use_buffer_in_train=False):
+    if use_buffer_in_train:
+        buffer = train_envs
+        train_envs = None
+
     saved_embedding = ensemble_models.load_val_user_item_embedding(freeze_emb=args.freeze_emb)
     if args.use_pretrained_embedding:
     # if args.which_tracker.lower() == "avg":
@@ -376,8 +387,12 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict):
     if args.use_userEmbedding:
         args.state_dim = action_columns[0].embedding_dim + saved_embedding.feat_user.weight.shape[1]
 
-    train_max = train_envs.get_env_attr("MAX_R")[0] - train_envs.get_env_attr("MIN_R")[0]
-    train_min = 0
+    if use_buffer_in_train:
+        train_max = buffer.rew.max()
+        train_min = buffer.rew.min()
+    else:
+        train_max = train_envs.get_env_attr("MAX_R")[0] - train_envs.get_env_attr("MIN_R")[0]
+        train_min = 0
     test_max = test_envs_dict['FB'].get_env_attr("mat")[0].max()
     test_min = test_envs_dict['FB'].get_env_attr("mat")[0].min()
 
@@ -419,62 +434,73 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict):
     return state_tracker
 
 
-def setup_offline_state_tracker(args, ensemble_models, env, buffer, test_envs_dict):
-    saved_embedding = ensemble_models.load_val_user_item_embedding(freeze_emb=args.freeze_emb)
-    if args.which_tracker.lower() == "avg":
-        user_columns, action_columns, feedback_columns, have_user_embedding, have_action_embedding, have_feedback_embedding = \
-            get_dataset_columns(saved_embedding["feat_user"].weight.shape[1],
-                                saved_embedding["feat_item"].weight.shape[1],
-                                env.mat.shape[0], env.mat.shape[1], envname=args.env)
+def learn_policy(args, env, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
+                 logger_path, is_onpolicy=True):
+    # log
+    # log_path = os.path.join(args.logdir, args.env, 'a2c')
+    # writer = SummaryWriter(log_path)
+    # logger1 = TensorboardLogger(writer)
+    # def save_best_fn(policy):
+    #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
+
+    # env = test_collector_set.env
+    df_val, df_user_val, df_item_val, list_feat = get_val_data(args.env)
+    item_feat_domination = get_training_item_domination(args.env)
+    item_similarity, item_popularity = get_item_similarity(args.env), get_item_popularity(args.env)
+
+    metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
+
+    policy.callbacks = [
+        Evaluator_Feat(test_collector_set, df_item_val, args.need_transform, item_feat_domination,
+                                lbe_item=env.lbe_item if args.need_transform else None, top_rate=args.top_rate, draw_bar=args.draw_bar),
+        Evaluator_Coverage_Count(test_collector_set, df_item_val, args.need_transform),
+        Evaluator_User_Experience(test_collector_set, df_item_val, item_similarity, item_popularity,
+                                  args.need_transform, lbe_item=env.lbe_item if args.need_transform else None),
+        LoggerEval_Policy(args.force_length, metrics)]
+    model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
+
+    # trainer
+    if is_onpolicy:
+        result = onpolicy_trainer(
+            policy,
+            train_collector,
+            test_collector_set,
+            args.epoch,
+            args.step_per_epoch,
+            args.repeat_per_collect,
+            args.test_num,
+            args.batch_size,
+            episode_per_collect=args.episode_per_collect,
+            # stop_fn=stop_fn,
+            # save_best_fn=save_best_fn,
+            # logger=logger1,
+            save_model_fn=functools.partial(save_model_fn,
+                                            model_save_path=model_save_path,
+                                            state_tracker=state_tracker,
+                                            optim=optim,
+                                            is_save=args.is_save)
+        )
     else:
-        user_columns, action_columns, feedback_columns, have_user_embedding, have_action_embedding, have_feedback_embedding = \
-            get_dataset_columns(args.embedding_dim, args.embedding_dim, env.mat.shape[0], env.mat.shape[1],
-                                envname=args.env)
+        result = offpolicy_trainer(	
+            policy,	
+            train_collector,	
+            test_collector_set,	
+            args.epoch,	
+            args.step_per_epoch,	
+            args.step_per_collect,  ## yyq	
+            args.test_num,	
+            args.batch_size,	
+            update_per_step=args.update_per_step,  ## yyq	
+            # stop_fn=stop_fn,	
+            # save_best_fn=save_best_fn,	
+            # logger=logger1,	
+            save_model_fn=functools.partial(save_model_fn,	
+                                            model_save_path=model_save_path,	
+                                            state_tracker=state_tracker,	
+                                            optim=optim,	
+                                            is_save=args.is_save)
+        )
 
-    args.action_shape = action_columns[0].vocabulary_size
-    args.state_dim = action_columns[0].embedding_dim
-
-    if args.use_userEmbedding:
-        args.state_dim = action_columns[0].embedding_dim + saved_embedding.feat_user.weight.shape[1]
-
-    train_max = buffer.rew.max()
-    train_min = buffer.rew.min()
-    test_max = test_envs_dict['FB'].get_env_attr("mat")[0].max()
-    test_min = test_envs_dict['FB'].get_env_attr("mat")[0].min()
-
-    if args.which_tracker.lower() == "caser":
-        state_tracker = StateTracker_Caser(user_columns, action_columns, feedback_columns, args.state_dim,
-                                           device=args.device,
-                                           window_size=args.window_size,
-                                           filter_sizes=args.filter_sizes, num_filters=args.num_filters,
-                                           dropout_rate=args.dropout_rate).to(args.device)
-        args.state_dim = state_tracker.final_dim
-    elif args.which_tracker.lower() == "gru":
-        state_tracker = StateTracker_GRU(user_columns, action_columns, feedback_columns, args.state_dim,
-                                         device=args.device,
-                                         window_size=args.window_size).to(args.device)
-        args.state_dim = state_tracker.final_dim
-    elif args.which_tracker.lower() == "sasrec":
-        state_tracker = StateTracker_SASRec(user_columns, action_columns, feedback_columns, args.state_dim,
-                                            device=args.device, window_size=args.window_size,
-                                            dropout_rate=args.dropout_rate, num_heads=args.num_heads).to(args.device)
-        args.state_dim = state_tracker.final_dim
-    elif args.which_tracker.lower() == "nextitnet":
-        state_tracker = StateTracker_NextItNet(user_columns, action_columns, feedback_columns, args.state_dim,
-                                               device=args.device, window_size=args.window_size,
-                                               dilations=args.dilations).to(args.device)
-        args.state_dim = state_tracker.final_dim
-    elif args.which_tracker.lower() == "avg":
-        state_tracker = StateTrackerAvg(user_columns, action_columns, feedback_columns, args.state_dim,
-                                         saved_embedding,
-                                         train_max, train_min, test_max, test_min, reward_handle=args.reward_handle,
-                                         device=args.device, window_size=args.window_size,
-                                         use_userEmbedding=args.use_userEmbedding).to(args.device)
-        if args.reward_handle == "cat" or args.reward_handle == "cat2":
-            args.state_dim += 1
-    else:
-        return None
-
-    return state_tracker
-
-
+    print(__file__)
+    pprint.pprint(result)
+    logger.info(result)

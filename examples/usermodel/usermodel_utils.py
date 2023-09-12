@@ -84,7 +84,12 @@ def get_args_all():
 
 
 def get_args_dataset_specific(envname):
+
     parser = argparse.ArgumentParser()
+    parser.add_argument('--is_random_init', dest='random_init', action='store_true')
+    parser.add_argument('--no_random_init', dest='random_init', action='store_false')
+    parser.set_defaults(random_init=True)
+
     if envname == 'CoatEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)

@@ -1,3 +1,3 @@
 [submodule "src/tianshou"]
 	path = src/tianshou
-	url = https://github.com/chongminggao/tianshou.git
+	url = https://github.com/yuyq18/tianshou.git
