@@ -126,59 +126,6 @@ class YahooEnv(BaseEnv):
 
         return normed_mat
 
-    @property
-    def state(self):
-        if self.action is None:
-            res = self.cur_user
-        else:
-            res = self.action
-        return np.array([res])
-
-    def __user_generator(self):
-        user = random.randint(0, len(self.mat) - 1)
-        # # todo for debug
-        # user = 0
-        return user
-
-    def step(self, action):
-        # action = int(action)
-
-        # Action: tensor with shape (32, )
-        self.action = action
-        t = self.total_turn
-        terminated = self._determine_whether_to_leave(t, action)
-        if t >= (self.max_turn - 1):
-            terminated = True
-        self._add_action_to_history(t, action)
-
-        reward = self.mat[self.cur_user, action]
-
-        self.cum_reward += reward
-        self.total_turn += 1
-
-        # if terminated:
-        #     self.cur_user = self.__user_generator()
-
-        return self.state, reward, terminated, False, {'cum_reward': self.cum_reward}
-
-    def reset(self):
-        self.cum_reward = 0
-        self.total_turn = 0
-        self.cur_user = self.__user_generator()
-
-        self.action = None  # Add by Chongming
-        self._reset_history()
-
-        # return self.state, {'key': 1, 'env': self}
-        return self.state, {'cum_reward': 0.0}
-
-    def render(self, mode='human', close=False):
-        # history_action = self.history_action
-        # category = {k: self.list_feat_small[v] for k, v in history_action.items()}
-        # category_debug = {k:self.list_feat[v] for k,v in history_action.items()}
-        # return history_action, category, category_debug
-        # return self.cur_user, history_action, category
-        pass
 
     def _determine_whether_to_leave(self, t, action):
         if t == 0:
@@ -190,16 +137,6 @@ class YahooEnv(BaseEnv):
 
         return False
 
-    def _reset_history(self):
-        self.history_action = {}
-        self.sequence_action = []
-        self.max_history = 0
-
-    def _add_action_to_history(self, t, action):
-        self.sequence_action.append(action)
-        self.history_action[t] = action
-        assert self.max_history == t
-        self.max_history += 1
 
 
 @njit
@@ -213,20 +150,20 @@ def get_distance_mat(mat, distance):
             distance[item_i, item_j] = dist
     return distance
 
-def negative_sampling(df_train, df_user, df_item, y_name):
-    print("negative sampling...")
-    mat_train = csr_matrix((df_train[y_name], (df_train["user_id"], df_train["item_id"])),
-                           shape=(df_train['user_id'].max() + 1, df_train['item_id'].max() + 1)).toarray()
-    df_negative = np.zeros([len(df_train), 2])
+# def negative_sampling(df_train, df_user, df_item, y_name):
+#     print("negative sampling...")
+#     mat_train = csr_matrix((df_train[y_name], (df_train["user_id"], df_train["item_id"])),
+#                            shape=(df_train['user_id'].max() + 1, df_train['item_id'].max() + 1)).toarray()
+#     df_negative = np.zeros([len(df_train), 2])
 
-    user_ids = df_train["user_id"].to_numpy()
-    item_ids = df_train["item_id"].to_numpy()
+#     user_ids = df_train["user_id"].to_numpy()
+#     item_ids = df_train["item_id"].to_numpy()
 
-    find_negative(user_ids, item_ids, mat_train, df_negative)
-    df_negative = pd.DataFrame(df_negative, columns=["user_id", "item_id"], dtype=int)
+#     find_negative(user_ids, item_ids, mat_train, df_negative)
+#     df_negative = pd.DataFrame(df_negative, columns=["user_id", "item_id"], dtype=int)
 
-    # df_negative.loc[df_negative["duration_ms"].isna(), "duration_ms"] = 0
-    return df_train, df_negative
+#     # df_negative.loc[df_negative["duration_ms"].isna(), "duration_ms"] = 0
+#     return df_train, df_negative
 
 
 def construct_complete_val_x(dataset_val, user_features, item_features):

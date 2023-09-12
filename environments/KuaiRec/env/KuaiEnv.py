@@ -324,49 +324,6 @@ class KuaiEnv(BaseEnv):
         return normed_mat
 
 
-    
-    # @property
-    # def state(self):
-    #     if self.action is None:
-    #         res = self.cur_user
-    #     else:
-    #         res = self.action
-    #     return np.array([self.cur_user, ])
-
-    # def __user_generator(self):
-    #     user = random.randint(0, len(self.mat) - 1)
-    #     # # todo for debug
-    #     # user = 0
-    #     return user
-
-    # def step(self, action):
-    #     self.action = action
-    #     t = self.total_turn
-    #     terminated = self._determine_whether_to_leave(t, action)
-    #     if t >= (self.max_turn - 1):
-    #         terminated = True
-    #     self._add_action_to_history(t, action)
-
-    #     reward = self.mat[self.cur_user, action]
-
-    #     self.cum_reward += reward
-    #     self.total_turn += 1
-
-    #     # if terminated:
-    #     #     self.cur_user = self.__user_generator()
-
-    #     return self.state, reward, terminated, False, {'cum_reward': self.cum_reward}
-
-    # def reset(self):
-    #     self.cum_reward = 0
-    #     self.total_turn = 0
-    #     self.cur_user = self.__user_generator()
-    #     self.action = None
-    #     self._reset_history()
-
-    #     # return self.state, {'key': 1, 'env': self}
-    #     return self.state, {'cum_reward': 0.0}
-
     def render(self, mode='human', close=False):
         history_action = self.history_action
         category = {k: self.list_feat_small[v] for k, v in history_action.items()}
@@ -395,21 +352,7 @@ class KuaiEnv(BaseEnv):
 
         return False
 
-    # def seed(self, sd=0):
-    #     torch.manual_seed(sd)
-
-    # def _reset_history(self):
-    #     self.history_action = {}
-    #     self.sequence_action = []
-    #     self.max_history = 0
-
-    # def _add_action_to_history(self, t, action):
-
-    #     self.sequence_action.append(action)
-    #     self.history_action[t] = action
-
-    #     assert self.max_history == t
-    #     self.max_history += 1
+    
 
 
 # For loading KuaishouRec Data

@@ -12,7 +12,7 @@ import torch
 
 sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy.policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
+from policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -142,56 +142,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     return policy, train_collector, test_collector_set, optim
 
 
-def learn_policy(args, env, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
-                 logger_path):
-    # log
-    # log_path = os.path.join(args.logdir, args.env, 'a2c')
-    # writer = SummaryWriter(log_path)
-    # logger1 = TensorboardLogger(writer)
-    # def save_best_fn(policy):
-    #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
-    # env = test_collector_set.env
-    df_val, df_user_val, df_item_val, list_feat = get_val_data(args.env)
-    item_feat_domination = get_training_item_domination(args.env)
-    item_similarity, item_popularity = get_item_similarity(args.env), get_item_popularity(args.env)
-
-    # set metrics and related evaluator
-    metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
-
-    policy.callbacks = [
-        Evaluator_Feat(test_collector_set, df_item_val, args.need_transform, item_feat_domination,
-                                lbe_item=env.lbe_item if args.need_transform else None, top_rate=args.top_rate, draw_bar=args.draw_bar),
-        Evaluator_Coverage_Count(test_collector_set, df_item_val, args.need_transform),
-        Evaluator_User_Experience(test_collector_set, df_item_val, item_similarity, item_popularity,
-                                  args.need_transform, lbe_item=env.lbe_item if args.need_transform else None),
-        LoggerEval_Policy(args.force_length, metrics)]
-    model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
-
-    # trainer
-    result = onpolicy_trainer(
-        policy,
-        train_collector,
-        test_collector_set,
-        args.epoch,
-        args.step_per_epoch,
-        args.repeat_per_collect,
-        args.test_num,
-        args.batch_size,
-        episode_per_collect=args.episode_per_collect,
-        # stop_fn=stop_fn,
-        # save_best_fn=save_best_fn,
-        # logger=logger1,
-        save_model_fn=functools.partial(save_model_fn,
-                                        model_save_path=model_save_path,
-                                        state_tracker=state_tracker,
-                                        optim=optim,
-                                        is_save=args.is_save)
-    )
-
-    print(__file__)
-    pprint.pprint(result)
-    logger.info(result)
 
 
 def main(args):
