@@ -30,13 +30,12 @@ from environments.Simulated_Env.base import BaseSimulatedEnv
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.util.data import get_val_data, get_training_item_domination, get_item_similarity, get_training_data, get_true_env, get_item_popularity
-from core.trainer.onpolicy import onpolicy_trainer
-from core.trainer.offpolicy import offpolicy_trainer
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
 
 from tianshou.data import VectorReplayBuffer, Batch
 from tianshou.env import DummyVectorEnv
+from tianshou.trainer import onpolicy_trainer, offpolicy_trainer
 
 from core.util.utils import create_dir
 import logzero

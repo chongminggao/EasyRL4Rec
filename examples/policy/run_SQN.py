@@ -17,12 +17,12 @@ from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
 from core.util.layers import Actor_Linear
-from core.trainer.offline import offline_trainer
 from core.util.data import get_val_data, get_env_args, \
     get_training_item_domination, get_item_similarity, get_item_popularity
 
 from tianshou.utils.net.common import ActorCritic
 from tianshou.policy import SQNPolicy
+from tianshou.trainer import offline_trainer
 
 # from util.upload import my_upload
 import logzero

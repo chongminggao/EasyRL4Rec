@@ -14,11 +14,8 @@ from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_te
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
-from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
-from core.evaluation.loggers import LoggerEval_Policy
-from core.util.data import get_env_args, get_val_data, get_training_item_domination, get_item_similarity, get_item_popularity
+from core.util.data import get_env_args
 from core.collector.collector import Collector
-from core.trainer.offpolicy import offpolicy_trainer
 
 
 from tianshou.data import VectorReplayBuffer, PrioritizedVectorReplayBuffer
@@ -28,7 +25,6 @@ from tianshou.policy import DQNPolicy
 
 # from util.upload import my_upload
 import logzero
-from logzero import logger
 
 try:
     import envpool
