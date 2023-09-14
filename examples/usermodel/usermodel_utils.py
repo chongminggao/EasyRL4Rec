@@ -84,12 +84,7 @@ def get_args_all():
 
 
 def get_args_dataset_specific(envname):
-
     parser = argparse.ArgumentParser()
-    parser.add_argument('--is_random_init', dest='random_init', action='store_true')
-    parser.add_argument('--no_random_init', dest='random_init', action='store_false')
-    parser.set_defaults(random_init=True)
-
     if envname == 'CoatEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
@@ -98,6 +93,12 @@ def get_args_dataset_specific(envname):
         parser.add_argument('--leave_threshold', default=10, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
     elif envname == 'YahooEnv-v0':
+        parser.add_argument("--feature_dim", type=int, default=8)
+        parser.add_argument("--entity_dim", type=int, default=8)
+        parser.add_argument('--batch_size', default=128, type=int)
+        parser.add_argument('--leave_threshold', default=120, type=float)
+        parser.add_argument('--num_leave_compute', default=3, type=int)
+    elif envname == 'MovielenEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
         parser.add_argument('--batch_size', default=128, type=int)
@@ -120,7 +121,7 @@ def get_args_dataset_specific(envname):
         parser.add_argument('--num_leave_compute', default=3, type=int)
     else:
         raise (
-            "envname should be in the following four datasets: {'CoatEnv-v0', 'YahooEnv-v0', 'KuaiEnv-v0', 'KuaiRand-v0'}")
+            "envname should be in the following four datasets: {'CoatEnv-v0', 'YahooEnv-v0', 'KuaiEnv-v0', 'KuaiRand-v0','movielen-v0'}")
 
     args = parser.parse_known_args()[0]
     return args
@@ -136,6 +137,8 @@ def get_datapath(envname):
         DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRec", "data")
     elif envname == 'KuaiRand-v0':
         DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRand_Pure", "data")
+    elif envname == 'MovielenEnv-v0':
+        DATAPATH = os.path.join(CODEPATH, "environments", "MovieLen")
     return DATAPATH
 
 
@@ -332,6 +335,9 @@ def get_task(envname, yfeat):
     elif envname == 'YahooEnv-v0':
         task = "regression"
         is_ranking = True
+    elif envname == 'MovielenEnv-v0':
+        task = "regression"
+        is_ranking = True
     elif envname == 'KuaiEnv-v0':
         task = "regression"
         is_ranking = False
@@ -373,6 +379,7 @@ def construct_complete_val_x(dataset_val, df_user, df_item, user_features, item_
 
     # user_ids = random.sample(user_ids.tolist(),100)
     user_ids = user_ids[:10000] # todo: for speeding up, we only use 10000 users for visual the bars.
+
     logzero.logger.info("#####################\nNote that we use only 10000 users for static evaluation!!\n#####################")
     item_ids = np.unique(dataset_val.x_numpy[:, dataset_val.item_col].astype(int))
 
