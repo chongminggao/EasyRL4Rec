@@ -58,7 +58,6 @@ class MovielenEnv(gym.Env):
         filename = os.path.join(DATAPATH, name)
         #df_data = pd.read_csv(filename, sep="\s+", header=None, names=["user_id", "item_id", "rating"])
         df_data = pd.read_csv(filename,  header=0, names=["user_id", "item_id", "rating"])
-        print(2)
 
         df_data["user_id"] -= 1
         df_data["item_id"] -= 1
