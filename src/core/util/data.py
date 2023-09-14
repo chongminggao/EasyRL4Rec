@@ -32,7 +32,6 @@ def get_features(env, is_userinfo=False):
 
 def get_training_data(env):
     df_train, df_user, df_item, list_feat = None, None, None, None
-    print(4)
     if env == "CoatEnv-v0":
         from environments.coat.env.Coat import CoatEnv
         df_train, df_user, df_item, list_feat = CoatEnv.get_df_coat("train.ascii")
