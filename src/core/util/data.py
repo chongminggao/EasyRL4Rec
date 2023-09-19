@@ -61,29 +61,35 @@ def get_training_item_domination(env):
 
 def get_item_similarity(env):
     item_similarity = None
-    if env == "CoatEnv-v0":
-        raise TypeError("Please implement corresponding function in dataset")
+    if env == "CoatEnv-v0":    
+        from environments.coat.env.Coat import CoatEnv    
+        item_similarity = CoatEnv.get_item_similarity()
     elif env == "KuaiRand-v0":
-        raise TypeError("Please implement corresponding function in dataset")
+        from environments.KuaiRand_Pure.env.KuaiRand import KuaiRandEnv
+        item_similarity = KuaiRandEnv.get_item_similarity()
     elif env == "KuaiEnv-v0":
         from environments.KuaiRec.env.KuaiEnv import KuaiEnv
         item_similarity = KuaiEnv.get_item_similarity()
     elif env == "YahooEnv-v0":
-        raise TypeError("Please implement corresponding function in dataset")
+        from environments.YahooR3.env.Yahoo import YahooEnv
+        item_similarity = YahooEnv.get_item_similarity()
 
     return item_similarity
 
 def get_item_popularity(env):
     item_popularity = None
     if env == "CoatEnv-v0":
-        raise TypeError("Please implement corresponding function in dataset")
+        from environments.coat.env.Coat import CoatEnv   
+        item_popularity = CoatEnv.get_item_popularity()
     elif env == "KuaiRand-v0":
-        raise TypeError("Please implement corresponding function in dataset")
+        from environments.KuaiRand_Pure.env.KuaiRand import KuaiRandEnv
+        item_popularity = KuaiRandEnv.get_item_popularity()
     elif env == "KuaiEnv-v0":
         from environments.KuaiRec.env.KuaiEnv import KuaiEnv
         item_popularity = KuaiEnv.get_item_popularity()
     elif env == "YahooEnv-v0":
-        raise TypeError("Please implement corresponding function in dataset")
+        from environments.YahooR3.env.Yahoo import YahooEnv
+        item_popularity = YahooEnv.get_item_popularity()
 
     return item_popularity
 

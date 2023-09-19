@@ -97,32 +97,33 @@ class KuaiEnv(BaseEnv):
         return item_feat_domination
     
     @staticmethod
-    def get_item_similarity():
-        df_data, df_user, df_item, list_feat = KuaiEnv.get_df_kuairec("big_matrix_processed.csv")
+    def get_item_similarity(manner="tag"):
+        
         CODEDIRPATH = os.path.dirname(__file__)
         item_similarity_path = os.path.join(CODEDIRPATH, "item_similarity.pickle")
 
         if os.path.isfile(item_similarity_path):
             item_similarity = pickle.load(open(item_similarity_path, 'rb'))
         else:
+            list_feat, df_feat = KuaiEnv.load_category()
             item_similarity = get_similarity_mat(list_feat, DATAPATH)
             pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
         return item_similarity
-
+        
     @staticmethod
     def get_item_popularity():
         # df_data, df_user, df_item, list_feat = KuaiEnv.get_df_kuairec("big_matrix_processed.csv")
-        filename = os.path.join(DATAPATH, "big_matrix_processed.csv")
-        df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'timestamp', 'watch_ratio'])
-        n_users = df_data['user_id'].nunique()
-        n_items = df_data['item_id'].nunique()
-
         CODEDIRPATH = os.path.dirname(__file__)
         item_popularity_path = os.path.join(CODEDIRPATH, "item_popularity.pickle")
 
         if os.path.isfile(item_popularity_path):
             item_popularity = pickle.load(open(item_popularity_path, 'rb'))
         else:
+            filename = os.path.join(DATAPATH, "big_matrix_processed.csv")
+            df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'timestamp', 'watch_ratio'])
+            n_users = df_data['user_id'].nunique()
+            n_items = df_data['item_id'].nunique()
+            
             df_data_filtered = df_data[df_data['watch_ratio']>=1.]
             
             groupby = df_data_filtered.loc[:, ["user_id", "item_id"]].groupby(by="item_id")

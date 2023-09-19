@@ -13,7 +13,7 @@ def interactive_evaluation(model, env, dataset_val, is_softmax, epsilon, is_ucb,
     all_acts = []
 
     for i in tqdm(range(num_trajectory), desc=f"evaluate static method in {env.__str__()}"):
-        user_ori, info = env.reset()
+        [user_ori, item_init_ori], info = env.reset() # 
         if need_transform:
             user = env.lbe_user.inverse_transform(user_ori)[0]
         else:

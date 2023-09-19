@@ -70,6 +70,50 @@ class KuaiRandEnv(BaseEnv):
 
 
     @staticmethod
+    def get_item_popularity():
+        CODEDIRPATH = os.path.dirname(__file__)
+        item_popularity_path = os.path.join(CODEDIRPATH, "item_popularity.pickle")
+
+        if os.path.isfile(item_popularity_path):
+            item_popularity = pickle.load(open(item_popularity_path, 'rb'))
+        else:
+            # df_data, df_user, df_item, list_feat = KuaiRandEnv.get_df_coat("train.ascii")
+            filename = os.path.join(DATAPATH, "train_processed.csv")
+            df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'is_click'])
+
+            n_users = df_data['user_id'].nunique()
+            n_items = df_data['item_id'].nunique()
+            n_items = 7583 # hard coded! Becuase there are 7583 items in the test data while there are 7538 items in the training data.
+
+            df_data_filtered = df_data[df_data["is_click"]>=0]
+            
+            groupby = df_data_filtered.loc[:, ["user_id", "item_id"]].groupby(by="item_id")
+            df_pop = groupby.user_id.apply(list).reset_index()
+            df_pop["popularity"] = df_pop['user_id'].apply(lambda x: len(x) / n_users)
+
+            item_pop_df = pd.DataFrame(np.arange(n_items), columns=["item_id"])
+            item_pop_df = item_pop_df.merge(df_pop, how="left", on="item_id")
+            item_pop_df['popularity'].fillna(0, inplace=True)
+            item_popularity = item_pop_df['popularity']
+            pickle.dump(item_popularity, open(item_popularity_path, 'wb'))
+        
+        return item_popularity
+    
+    @staticmethod
+    def get_item_similarity(yname="is_click"):
+        
+        CODEDIRPATH = os.path.dirname(__file__)
+        item_similarity_path = os.path.join(CODEDIRPATH, "item_similarity.pickle")
+
+        if os.path.isfile(item_similarity_path):
+            item_similarity = pickle.load(open(item_similarity_path, 'rb'))
+        else:
+            mat, list_feat, mat_distance = KuaiRandEnv.load_mat()
+            item_similarity = 1 / (mat_distance + 1)
+            pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
+        return item_similarity
+    
+    @staticmethod
     def load_mat(yname, read_user_num=None):
         filename = ""
         if yname == "is_click":
