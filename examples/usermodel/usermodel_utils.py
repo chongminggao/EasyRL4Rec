@@ -284,7 +284,7 @@ def load_dataset_val(args, user_features, item_features, reward_features, entity
     assert dataset_val.x_columns[len(user_features)].name == "item_id"
     dataset_val.set_item_col(len(user_features))
 
-    if not any(df_y.to_numpy() % 1):  # 整数
+    if not any(df_y.to_numpy() % 1):  # if df_y is int.
         # make sure the label is binary
 
         df_binary = pd.concat([df_val[["user_id", "item_id"]], df_y], axis=1)
@@ -310,6 +310,7 @@ def load_dataset_val(args, user_features, item_features, reward_features, entity
         dataset_val.set_ground_truth(ground_truth_revise)
 
         if args.all_item_ranking:
+            # See: Walid Krichene, Steffen Rendle. On Sampled Metrics for Item Recommendation. KDD 2020 Best Paper.
             dataset_val.set_all_item_ranking_in_evaluation(args.all_item_ranking)
 
             df_x_complete = construct_complete_val_x(dataset_val, df_user_val, df_item_val, user_features,

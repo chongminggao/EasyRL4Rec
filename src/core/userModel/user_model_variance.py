@@ -104,21 +104,11 @@ class UserModel_Variance(nn.Module):
             dataset=dataset_train.get_dataset_train(), shuffle=shuffle, batch_size=batch_size,
             num_workers=dataset_train.num_workers)
 
-        # train_loader = DataLoader(
-        #     dataset=dataset_train.get_dataset_train(), shuffle=False, batch_size=batch_size)
 
         sample_num = len(dataset_train)
         steps_per_epoch = (sample_num - 1) // batch_size + 1
 
-        # configure callbacks
-        # callbacks = (callbacks or []) + [self.history]  # add history callback
-        # callbacks = CallbackList(callbacks)
-        # callbacks.set_model(self)
-        # callbacks.on_train_begin()
-        # # callbacks.set_model(self)
-        # if not hasattr(callbacks, 'model'):  # for tf1.4
-        #     callbacks.__setattr__('model', self)
-        # callbacks.model.stop_training = False
+        
         for callback in callbacks:
             callback.on_train_begin()
 
@@ -126,13 +116,9 @@ class UserModel_Variance(nn.Module):
         epoch_logs = {}
         if dataset_val:
             eval_result = self.evaluate_data(dataset_val, batch_size, epoch=-1)
-            # for name, result in eval_result.items():
-            #     epoch_logs["val_" + name] = result
             epoch_logs.update(eval_result)
         if self.RL_eval_fun:
             eval_result_RL = self.RL_eval_fun(self.eval())
-            # for name, result in eval_result_RL.items():
-            #     epoch_logs["RL_val_" + name] = result
             epoch_logs.update(eval_result_RL)
         # callbacks.on_epoch_end(-1, epoch_logs)
         for callback in callbacks:
@@ -257,10 +243,7 @@ class UserModel_Variance(nn.Module):
 
         item_index = df_item_val.index.to_numpy()
 
-        # if not lbe_item is None:
-        #     recommended_ids = lbe_item.transform(recommended_items).tolist()
-        # else:
-        #     recommended_ids = recommended_items
+        
 
 
         # the preserved transformed ids.
@@ -281,20 +264,7 @@ class UserModel_Variance(nn.Module):
 
         assert u_all_item.shape[1] == len(dataset_val.x_columns)
 
-        # # 用户的所有评分
-        # if df_user is None:
-        #     u_all_item = torch.tensor(
-        #         np.concatenate((np.ones([len(df_item_val), 1]) * user,
-        #                         np.expand_dims(item_index, axis=-1),
-        #                         df_item_val.values), 1),
-        #         dtype=torch.float, device=self.device, requires_grad=False)
-        # else:
-        #     u_all_item = torch.tensor(
-        #         np.concatenate((np.ones([len(df_item_val), 1]) * user,
-        #                         df_user.loc[user].to_numpy() * np.array([[1]] * len(df_item_val)),
-        #                         np.expand_dims(item_index, axis=-1),
-        #                         df_item_val.values), 1),
-        #         dtype=torch.float, device=self.device, requires_grad=False)
+        
 
         mean, var = self.forward(u_all_item)
         u_value = mean.detach().squeeze() # predicted value
@@ -307,9 +277,6 @@ class UserModel_Variance(nn.Module):
             #     warnings.simplefilter("ignore")
             ucb_bound = (2 * np.log(self.n_rec) / self.n_each) ** 0.5
 
-            # ucb_bound[np.isnan(ucb_bound)] = 0
-            # ucb_bound[np.isinf(ucb_bound)] = u_value.max()
-
             u_value = u_value + torch.Tensor(ucb_bound).to(u_value.device)
         else:
             u_value = u_value
@@ -318,16 +285,6 @@ class UserModel_Variance(nn.Module):
             value_softmax = self.softmax(u_value)
             index_rec = torch.multinomial(value_softmax, k, replacement=False)
         else:
-            # value = u_value
-            # if min(value) < 0:
-            #     value = -min(value) + value
-            #     value = value / sum(value)
-            # Todo:
-            # index_rec = u_value.argmax() # 预测分数的max
-
-            # value = u_value/sum(u_value)
-            # index_rec = torch.multinomial(value, k, replacement=False)
-
             _, index_rec = torch.topk(u_value, k)
 
         if epsilon > 0 and np.random.random() < epsilon:
@@ -390,10 +347,7 @@ class UserModel_Variance(nn.Module):
         """
         model = self.eval()
 
-        # dataset_predict.set_only_x(True)
-
-        # test_loader = DataLoader(dataset=dataset_predict, shuffle=False, batch_size=batch_size)
-        # test_loader = DataLoader(dataset=dataset_predict.get_dataset_eval(), shuffle=False, batch_size=batch_size)
+        
 
         is_shuffle=False
         assert not is_shuffle
@@ -407,15 +361,7 @@ class UserModel_Variance(nn.Module):
         with torch.no_grad():
             # for _, x_test in enumerate(test_loader):
             for _, (x, y) in tqdm(enumerate(test_loader), total=steps_per_epoch, desc="Predicting data..."):
-                # if isinstance(x_test, list):
-                #     for i in range(len(x_test)):
-                #         if isinstance(x_test[i], list):
-                #             for j in range(len(x_test[i])):
-                #                 x_test[i][j] = x_test[i][j].to(self.device).float()
-                #         elif isinstance(x_test[i], torch.Tensor):
-                #             x_test[i] = x_test[i].to(self.device).float()
-                # else:
-                #     raise Exception("No!")
+                
 
                 x = x.to(self.device).float()
                 # y = y.to(self.device).float()

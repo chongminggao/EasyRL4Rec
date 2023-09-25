@@ -34,7 +34,7 @@ class IntrinsicSimulatedEnv(BaseSimulatedEnv):
                 pred_reward = 10
         else:  # elif self.env_name == "KuaiEnv-v0":
             # get prediction
-            pred_reward = self.predicted_mat[self.cur_user[0], action]  # todo
+            pred_reward = self.predicted_mat[self.cur_user, action]  # todo
         
         # get diversity
         div_reward = self._cal_diversity(action)

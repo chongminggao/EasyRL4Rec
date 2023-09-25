@@ -82,11 +82,11 @@ class EnsembleModel():
             # logger.info(history.history)
             logger.info("\n")
             history_list.append(history.history)
-
-        logger.info("============ Summarized results =============")
-        for hist in history_list:
-            logger.info(hist)
-            # logger.info("\n")
+        # logger.info("============ Summarized results =============")
+        logger.info("============ Training terminated. ===================")
+        # for hist in history_list:
+        #     logger.info(hist)
+        #     # logger.info("\n")
 
         return history_list
 
@@ -343,9 +343,12 @@ def get_one_predicted_res(model, df_x_complete, test_loader, steps_per_epoch):
     # user_ids = np.sort(df_x_complete["user_id"].unique())
 
     num_user = len(df_x_complete["user_id"].unique())
-    num_item = len(df_x_complete["item_id"].unique())
+    # num_item = len(df_x_complete["item_id"].unique())
+    num_item = df_x_complete["item_id"].max() + 1
 
     if num_user != df_x_complete["user_id"].max() + 1:
+        # The ids of training set should be aligned with that of the test set!!!
+        # For KuaiRec which train on a big matrix and test on a small matrix. 
         assert num_item != df_x_complete["item_id"].max() + 1
         lbe_user = LabelEncoder()
         lbe_item = LabelEncoder()
@@ -362,7 +365,7 @@ def get_one_predicted_res(model, df_x_complete, test_loader, steps_per_epoch):
             (var_all_cat, (lbe_user.transform(df_x_complete["user_id"]), lbe_item.transform(df_x_complete["item_id"]))),
             shape=(num_user, num_item)).toarray()
     else:
-        assert num_item == df_x_complete["item_id"].max() + 1
+        # assert num_item == df_x_complete["item_id"].max() + 1 # The ids need to be aligned!
         mean_mat = csr_matrix(
             (mean_all_cat, (df_x_complete["user_id"], df_x_complete["item_id"])),
             shape=(num_user, num_item)).toarray()

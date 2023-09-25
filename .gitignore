@@ -43,3 +43,7 @@ events.*
 *.tar.gz
 *.DS_Store
 *._*
+
+*.pkl
+*.pickle
+temp.*

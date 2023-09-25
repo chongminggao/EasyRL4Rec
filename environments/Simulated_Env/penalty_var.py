@@ -33,9 +33,9 @@ class PenaltyVarSimulatedEnv(BaseSimulatedEnv):
             penalized_reward = pred_reward
         else:  # elif self.env_name == "KuaiEnv-v0":
             # 1. get prediction
-            pred_reward = self.predicted_mat[self.cur_user[0], action]  # todo
+            pred_reward = self.predicted_mat[self.cur_user, action]  # todo
             # 2. get variance
-            max_var = self.maxvar_mat[self.cur_user[0], action]  # todo
+            max_var = self.maxvar_mat[self.cur_user, action]  # todo
 
         penalized_reward = pred_reward - self.lambda_variance * max_var - self.MIN_R    
         return penalized_reward
