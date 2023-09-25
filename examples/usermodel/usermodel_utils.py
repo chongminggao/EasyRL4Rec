@@ -118,6 +118,12 @@ def get_args_dataset_specific(envname):
         parser.add_argument('--batch_size', default=4096, type=int)
         parser.add_argument('--leave_threshold', default=10, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
+    elif envname == 'EtsyEnv-v0':
+        parser.add_argument("--feature_dim", type=int, default=8)
+        parser.add_argument("--entity_dim", type=int, default=8)
+        parser.add_argument('--batch_size', default=128, type=int)
+        parser.add_argument('--leave_threshold', default=120, type=float)
+        parser.add_argument('--num_leave_compute', default=3, type=int)
     else:
         raise (
             "envname should be in the following four datasets: {'CoatEnv-v0', 'YahooEnv-v0', 'KuaiEnv-v0', 'KuaiRand-v0'}")
@@ -136,6 +142,8 @@ def get_datapath(envname):
         DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRec", "data")
     elif envname == 'KuaiRand-v0':
         DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRand_Pure", "data")
+    elif envname == 'EtsyEnv-v0':
+        DATAPATH = os.path.join(CODEPATH, "environments", "Etsydata", "data")
     return DATAPATH
 
 
@@ -273,6 +281,16 @@ def load_dataset_val(args, user_features, item_features, reward_features, entity
                                                       item_features,
                                                       entity_dim, feature_dim)
 
+    # for debuging etsy
+    # idx_test = df_y["rating"] > 0 
+    # rand_index = np.random.choice(np.arange(len(df_y)), size=3000, replace=False)
+    # idx_test[rand_index] = True
+    # df_x = df_x.loc[idx_test]
+    # df_y = df_y.loc[idx_test]
+    # df_val = df_val.loc[idx_test]
+
+
+
     dataset_val = StaticDataset(x_columns, y_columns, num_workers=4)
     dataset_val.compile_dataset(df_x, df_y)
 
@@ -338,6 +356,8 @@ def get_task(envname, yfeat):
         is_ranking = False
     elif envname == 'KuaiRand-v0':
         task = "regression" if yfeat == "watch_ratio_normed" else "binary"
+    elif envname == 'EtsyEnv-v0':
+        task = "regression"
         is_ranking = True
     return task, task_logit_dim, is_ranking
 

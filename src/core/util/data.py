@@ -23,6 +23,11 @@ def get_features(env, is_userinfo=False):
         user_features = ["user_id"]
         item_features = ['item_id']
         reward_features = ["rating"]
+    elif env == 'EtsyEnv-v0':
+        user_features = ["user_id"]
+        item_features = ['item_id'] + ["feat" + str(i) for i in range(2)]
+        reward_features = ["rating"]
+
 
     return user_features, item_features, reward_features
 
@@ -40,6 +45,9 @@ def get_training_data(env):
     elif env == "YahooEnv-v0":
         from environments.YahooR3.env.Yahoo import YahooEnv
         df_train, df_user, df_item, list_feat = YahooEnv.get_df_yahoo("ydata-ymusic-rating-study-v1_0-train.txt")
+    elif env == "EtsyEnv-v0":
+        from environments.Etsydata.etsy import EtsyEnv
+        df_train, df_user, df_item, list_feat = EtsyEnv.get_df_etsy("df_train.csv")
 
     return df_train, df_user, df_item, list_feat
 
@@ -56,6 +64,9 @@ def get_training_item_domination(env):
         item_feat_domination = KuaiEnv.get_domination()
     elif env == "YahooEnv-v0":
         item_feat_domination = None
+    elif env == "EtsyEnv-v0":
+        from environments.Etsydata.etsy import EtsyEnv
+        item_feat_domination = EtsyEnv.get_domination()
 
     return item_feat_domination
 
@@ -73,6 +84,9 @@ def get_item_similarity(env):
     elif env == "YahooEnv-v0":
         from environments.YahooR3.env.Yahoo import YahooEnv
         item_similarity = YahooEnv.get_item_similarity()
+    elif env == "EtsyEnv-v0":
+        from environments.Etsydata.etsy import EtsyEnv
+        item_similarity = EtsyEnv.get_item_similarity()
 
     return item_similarity
 
@@ -90,7 +104,9 @@ def get_item_popularity(env):
     elif env == "YahooEnv-v0":
         from environments.YahooR3.env.Yahoo import YahooEnv
         item_popularity = YahooEnv.get_item_popularity()
-
+    elif env == "EtsyEnv-v0":
+        from environments.Etsydata.etsy import EtsyEnv
+        item_popularity = EtsyEnv.get_item_popularity()
     return item_popularity
 
 
@@ -108,7 +124,9 @@ def get_val_data(env):
     elif env == "YahooEnv-v0":
         from environments.YahooR3.env.Yahoo import YahooEnv
         df_val, df_user_val, df_item_val, list_feat = YahooEnv.get_df_yahoo("ydata-ymusic-rating-study-v1_0-test.txt")
-
+    elif env == "EtsyEnv-v0":
+        from environments.Etsydata.etsy import EtsyEnv
+        df_val, df_user_val, df_item_val, list_feat = EtsyEnv.get_df_etsy("df_test.csv")
     return df_val, df_user_val, df_item_val, list_feat
 
 
@@ -182,6 +200,19 @@ def get_env_args(args):
         parser.add_argument('--num_leave_compute', default=10, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
+    
+    elif env == "EtsyEnv-v0":
+        parser.set_defaults(is_userinfo=False)
+        parser.set_defaults(is_binarize=False)
+        parser.set_defaults(need_transform=False)
+        # args.entropy_on_user = True
+        parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
+        parser.add_argument("--yfeat", type=str, default="rating")
+        parser.add_argument("--rating_threshold", type=float, default=1)
+        parser.add_argument('--leave_threshold', default=0.01, type=float)
+        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--max_turn', default=30, type=int)
+        
 
     parser.add_argument('--force_length', type=int, default=10)
     parser.add_argument("--top_rate", type=float, default=0.8)
@@ -247,4 +278,15 @@ def get_true_env(args, read_user_num=None):
                      "df_dist_small": df_dist_small}
         env = KuaiEnv(**kwargs_um)
         env_task_class = KuaiEnv
+    elif args.env == "EtsyEnv-v0":
+        from environments.Etsydata.etsy import EtsyEnv
+        mat, df_item, mat_distance = EtsyEnv.load_mat()
+        kwargs_um = {"mat": mat,
+                     "mat_distance": mat_distance,
+                     "num_leave_compute": args.num_leave_compute,
+                     "leave_threshold": args.leave_threshold,
+                     "max_turn": args.max_turn,
+                     "random_init": args.random_init}
+        env = EtsyEnv(**kwargs_um)
+        env_task_class = EtsyEnv
     return env, env_task_class, kwargs_um
