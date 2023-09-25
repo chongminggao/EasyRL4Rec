@@ -51,7 +51,7 @@ class BaseSimulatedEnv(gym.Env):
         if self.env_name == "VirtualTB-v0":
             self.cur_user = self.state[:-3]
         else:  # elif self.env_name == "KuaiEnv-v0":
-            self.cur_user = self.state
+            self.cur_user = self.state[0]
         # return self.state, {'key': 1, 'env': self}  ## TODO key
         return self.state, {'cum_reward': 0.0}
 
@@ -70,7 +70,7 @@ class BaseSimulatedEnv(gym.Env):
                 pred_reward = 10
         else:  # elif self.env_name == "KuaiEnv-v0":
             # get prediction
-            pred_reward = self.predicted_mat[self.cur_user[0], action] - self.MIN_R
+            pred_reward = self.predicted_mat[self.cur_user, action] - self.MIN_R
 
         return pred_reward
 

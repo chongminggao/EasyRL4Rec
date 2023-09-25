@@ -19,7 +19,7 @@ from deepctr_torch.inputs import DenseFeat, VarLenSparseFeat
 
 def create_dir(create_dirs):
     """
-    创建所需要的目录
+    create necessary dirs.
     """
     for dir in create_dirs:
         if not os.path.exists(dir):
@@ -30,15 +30,18 @@ def create_dir(create_dirs):
                 print("The dir [{}] already existed".format(dir))
 
 def get_sorted_domination_features(df_data, df_item, is_multi_hot, yname=None, threshold=None):
+    """
+    :param threshold: is used for counting only the positive samples.
+    """
     item_feat_domination = dict()
-    if not is_multi_hot: # for coat
+    if not is_multi_hot: # one-hot for coat
         item_feat = df_item.columns.to_list()
         for x in item_feat:
             sorted_count = collections.Counter(df_data[x])
             sorted_percentile = dict(map(lambda x: (x[0], x[1] / len(df_data)), dict(sorted_count).items()))
             sorted_items = sorted(sorted_percentile.items(), key=lambda x: x[1], reverse=True)
             item_feat_domination[x] = sorted_items
-    else: # for kuairec and kuairand
+    else: # multi-hot for kuairec and kuairand
         df_item_filtered = df_item.filter(regex="^feat", axis=1)
 
         # df_item_flat = df_item_filtered.to_numpy().reshape(-1)
@@ -98,24 +101,8 @@ def clip0(x):
 @njit
 def find_negative(user_ids, item_ids, neg_u_list, neg_i_list, mat_train, df_negative, is_rand=True, num_break=3):
     """
-    :param user_ids:
-    :type user_ids:
-    :param item_ids:
-    :type item_ids:
-    :param neg_u_list:
-    :type neg_u_list:
-    :param neg_i_list:
-    :type neg_i_list:
-    :param mat_train:
-    :type mat_train:
-    :param df_negative:
-    :type df_negative:
     :param is_rand: Is sampling strategy a deterministic strategy.
     :type is_rand: bool
-    :param num_break:
-    :type num_break:
-    :return:
-    :rtype:
     """
     if is_rand:
         ind = 0

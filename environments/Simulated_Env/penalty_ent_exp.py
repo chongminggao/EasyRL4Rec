@@ -53,11 +53,11 @@ class PenaltyEntExpSimulatedEnv(BaseSimulatedEnv):
             penalized_reward = pred_reward
         else:  # elif self.env_name == "KuaiEnv-v0":
             # 1. get prediction
-            pred_reward = self.predicted_mat[self.cur_user[0], action]  # todo
+            pred_reward = self.predicted_mat[self.cur_user, action]  # todo
             # 2. get entropy
             # entropy_u = 0
             # if 0 in self.entropy_window:
-            #     entropy_u = self.entropy_dict["on_user"].loc[self.cur_user[0]]
+            #     entropy_u = self.entropy_dict["on_user"].loc[self.cur_user]
             entropy = 0
             entropy_set = set(self.entropy_window) - {0}
             if len(entropy_set):
