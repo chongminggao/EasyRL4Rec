@@ -157,6 +157,7 @@ def get_env_args(args):
         parser.add_argument('--num_leave_compute', default=3, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
+        # parser.add_argument('--timefield', type=str, default=None)
 
     elif env == "YahooEnv-v0":
         parser.set_defaults(is_userinfo=True)
@@ -171,6 +172,7 @@ def get_env_args(args):
         parser.add_argument('--num_leave_compute', default=3, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
+        # parser.add_argument('--timefield', type=str, default=None)
 
     elif env == "KuaiRand-v0":
         parser.set_defaults(is_userinfo=False)
@@ -185,6 +187,7 @@ def get_env_args(args):
         parser.add_argument('--num_leave_compute', default=10, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
+        # parser.add_argument('--timefield', type=str, default="time_ms")
 
     elif env == "KuaiEnv-v0":
         parser.set_defaults(is_userinfo=False)
@@ -200,6 +203,7 @@ def get_env_args(args):
         parser.add_argument('--num_leave_compute', default=10, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
+        # parser.add_argument('--timefield', type=str, default="timestamp")
     
     elif env == "EtsyEnv-v0":
         parser.set_defaults(is_userinfo=False)
@@ -209,9 +213,10 @@ def get_env_args(args):
         parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
         parser.add_argument("--yfeat", type=str, default="rating")
         parser.add_argument("--rating_threshold", type=float, default=1)
-        parser.add_argument('--leave_threshold', default=0.01, type=float)
-        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--leave_threshold', default=0.005, type=float)  #
+        parser.add_argument('--num_leave_compute', default=1, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
+        # parser.add_argument('--timefield', type=str, default="timeStamp")
         
 
     parser.add_argument('--force_length', type=int, default=10)

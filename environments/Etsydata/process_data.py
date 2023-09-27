@@ -22,10 +22,10 @@ filename_df_item = os.path.join(DATAPATH, "df_item.csv")
 filename_list_feat = os.path.join(DATAPATH, "list_feat.pkl")
 
 
-cuda = 7
+cuda = 4
 n_epochs = 20
 batch_size = 4096
-sgd_lr = 0.05
+sgd_lr = 0.01
 device = torch.device("cuda:{}".format(cuda) if torch.cuda.is_available() else "cpu")
 
 
@@ -102,7 +102,7 @@ def load_and_preprocess():
     df_data.rename(columns={"userId":"user_id"}, inplace=True)
     df_data.rename(columns={"itemId":"item_id"}, inplace=True)
 
-    df_data.loc[df_data["rating"] > 1, "rating"] = 1
+    # df_data.loc[df_data["rating"] > 1, "rating"] = 1
     
     lbe_user = LabelEncoder()
     df_data["user_id"] = lbe_user.fit_transform(df_data["user_id"])
