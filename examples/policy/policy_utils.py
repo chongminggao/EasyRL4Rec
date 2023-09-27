@@ -178,6 +178,20 @@ def prepare_user_model(args):
     # return ensemble_models, alpha_u, beta_i
     return ensemble_models
 
+def evenly_distribute_trajectories_to_bins(df_user_num_mapped, num_bins):
+    df_user_num_sorted = df_user_num_mapped.sort_values("item_id", ascending=False)
+
+    bins = np.zeros([num_bins])
+    bins_ind = defaultdict(set)
+    for user, num in df_user_num_sorted.reset_index().to_numpy():
+        ind = bins.argmin()
+        bins_ind[ind].add(user)
+        bins[ind] += num
+        # np.zeros([num_bins])
+
+    max_size = max(bins)
+    buffer_size = max_size * num_bins
+    return bins_ind, max_size, buffer_size
 
 def construct_buffer_from_offline_data(args, df_train, env):
     num_bins = args.test_num
@@ -197,8 +211,7 @@ def construct_buffer_from_offline_data(args, df_train, env):
             if int(item) in env.lbe_item.classes_:
                 indices[k] = True
         df_filtered = df_train[["user_id", "item_id", args.yfeat]].loc[indices]
-        df_filtered[
-            "user_id"] = dummy_user = 0  # set to dummy user. Since these users are not in the evaluational environment.
+        df_filtered["user_id"] = dummy_user = 0  # set to dummy user. Since these users are not in the evaluational environment.
         df_filtered = df_filtered.reset_index(drop=True)
         # df_user_items = df_filtered.groupby("user_id").agg(list)
 
@@ -249,46 +262,59 @@ def construct_buffer_from_offline_data(args, df_train, env):
     else:  # KuaiRand-v0 and CoatEnv-v0
         df_user_num_mapped = df_user_num
 
-    df_user_num_sorted = df_user_num_mapped.sort_values("item_id", ascending=False)
 
-    bins = np.zeros([num_bins])
-    bins_ind = defaultdict(set)
-    for user, num in df_user_num_sorted.reset_index().to_numpy():
-        ind = bins.argmin()
-        bins_ind[ind].add(user)
-        bins[ind] += num
-        np.zeros([num_bins])
-
-    max_size = max(bins)
-    buffer_size = max_size * num_bins
+    bins_ind, max_size, buffer_size = evenly_distribute_trajectories_to_bins(df_user_num_mapped, num_bins)
     buffer = VectorReplayBuffer(buffer_size, num_bins)
 
-    # env, env_task_class, kwargs_um = get_true_env(args)
-    env.max_turn = max_size
+    # env.max_turn = max_size
+
     df_user_items = df_train[["user_id", "item_id", args.yfeat]].groupby("user_id").agg(list)
     for indices, users in tqdm(bins_ind.items(), total=len(bins_ind), desc="preparing offline data into buffer..."):
         for user in users:
-            items = [-1] + df_user_items.loc[user][0]
+            (user_reset, item_reset), info = env.reset()
+            env.cur_user = user
+            # env.state = np.array([user, item_reset])
+            env.action
+
+            # items = [item_reset] + df_user_items.loc[user][0]
+            items = df_user_items.loc[user][0]
             rewards = df_user_items.loc[user][1]
             np_ui_pair = np.vstack([np.ones_like(items) * user, items]).T
 
-            env.reset()
-            env.cur_user = user
             terminateds = np.zeros(len(rewards), dtype=bool)
             truncateds = np.zeros(len(rewards), dtype=bool)
+            rew_prevs = [0] + rewards[:-1]
+            is_starts = np.zeros(len(rewards), dtype=bool)
+            obs_items = np.zeros(len(rewards), dtype=int)
+            # obs_next_items = np.zeros(len(rewards), dtype=int)
+            
+            set_is_start = True
 
-            for k, item in enumerate(items[1:]):
+            for k, item in enumerate(items):
+                if set_is_start:
+                    is_starts[k] = True
+                    obs_items[k] = item_reset
+                    rew_prevs[k] = 0 
+                    set_is_start = False
+                else:
+                    obs_items[k] = items[k-1]
+                    assert rew_prevs[k] == rewards[k-1]
+                    
                 obs_next, rew, terminated, truncated, info = env.step(item)
                 if terminated or truncated:  
-                    env.reset()
-                    env.cur_user = dummy_user
+                    (user_reset, item_reset), info = env.reset()
+                    set_is_start = True
+                    # env.cur_user = user_reset
                 terminateds[k] = terminated
                 truncateds[k] = truncated
-                terminateds[-1] = True
                 # print(env.cur_user, obs_next, rew, done, info)
 
-            batch = Batch(obs=np_ui_pair[:-1], obs_next=np_ui_pair[1:], act=items[1:],
-                          policy={}, info={}, rew=rewards, terminated=terminateds, truncated=truncateds)
+            terminateds[-1] = True
+            
+            obs = np.vstack([np.ones_like(items) * user, obs_items]).T
+
+            batch = Batch(obs=obs, obs_next=np_ui_pair, act=items, is_start=is_starts,
+                          policy={}, info={}, rew=rewards, rew_prev=rew_prevs, terminated=terminateds, truncated=truncateds)
             ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * indices)
 
     return buffer
