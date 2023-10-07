@@ -77,7 +77,6 @@ class KuaiRandEnv(BaseEnv):
         if os.path.isfile(item_popularity_path):
             item_popularity = pickle.load(open(item_popularity_path, 'rb'))
         else:
-            # df_data, df_user, df_item, list_feat = KuaiRandEnv.get_df_coat("train.ascii")
             filename = os.path.join(DATAPATH, "train_processed.csv")
             df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'is_click'])
 
@@ -237,6 +236,14 @@ class KuaiRandEnv(BaseEnv):
             df_data.reset_index(drop=True, inplace=True)
 
         return df_data, df_user, df_item, list_feat
+    
+    @staticmethod
+    def get_train_data():
+        return KuaiRandEnv.get_df_kuairand("train_processed.csv")
+
+    @staticmethod
+    def get_val_data():
+        return KuaiRandEnv.get_df_kuairand("test_processed.csv")
 
 
     @staticmethod

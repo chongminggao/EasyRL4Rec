@@ -14,8 +14,7 @@ sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
 from core.evaluation.evaluator_static import test_static_model_in_RL_env
 from core.evaluation.loggers import LoggerEval_UserModel
-from core.util.data import get_env_args, get_features, get_true_env, \
-    get_training_item_domination
+from core.util.data import get_env_args, get_features, get_true_env
 from core.userModel.user_model_ensemble import EnsembleModel
 from core.evaluation.metrics import get_ranking_results
 
@@ -33,14 +32,14 @@ def get_args_ips():
     args = parser.parse_known_args()[0]
     return args
 
-def prepare_dataset(args, user_features, item_features, reward_features, MODEL_SAVE_PATH, DATAPATH):
+def prepare_dataset(args, EnvClass, MODEL_SAVE_PATH, DATAPATH):
     dataset_train, df_user, df_item, x_columns, y_columns, ab_columns = \
-        load_dataset_train_IPS(args, user_features, item_features, reward_features,
+        load_dataset_train_IPS(args, EnvClass,
                            args.tau, args.entity_dim, args.feature_dim, MODEL_SAVE_PATH, DATAPATH)
     if not args.is_ab:
         ab_columns = None
 
-    dataset_val, df_user_val, df_item_val = load_dataset_val(args, user_features, item_features, reward_features,
+    dataset_val, df_user_val, df_item_val = load_dataset_val(args, EnvClass,
                                                              args.entity_dim, args.feature_dim)
     return dataset_train, dataset_val, df_user, df_item, df_user_val, df_item_val, x_columns, y_columns, ab_columns
 
@@ -101,19 +100,17 @@ def main(args):
     MODEL_SAVE_PATH, logger_path = prepare_dir_log(args)
 
     # %% 2. Prepare dataset
-    user_features, item_features, reward_features = get_features(args.env, args.is_userinfo)
+    env, env_task_class, kwargs_um = get_true_env(args, read_user_num=None)
 
     dataset_train, dataset_val, df_user, df_item, df_user_val, df_item_val, x_columns, y_columns, ab_columns = \
-        prepare_dataset(args, user_features, item_features, reward_features, MODEL_SAVE_PATH, DATAPATH)
+        prepare_dataset(args, env_task_class, MODEL_SAVE_PATH, DATAPATH)
 
     # %% 3. Setup model
     task, task_logit_dim, is_ranking = get_task(args.env, args.yfeat)
     ensemble_models = setup_user_model(args, x_columns, y_columns, ab_columns,
                                         task, task_logit_dim, is_ranking, MODEL_SAVE_PATH)
 
-    env, env_task_class, kwargs_um = get_true_env(args, read_user_num=None)
-
-    item_feat_domination = get_training_item_domination(args.env)
+    item_feat_domination = env.get_domination()
     ensemble_models.compile_RL_test(
         functools.partial(test_static_model_in_RL_env, env=env, dataset_val=dataset_val, is_softmax=args.is_softmax,
                           epsilon=args.epsilon, is_ucb=args.is_ucb, need_transform=args.need_transform,
@@ -127,9 +124,9 @@ def main(args):
                                             callbacks=[LoggerEval_UserModel()])
 
     # %% 6. Save model
-    # ensemble_models.get_save_entropy_mat(args.env, args.entropy_window)
+    # ensemble_models.get_save_entropy_mat(env_task_class, args.entropy_window)
     ensemble_models.save_all_models(dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
-                                    user_features, item_features, args.deterministic)
+                                    args.env, args.is_userinfo, args.deterministic)
 
 
 

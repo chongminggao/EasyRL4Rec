@@ -17,7 +17,7 @@ from policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, pre
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
-from core.util.data import get_env_args, get_item_similarity, get_item_popularity, get_true_env
+from core.util.data import get_env_args, get_true_env
 from core.collector.collector import Collector
 from environments.Simulated_Env.intrinsic import IntrinsicSimulatedEnv
 
@@ -61,7 +61,7 @@ def prepare_train_envs(args, ensemble_models):
     with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
         predicted_mat = pickle.load(file)
 
-    item_similarity, item_popularity = get_item_similarity(args.env), get_item_popularity(args.env)
+    item_similarity, item_popularity = env.get_item_similarity(), env.get_item_popularity()
 
     kwargs = {
         "ensemble_models": ensemble_models,

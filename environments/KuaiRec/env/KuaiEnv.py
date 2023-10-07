@@ -83,6 +83,14 @@ class KuaiEnv(BaseEnv):
         return df_data, df_user, df_item, list_feat
 
     @staticmethod
+    def get_train_data():
+        return KuaiEnv.get_df_kuairec("big_matrix_processed.csv")
+
+    @staticmethod
+    def get_val_data():
+        return KuaiEnv.get_df_kuairec("small_matrix_processed.csv")
+
+    @staticmethod
     def get_domination():
         df_data, _, df_item, _ = KuaiEnv.get_df_kuairec("big_matrix_processed.csv")
         CODEDIRPATH = os.path.dirname(__file__)

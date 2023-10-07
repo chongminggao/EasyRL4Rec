@@ -71,6 +71,14 @@ class CoatEnv(BaseEnv):
         return df_data, df_user, df_item, list_feat
 
     @staticmethod
+    def get_train_data():
+        return CoatEnv.get_df_coat("train.ascii")
+
+    @staticmethod
+    def get_val_data():
+        return CoatEnv.get_df_coat("test.ascii")
+    
+    @staticmethod
     def get_domination():
         df_data, _, df_item, _ = CoatEnv.get_df_coat("train.ascii")
         CODEDIRPATH = os.path.dirname(__file__)
@@ -124,13 +132,8 @@ class CoatEnv(BaseEnv):
         return item_popularity
 
 
-        
-
-
-
     @staticmethod
     def get_item_similarity():
-        
         CODEDIRPATH = os.path.dirname(__file__)
         item_similarity_path = os.path.join(CODEDIRPATH, "item_similarity.pickle")
 

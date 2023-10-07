@@ -29,7 +29,7 @@ from environments.Simulated_Env.base import BaseSimulatedEnv
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.util.data import get_val_data, get_training_item_domination, get_item_similarity, get_training_data, get_true_env, get_item_popularity
+from core.util.data import get_true_env
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
 
@@ -321,9 +321,8 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
 
 def prepare_buffer_via_offline_data(args):
-    df_train, df_user, df_item, list_feat = get_training_data(args.env)
-    # df_val, df_user_val, df_item_val, list_feat = get_val_data(args.env)
-    # df_train = df_train.head(10000)
+    env, env_task_class, kwargs_um = get_true_env(args)
+    df_train, df_user, df_item, list_feat = env.get_train_data()
     if "time_ms" in df_train.columns:
         df_train.rename(columns={"time_ms": "timestamp"}, inplace=True)
         df_train = df_train.sort_values(["user_id", "timestamp"])
@@ -332,7 +331,6 @@ def prepare_buffer_via_offline_data(args):
 
     df_train[["user_id", "item_id"]].to_numpy()
 
-    env, env_task_class, kwargs_um = get_true_env(args)
     buffer = construct_buffer_from_offline_data(args, df_train, env)
     env.max_turn = args.max_turn
 
@@ -468,10 +466,9 @@ def learn_policy(args, env, policy, train_collector, test_collector_set, state_t
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
-    # env = test_collector_set.env
-    df_val, df_user_val, df_item_val, list_feat = get_val_data(args.env)
-    item_feat_domination = get_training_item_domination(args.env)
-    item_similarity, item_popularity = get_item_similarity(args.env), get_item_popularity(args.env)
+    df_val, df_user_val, df_item_val, list_feat = env.get_val_data()
+    item_feat_domination = env.get_domination()
+    item_similarity, item_popularity = env.get_item_similarity(), env.get_item_popularity()
 
     metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
 
