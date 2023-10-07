@@ -62,6 +62,18 @@ class YahooEnv(BaseEnv):
         return df_data, df_user, df_item, list_feat
 
     @staticmethod
+    def get_train_data():
+        return YahooEnv.get_df_yahoo("ydata-ymusic-rating-study-v1_0-train.txt")
+
+    @staticmethod
+    def get_val_data():
+        return YahooEnv.get_df_yahoo("ydata-ymusic-rating-study-v1_0-test.txt")
+
+    @staticmethod
+    def get_domination():
+        return None
+    
+    @staticmethod
     def load_user_feat():
         df_user = pd.DataFrame(np.arange(15400), columns=["user_id"])
         df_user.set_index("user_id", inplace=True)

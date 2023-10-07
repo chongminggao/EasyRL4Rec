@@ -11,7 +11,7 @@ import pandas as pd
 from core.util.inputs import SparseFeatP
 from deepctr_torch.inputs import DenseFeat
 from core.util.static_dataset import StaticDataset
-from core.util.data import get_training_data, get_val_data
+from core.util.data import get_features
 from core.util.utils import negative_sampling, create_dir
 
 from environments.KuaiRec.env.KuaiEnv import compute_exposure_effect_kuaiRec
@@ -163,9 +163,10 @@ def prepare_dir_log(args):
     return MODEL_SAVE_PATH, logger_path
 
 
-def load_dataset_train(args, user_features, item_features, reward_features, tau, entity_dim, feature_dim,
+def load_dataset_train(args, EnvClass, tau, entity_dim, feature_dim,
                        MODEL_SAVE_PATH, DATAPATH):
-    df_train, df_user, df_item, list_feat = get_training_data(args.env)
+    user_features, item_features, reward_features = get_features(args.env, args.is_userinfo)
+    df_train, df_user, df_item, list_feat = EnvClass.get_train_data()
 
     assert user_features[0] == "user_id"
     assert item_features[0] == "item_id"
@@ -206,9 +207,10 @@ def load_dataset_train(args, user_features, item_features, reward_features, tau,
 
     return dataset, df_user, df_item, x_columns, y_columns, ab_columns
 
-def load_dataset_train_IPS(args, user_features, item_features, reward_features, tau, entity_dim, feature_dim,
+def load_dataset_train_IPS(args, EnvClass, tau, entity_dim, feature_dim,
                        MODEL_SAVE_PATH, DATAPATH):
-    df_train, df_user, df_item, list_feat = get_training_data(args.env)
+    user_features, item_features, reward_features = get_features(args.env, args.is_userinfo)
+    df_train, df_user, df_item, list_feat = EnvClass.get_train_data()
 
     assert user_features[0] == "user_id"
     assert item_features[0] == "item_id"
@@ -253,8 +255,9 @@ def load_dataset_train_IPS(args, user_features, item_features, reward_features, 
 
     return dataset, df_user, df_item, x_columns, y_columns, ab_columns
 
-def load_dataset_val(args, user_features, item_features, reward_features, entity_dim, feature_dim):
-    df_val, df_user_val, df_item_val, list_feat = get_val_data(args.env)
+def load_dataset_val(args, EnvClass, entity_dim, feature_dim):
+    user_features, item_features, reward_features = get_features(args.env, args.is_userinfo)
+    df_val, df_user_val, df_item_val, list_feat = EnvClass.get_val_data()
 
     assert user_features[0] == "user_id"
     assert item_features[0] == "item_id"
