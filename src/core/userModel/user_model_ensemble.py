@@ -17,7 +17,6 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from core.util.data import get_features
 from core.util.inputs import input_from_feature_columns
 from core.util.static_dataset import StaticDataset
 from core.userModel.user_model_pairwise_variance import UserModel_Pairwise_Variance
@@ -158,8 +157,8 @@ class EnsembleModel():
 
         return prediction, var_max
 
-    def get_save_entropy_mat(self, EnvClass, entropy_window):
-        df_train, df_user, df_item, list_feat = EnvClass.get_train_data()
+    def get_save_entropy_mat(self, dataset, entropy_window):
+        df_train, df_user, df_item, list_feat = dataset.get_train_data()
 
         num_item = df_train["item_id"].nunique()
         if not "timestamp" in df_train.columns:
@@ -229,8 +228,8 @@ class EnsembleModel():
         return entropy_user, map_entropy
 
     def save_all_models(self, dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
-                        envname, is_userinfo, deterministic):
-        user_features, item_features, reward_features = get_features(envname, is_userinfo)
+                        dataset, is_userinfo, deterministic):
+        user_features, item_features, reward_features = dataset.get_features(is_userinfo)
         # (1) Compute and save Mat
         mean_mat_list, var_mat_list = self.compute_mean_var(dataset_val, df_user, df_item, user_features, item_features,
                                                             x_columns, y_columns)

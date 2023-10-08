@@ -2,7 +2,6 @@
 # @Time    : 2021/9/11 4:24 下午
 # @Author  : Chongming GAO
 # @FileName: util.py
-import collections
 import os
 import pickle
 from logzero import logger
@@ -29,35 +28,6 @@ def create_dir(create_dirs):
             except FileExistsError:
                 print("The dir [{}] already existed".format(dir))
 
-def get_sorted_domination_features(df_data, df_item, is_multi_hot, yname=None, threshold=None):
-    """
-    :param threshold: is used for counting only the positive samples.
-    """
-    item_feat_domination = dict()
-    if not is_multi_hot: # one-hot for coat
-        item_feat = df_item.columns.to_list()
-        for x in item_feat:
-            sorted_count = collections.Counter(df_data[x])
-            sorted_percentile = dict(map(lambda x: (x[0], x[1] / len(df_data)), dict(sorted_count).items()))
-            sorted_items = sorted(sorted_percentile.items(), key=lambda x: x[1], reverse=True)
-            item_feat_domination[x] = sorted_items
-    else: # multi-hot for kuairec and kuairand
-        df_item_filtered = df_item.filter(regex="^feat", axis=1)
-
-        # df_item_flat = df_item_filtered.to_numpy().reshape(-1)
-        # df_item_nonzero = df_item_flat[df_item_flat>0]
-
-        feat_train = df_data.loc[df_data[yname] >= threshold, df_item_filtered.columns.to_list()]
-        cats_train = feat_train.to_numpy().reshape(-1)
-        pos_cat_train = cats_train[cats_train > 0]
-
-        sorted_count = collections.Counter(pos_cat_train)
-        sorted_percentile = dict(map(lambda x: (x[0], x[1] / sum(sorted_count.values())), dict(sorted_count).items()))
-        sorted_items = sorted(sorted_percentile.items(), key=lambda x: x[1], reverse=True)
-
-        item_feat_domination["feat"] = sorted_items
-
-    return item_feat_domination
 
 def compute_action_distance(action: np.ndarray, actions_hist: np.ndarray,
                             env_name="VirtualTB-v0", realenv=None):  # for kuaishou data
