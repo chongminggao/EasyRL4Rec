@@ -1,5 +1,5 @@
 # run user model
-python examples/usermodel/run_DeepFM_ensemble.py --env CoatEnv-v0  --seed 2023 --cuda 6     --epoch 3 --loss "pointneg" --message "pointneg"
+python examples/usermodel/run_DeepFM_ensemble.py --env CoatEnv-v0  --seed 2023 --cuda 1     --epoch 2 --n_models 2 --loss "pointneg" --message "pointneg"
 python examples/usermodel/run_DeepFM_IPS.py      --env CoatEnv-v0  --seed 2023 --cuda 1     --epoch 3 --loss "pointneg" --message "DeepFM-IPS"
 python examples/usermodel/run_Egreedy.py         --env CoatEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 3 --seed 2023 --cuda 2 --loss "pointneg" --message "epsilon-greedy"
 python examples/usermodel/run_LinUCB.py          --env CoatEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 3 --seed 2023 --cuda 3 --loss "pointneg" --message "UCB"
@@ -20,7 +20,7 @@ python examples/policy/run_BCQ.py --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch
 # 2. Online RL with User Model (Model-based or simulation-based RL) 
 # 2.1 onpolicy
 python examples/policy/run_A2C_IPS.py --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "DeepFM-IPS"  --message "IPS"
-python examples/policy/run_A2C.py     --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C-new"
+python examples/policy/run_A2C.py     --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 2  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C-new"
 python examples/policy/run_PG.py      --env CoatEnv-v0  --seed 2023 --cuda 0 --epoch 10   --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "PG"
 python examples/policy/run_PPO.py     --env CoatEnv-v0  --seed 2023 --cuda 2 --epoch 10   --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "PPO"
 # 2.2 offpolicy

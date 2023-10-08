@@ -1,23 +1,23 @@
 import pandas as pd
 
 print("Loading big matrix...")
-big_matrix = pd.read_csv("../data/big_matrix.csv")
+big_matrix = pd.read_csv("../data_raw/big_matrix.csv")
 print("Loading small matrix...")
-small_matrix = pd.read_csv("../data/small_matrix.csv")
+small_matrix = pd.read_csv("../data_raw/small_matrix.csv")
 
 print("Loading social network...")
-social_network = pd.read_csv("../data/social_network.csv")
+social_network = pd.read_csv("../data_raw/social_network.csv")
 social_network["friend_list"] = social_network["friend_list"].map(eval)
 
 print("Loading item features...")
-item_categories = pd.read_csv("../data/item_categories.csv")
+item_categories = pd.read_csv("../data_raw/item_categories.csv")
 item_categories["feat"] = item_categories["feat"].map(eval)
 
 print("Loading user features...")
-user_features = pd.read_csv("../data/user_features.csv")
+user_features = pd.read_csv("../data_raw/user_features.csv")
 
 print("Loading items' daily features...")
-item_daily_feat = pd.read_csv("../data/item_daily_features.csv")
+item_daily_feat = pd.read_csv("../data_raw/item_daily_features.csv")
 
 print("All data loaded.")
 print("1. Big matrix:")

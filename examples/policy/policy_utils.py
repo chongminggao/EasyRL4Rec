@@ -321,8 +321,8 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
 
 def prepare_buffer_via_offline_data(args):
-    env, env_task_class, kwargs_um = get_true_env(args)
-    df_train, df_user, df_item, list_feat = env.get_train_data()
+    env, dataset, kwargs_um = get_true_env(args)
+    df_train, df_user, df_item, list_feat = dataset.get_train_data()
     if "time_ms" in df_train.columns:
         df_train.rename(columns={"time_ms": "timestamp"}, inplace=True)
         df_train = df_train.sort_values(["user_id", "timestamp"])
@@ -340,17 +340,17 @@ def prepare_buffer_via_offline_data(args):
     random.seed(args.seed)
     torch.manual_seed(args.seed)
 
-    return env, buffer
+    return env, dataset, buffer
 
 def prepare_train_envs(args, ensemble_models):
-    env, env_task_class, kwargs_um = get_true_env(args)
+    env, dataset, kwargs_um = get_true_env(args)
 
     with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
         predicted_mat = pickle.load(file)
 
     kwargs = {
         "ensemble_models": ensemble_models,
-        "env_task_class": env_task_class,
+        "env_task_class": type(env),
         "task_env_param": kwargs_um,
         "task_name": args.env,
         "predicted_mat": predicted_mat,
@@ -364,12 +364,12 @@ def prepare_train_envs(args, ensemble_models):
     torch.manual_seed(args.seed)
     train_envs.seed(args.seed)
 
-    return env, train_envs
+    return env, dataset, train_envs
 
 
 def prepare_test_envs(args):
-    env, env_task_class, kwargs_um = get_true_env(args)
-    # test_envs = gym.make(args.task)
+    env, dataset, kwargs_um = get_true_env(args)
+    env_task_class = type(env)
     test_envs = DummyVectorEnv(
         [lambda: env_task_class(**kwargs_um) for _ in range(args.test_num)])
     test_envs_NX_0 = DummyVectorEnv(
@@ -457,7 +457,7 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict, 
     return state_tracker
 
 
-def learn_policy(args, env, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
+def learn_policy(args, env, dataset, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
                  logger_path, is_onpolicy=True):
     # log
     # log_path = os.path.join(args.logdir, args.env, 'a2c')
@@ -466,9 +466,9 @@ def learn_policy(args, env, policy, train_collector, test_collector_set, state_t
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
-    df_val, df_user_val, df_item_val, list_feat = env.get_val_data()
-    item_feat_domination = env.get_domination()
-    item_similarity, item_popularity = env.get_item_similarity(), env.get_item_popularity()
+    df_val, df_user_val, df_item_val, list_feat = dataset.get_val_data()
+    item_feat_domination = dataset.get_domination()
+    item_similarity, item_popularity = dataset.get_item_similarity(), dataset.get_item_popularity()
 
     metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
 

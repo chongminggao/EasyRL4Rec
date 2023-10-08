@@ -112,7 +112,7 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, train_envs = prepare_train_envs(args, ensemble_models)
+    env, dataset, train_envs = prepare_train_envs(args, ensemble_models)
     test_envs_dict = prepare_test_envs(args)
 
     # %% 3. Setup policy
@@ -120,7 +120,7 @@ def main(args):
     policy, train_collector, test_collector_set, optim = setup_policy_model(args, state_tracker, train_envs, test_envs_dict)
 
     # %% 4. Learn policy
-    learn_policy(args, env, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
+    learn_policy(args, env, dataset, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
                  logger_path)
 
 

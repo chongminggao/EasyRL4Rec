@@ -1,32 +1,5 @@
 import argparse
 
-
-def get_features(env, is_userinfo=False):
-    if env == "CoatEnv-v0":
-        user_features = ["user_id", 'gender_u', 'age', 'location', 'fashioninterest']
-        item_features = ['item_id', 'gender_i', "jackettype", 'color', 'onfrontpage']
-        reward_features = ["rating"]
-    elif env == "KuaiRand-v0":
-        user_features = ["user_id", 'user_active_degree', 'is_live_streamer', 'is_video_author',
-                         'follow_user_num_range',
-                         'fans_user_num_range', 'friend_user_num_range', 'register_days_range'] \
-                        + [f'onehot_feat{x}' for x in range(18)]
-        if not is_userinfo:
-            user_features = ["user_id"]
-        item_features = ["item_id"] + ["feat" + str(i) for i in range(3)] + ["duration_normed"]
-        reward_features = ["is_click"]
-    elif env == "KuaiEnv-v0":
-        user_features = ["user_id"]
-        item_features = ["item_id"] + ["feat" + str(i) for i in range(4)] + ["duration_normed"]
-        reward_features = ["watch_ratio_normed"]
-    elif env == "YahooEnv-v0":
-        user_features = ["user_id"]
-        item_features = ['item_id']
-        reward_features = ["rating"]
-
-    return user_features, item_features, reward_features
-
-
 def get_env_args(args):
     env = args.env
 
@@ -111,8 +84,9 @@ def get_env_args(args):
 
 def get_true_env(args, read_user_num=None):
     if args.env == "CoatEnv-v0":
-        from environments.coat.env.Coat import CoatEnv
-        mat, df_item, mat_distance = CoatEnv.load_mat()
+        from environments.coat.CoatEnv import CoatEnv
+        from environments.coat.CoatData import CoatData
+        mat, df_item, mat_distance = CoatEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "df_item": df_item,
                      "mat_distance": mat_distance,
@@ -121,10 +95,11 @@ def get_true_env(args, read_user_num=None):
                      "max_turn": args.max_turn,
                      "random_init": args.random_init}
         env = CoatEnv(**kwargs_um)
-        env_task_class = CoatEnv
+        dataset = CoatData()
     elif args.env == "YahooEnv-v0":
-        from environments.YahooR3.env.Yahoo import YahooEnv
-        mat, mat_distance = YahooEnv.load_mat()
+        from environments.YahooR3.YahooEnv import YahooEnv
+        from environments.YahooR3.YahooData import YahooData
+        mat, mat_distance = YahooEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "mat_distance": mat_distance,
                      "num_leave_compute": args.num_leave_compute,
@@ -133,10 +108,11 @@ def get_true_env(args, read_user_num=None):
                      "random_init": args.random_init}
 
         env = YahooEnv(**kwargs_um)
-        env_task_class = YahooEnv
+        dataset = YahooData()
     elif args.env == "KuaiRand-v0":
-        from environments.KuaiRand_Pure.env.KuaiRand import KuaiRandEnv
-        mat, list_feat, mat_distance = KuaiRandEnv.load_mat(args.yfeat, read_user_num=read_user_num)
+        from environments.KuaiRand_Pure.KuaiRandEnv import KuaiRandEnv
+        from environments.KuaiRand_Pure.KuaiRandData import KuaiRandData
+        mat, list_feat, mat_distance = KuaiRandEnv.load_env_data(args.yfeat, read_user_num=read_user_num)
         kwargs_um = {"yname": args.yfeat,
                      "mat": mat,
                      "mat_distance": mat_distance,
@@ -146,10 +122,11 @@ def get_true_env(args, read_user_num=None):
                      "max_turn": args.max_turn,
                      "random_init": args.random_init}
         env = KuaiRandEnv(**kwargs_um)
-        env_task_class = KuaiRandEnv
+        dataset = KuaiRandData()
     elif args.env == "KuaiEnv-v0":
-        from environments.KuaiRec.env.KuaiEnv import KuaiEnv
-        mat, lbe_user, lbe_item, list_feat, df_video_env, df_dist_small = KuaiEnv.load_mat()
+        from environments.KuaiRec.KuaiEnv import KuaiEnv
+        from environments.KuaiRec.KuaiData import KuaiData
+        mat, lbe_user, lbe_item, list_feat, df_dist_small = KuaiEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "lbe_user": lbe_user,
                      "lbe_item": lbe_item,
@@ -158,8 +135,7 @@ def get_true_env(args, read_user_num=None):
                      "max_turn": args.max_turn,
                      "random_init": args.random_init,
                      "list_feat": list_feat,
-                     "df_video_env": df_video_env,
                      "df_dist_small": df_dist_small}
         env = KuaiEnv(**kwargs_um)
-        env_task_class = KuaiEnv
-    return env, env_task_class, kwargs_um
+        dataset = KuaiData()
+    return env, dataset, kwargs_um

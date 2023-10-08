@@ -89,7 +89,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
     return policy, test_collector_set, optim
 
 
-def learn_policy(args, env, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path):
+def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path):
     # log
     # t0 = datetime.datetime.now().strftime("%m%d_%H%M%S")
     # log_file = f'seed_{args.seed}_{t0}-{args.env.replace("-", "_")}_crr'
@@ -101,9 +101,9 @@ def learn_policy(args, env, policy, buffer, test_collector_set, state_tracker, o
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
-    df_val, df_user_val, df_item_val, list_feat = env.get_val_data()
-    item_feat_domination = env.get_domination()
-    item_similarity, item_popularity = env.get_item_similarity(), env.get_item_popularity()
+    df_val, df_user_val, df_item_val, list_feat = dataset.get_val_data()
+    item_feat_domination = dataset.get_domination()
+    item_similarity, item_popularity = dataset.get_item_similarity(), dataset.get_item_popularity()
 
     # set metrics and related evaluator
     metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
@@ -146,7 +146,7 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, buffer = prepare_buffer_via_offline_data(args)
+    env, dataset, buffer = prepare_buffer_via_offline_data(args)
     test_envs_dict = prepare_test_envs(args)
 
     # %% 3. Setup policy
@@ -154,7 +154,7 @@ def main(args):
     policy, test_collector_set, optim = setup_policy_model(args, state_tracker, buffer, test_envs_dict)
 
     # %% 4. Learn policy
-    learn_policy(args, env, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path)
+    learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path)
 
 
 if __name__ == '__main__':
