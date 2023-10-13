@@ -4,23 +4,25 @@ import os
 import pprint
 import sys
 import traceback
+from gymnasium.spaces import Discrete
 
 import torch
 
-sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
+sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, prepare_test_envs, setup_state_tracker
+from policy.policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
+from core.util.layers import Actor_Linear
 from core.util.data import get_env_args
+from core.policy.RecPolicy import RecPolicy
 
-from tianshou.utils.net.common import ActorCritic, Net
-from tianshou.utils.net.discrete import Actor
-from tianshou.policy import DiscreteBCQPolicy
+from tianshou.utils.net.common import ActorCritic
+from tianshou.policy import SQNPolicy
 from tianshou.trainer import offline_trainer
 
 # from util.upload import my_upload
@@ -33,45 +35,40 @@ except ImportError:
     envpool = None
 
 
-def get_args_BCQ():
+def get_args_SQN():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="BCQ")
+    parser.add_argument("--model_name", type=str, default="SQN")
+    parser.add_argument('--which_head', type=str, default='qhead')  # in {"shead", "qhead", "bcq"}
+
+    # bcq
     parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument("--unlikely-action-threshold", type=float, default=0.6)
     parser.add_argument("--imitation-logits-penalty", type=float, default=0.01)
     parser.add_argument("--eps-test", type=float, default=0.001)
+    # parser.add_argument('--step-per-epoch', type=int, default=1000)
     parser.add_argument('--step-per-epoch', type=int, default=1000)
-    # parser.add_argument("--update-per-epoch", type=int, default=5000)
-    parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="BCQ")
+
+    # parser.add_argument("--read_message", type=str, default="UM")
+    parser.add_argument("--message", type=str, default="SQN")
 
     args = parser.parse_known_args()[0]
     return args
 
 
 def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
-    if args.cpu:
-        args.device = "cpu"
-    else:
-        args.device = torch.device("cuda:{}".format(args.cuda) if torch.cuda.is_available() else "cpu")
 
-    # model
-    net = Net(args.state_dim, args.hidden_sizes[0], device=args.device)
-    policy_net = Actor(
-        net, args.action_shape, hidden_sizes=args.hidden_sizes, device=args.device
-    ).to(args.device)
-    imitation_net = Actor(
-        net, args.action_shape, hidden_sizes=args.hidden_sizes, device=args.device
-    ).to(args.device)
-    actor_critic = ActorCritic(policy_net, imitation_net)
+    model_final_layer = Actor_Linear(args.state_dim, args.action_shape, device=args.device).to(args.device)
+    imitation_final_layer = Actor_Linear(args.state_dim, args.action_shape, device=args.device).to(args.device)
+
+    actor_critic = ActorCritic(model_final_layer, imitation_final_layer)
     optim_RL = torch.optim.Adam(actor_critic.parameters(), lr=args.lr)
     optim_state = torch.optim.Adam(state_tracker.parameters(), lr=args.lr)
     optim = [optim_RL, optim_state]
 
-    policy = DiscreteBCQPolicy(
-        policy_net,
-        imitation_net,
+    policy = SQNPolicy(
+        model_final_layer,
+        imitation_final_layer,
         optim,
         args.gamma,
         args.n_step,
@@ -81,33 +78,29 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         args.imitation_logits_penalty,
         state_tracker=state_tracker,
         buffer=buffer,
+        which_head=args.which_head,
+        action_space=Discrete(args.action_shape),
     )
 
-    # collector
-    # buffer has been gathered
-    # train_collector = Collector(policy, train_envs, buffer, exploration_noise=True)
-    # test_collector = Collector(
-    #     policy, test_envs,
-    #     VectorReplayBuffer(args.buffer_size, len(test_envs)),
-    #     preprocess_fn=state_tracker.build_state,
-    #     exploration_noise=args.exploration_noise,
-    # )
-    test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
+    rec_policy = RecPolicy(args, policy, state_tracker)
+
+    test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
-    return policy, test_collector_set, optim
+    return rec_policy, test_collector_set, optim
 
 
 def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path):
     # log
     # t0 = datetime.datetime.now().strftime("%m%d_%H%M%S")
-    # log_file = f'seed_{args.seed}_{t0}-{args.env.replace("-", "_")}_sqn'
-    # log_path = os.path.join(args.logdir, args.env, 'sqn', log_file)
+    # log_file = f'seed_{args.seed}_{t0}-{args.env.replace("-", "_")}_bcq'
+    # log_path = os.path.join(args.logdir, args.env, 'bcq', log_file)
     # writer = SummaryWriter(log_path)
     # writer.add_text("args", str(args))
     # logger1 = TensorboardLogger(writer)
+    #
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
@@ -171,9 +164,10 @@ def main(args):
 if __name__ == '__main__':
     args_all = get_args_all()
     args = get_env_args(args_all)
-    args_BCQ = get_args_BCQ()
+    args_SQN = get_args_SQN()
     args_all.__dict__.update(args.__dict__)
-    args_all.__dict__.update(args_BCQ.__dict__)
+    args_all.__dict__.update(args_SQN.__dict__)
+
     try:
         main(args_all)
     except Exception as e:

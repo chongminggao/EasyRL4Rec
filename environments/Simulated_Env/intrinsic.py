@@ -61,5 +61,5 @@ class IntrinsicSimulatedEnv(BaseSimulatedEnv):
         else:
             p_id = action
         item_pop = self.item_popularity[p_id]
-        nov = - np.log(item_pop)  # nov \in xxxx   -log(0.0001) = 4  lambda 考虑~0.25
+        nov = - np.log(item_pop+1e-10)  # nov \in xxxx   -log(0.0001) = 4  lambda 考虑~0.25
         return nov

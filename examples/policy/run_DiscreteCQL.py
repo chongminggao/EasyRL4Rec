@@ -4,6 +4,7 @@ import os
 import pprint
 import sys
 import traceback
+from gymnasium.spaces import Discrete
 
 import torch
 
@@ -17,6 +18,7 @@ from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
 from core.util.data import get_env_args
+from core.policy.RecPolicy import RecPolicy
 
 from tianshou.utils.net.common import Net
 from tianshou.policy import DiscreteCQLPolicy
@@ -34,14 +36,14 @@ except ImportError:
 
 def get_args_CQL():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="CQL")
+    parser.add_argument("--model_name", type=str, default="DiscreteCQL")
     parser.add_argument('--num-quantiles', type=int, default=20)
     parser.add_argument("--min-q-weight", type=float, default=10.)
     parser.add_argument("--eps-test", type=float, default=0.001)
     parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument('--step-per-epoch', type=int, default=1000)
-    parser.add_argument("--message", type=str, default="CQL")
+    parser.add_argument("--message", type=str, default="DiscreteCQL")
 
     args = parser.parse_known_args()[0]
     return args
@@ -71,16 +73,20 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         min_q_weight=args.min_q_weight,
         state_tracker=state_tracker,
         buffer=buffer,
+        action_space=Discrete(args.action_shape),
     ).to(args.device)
+
+    rec_policy = RecPolicy(args, policy, state_tracker)
 
     # collector
     # buffer has been gathered
-    test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
+
+    test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
-    return policy, test_collector_set, optim
+    return rec_policy, test_collector_set, optim
 
 
 def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path):
@@ -108,6 +114,7 @@ def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_t
         Evaluator_User_Experience(test_collector_set, df_item_val, item_similarity, item_popularity,
                                   args.need_transform, lbe_item=env.lbe_item if args.need_transform else None),
         LoggerEval_Policy(args.force_length, metrics)]
+
     model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
 
     result = offline_trainer(

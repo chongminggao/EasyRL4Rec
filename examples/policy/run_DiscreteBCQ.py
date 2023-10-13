@@ -4,6 +4,7 @@ import os
 import pprint
 import sys
 import traceback
+from gymnasium.spaces import Discrete
 
 import torch
 
@@ -16,11 +17,12 @@ from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prep
 from core.collector.collector_set import CollectorSet
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
-from core.util.layers import Actor_Linear
 from core.util.data import get_env_args
+from core.policy.RecPolicy import RecPolicy
 
-from tianshou.utils.net.common import ActorCritic
-from tianshou.policy import SQNPolicy
+from tianshou.utils.net.common import ActorCritic, Net
+from tianshou.utils.net.discrete import Actor
+from tianshou.policy import DiscreteBCQPolicy
 from tianshou.trainer import offline_trainer
 
 # from util.upload import my_upload
@@ -33,40 +35,45 @@ except ImportError:
     envpool = None
 
 
-def get_args_SQN():
+def get_args_BCQ():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="SQN")
-    parser.add_argument('--which_head', type=str, default='qhead')  # in {"shead", "qhead", "bcq"}
-
-    # bcq
+    parser.add_argument("--model_name", type=str, default="DiscreteBCQ")
     parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument("--unlikely-action-threshold", type=float, default=0.6)
     parser.add_argument("--imitation-logits-penalty", type=float, default=0.01)
     parser.add_argument("--eps-test", type=float, default=0.001)
-    # parser.add_argument('--step-per-epoch', type=int, default=1000)
     parser.add_argument('--step-per-epoch', type=int, default=1000)
-
-    # parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="SQN")
+    # parser.add_argument("--update-per-epoch", type=int, default=5000)
+    parser.add_argument("--read_message", type=str, default="UM")
+    parser.add_argument("--message", type=str, default="DiscreteBCQ")
 
     args = parser.parse_known_args()[0]
     return args
 
 
 def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
+    if args.cpu:
+        args.device = "cpu"
+    else:
+        args.device = torch.device("cuda:{}".format(args.cuda) if torch.cuda.is_available() else "cpu")
 
-    model_final_layer = Actor_Linear(args.state_dim, args.action_shape, device=args.device).to(args.device)
-    imitation_final_layer = Actor_Linear(args.state_dim, args.action_shape, device=args.device).to(args.device)
-
-    actor_critic = ActorCritic(model_final_layer, imitation_final_layer)
+    # model
+    net = Net(args.state_dim, args.hidden_sizes[0], device=args.device)
+    policy_net = Actor(
+        net, args.action_shape, hidden_sizes=args.hidden_sizes, device=args.device
+    ).to(args.device)
+    imitation_net = Actor(
+        net, args.action_shape, hidden_sizes=args.hidden_sizes, device=args.device
+    ).to(args.device)
+    actor_critic = ActorCritic(policy_net, imitation_net)
     optim_RL = torch.optim.Adam(actor_critic.parameters(), lr=args.lr)
     optim_state = torch.optim.Adam(state_tracker.parameters(), lr=args.lr)
     optim = [optim_RL, optim_state]
 
-    policy = SQNPolicy(
-        model_final_layer,
-        imitation_final_layer,
+    policy = DiscreteBCQPolicy(
+        policy_net,
+        imitation_net,
         optim,
         args.gamma,
         args.n_step,
@@ -76,27 +83,30 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         args.imitation_logits_penalty,
         state_tracker=state_tracker,
         buffer=buffer,
-        which_head=args.which_head
+        action_space=Discrete(args.action_shape),
     )
 
+    rec_policy = RecPolicy(args, policy, state_tracker)
 
-    test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
+    # collector
+    # buffer has been gathered
+
+    test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
-    return policy, test_collector_set, optim
+    return rec_policy, test_collector_set, optim
 
 
 def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path):
     # log
     # t0 = datetime.datetime.now().strftime("%m%d_%H%M%S")
-    # log_file = f'seed_{args.seed}_{t0}-{args.env.replace("-", "_")}_bcq'
-    # log_path = os.path.join(args.logdir, args.env, 'bcq', log_file)
+    # log_file = f'seed_{args.seed}_{t0}-{args.env.replace("-", "_")}_sqn'
+    # log_path = os.path.join(args.logdir, args.env, 'sqn', log_file)
     # writer = SummaryWriter(log_path)
     # writer.add_text("args", str(args))
     # logger1 = TensorboardLogger(writer)
-    #
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
@@ -114,7 +124,7 @@ def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_t
         Evaluator_User_Experience(test_collector_set, df_item_val, item_similarity, item_popularity,
                                   args.need_transform, lbe_item=env.lbe_item if args.need_transform else None),
         LoggerEval_Policy(args.force_length, metrics)]
-    model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
+
     model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
 
     result = offline_trainer(
@@ -126,7 +136,7 @@ def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_t
         args.test_num,
         args.batch_size,
         # save_best_fn=save_best_fn,
-        # # stop_fn=stop_fn,
+        # stop_fn=stop_fn,
         # logger=logger1,
         save_model_fn=functools.partial(save_model_fn,
                                         model_save_path=model_save_path,
@@ -160,10 +170,9 @@ def main(args):
 if __name__ == '__main__':
     args_all = get_args_all()
     args = get_env_args(args_all)
-    args_SQN = get_args_SQN()
+    args_BCQ = get_args_BCQ()
     args_all.__dict__.update(args.__dict__)
-    args_all.__dict__.update(args_SQN.__dict__)
-
+    args_all.__dict__.update(args_BCQ.__dict__)
     try:
         main(args_all)
     except Exception as e:

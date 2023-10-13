@@ -17,8 +17,6 @@ PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 class KuaiData(BaseData):
-    metadata = {'render.modes': ['human']}
-
     def __init__(self):
         super(KuaiData, self).__init__()
         self.train_data_path = "big_matrix_processed.csv"

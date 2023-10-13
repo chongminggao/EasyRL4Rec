@@ -67,7 +67,7 @@ def get_args_all():
     parser.add_argument('--dnn', default=(128, 128), type=int, nargs="+")
     parser.add_argument('--dnn_var', default=(), type=int, nargs="+")
     parser.add_argument('--batch_size', default=256, type=int)
-    parser.add_argument('--epoch', default=5, type=int)
+    parser.add_argument('--epoch', default=200, type=int)
     parser.add_argument('--cuda', default=0, type=int)
 
     # exposure parameters:

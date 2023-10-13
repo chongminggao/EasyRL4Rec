@@ -13,8 +13,6 @@ PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 class YahooData(BaseData):
-    metadata = {'render.modes': ['human']}
-
     def __init__(self):
         super(YahooData, self).__init__()
         self.train_data_path = "ydata-ymusic-rating-study-v1_0-train.txt"

@@ -1,7 +1,8 @@
 import argparse
 import sys
 import traceback
-from gymnasium.spaces import Discrete
+from gymnasium.spaces import Box
+from torch.distributions import Independent, Normal
 
 import torch
 
@@ -14,12 +15,12 @@ from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_us
 from core.collector.collector_set import CollectorSet
 from core.util.data import get_env_args
 from core.collector.collector import Collector
-
+from core.policy.RecPolicy import RecPolicy
 
 from tianshou.data import VectorReplayBuffer
 
 from tianshou.utils.net.common import ActorCritic, DataParallelNet, Net
-from tianshou.utils.net.discrete import Actor, Critic
+from tianshou.utils.net.continuous import ActorProb, Critic
 from tianshou.policy import PPOPolicy
 
 # from util.upload import my_upload
@@ -33,9 +34,9 @@ except ImportError:
 
 def get_args_PPO():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="A2C_with_emb")
+    parser.add_argument("--model_name", type=str, default="ContinuousPPO")
     # ppo special
-    parser.add_argument('--vf-coef', type=float, default=0.5)
+    parser.add_argument('--vf-coef', type=float, default=0.25)
     parser.add_argument('--ent-coef', type=float, default=0.0)
     parser.add_argument('--eps-clip', type=float, default=0.2)
     parser.add_argument('--max-grad-norm', type=float, default=0.5)
@@ -44,10 +45,11 @@ def get_args_PPO():
     parser.add_argument('--norm-adv',action="store_true", default=True)
     parser.add_argument('--recompute-adv', action="store_true", default=False)
     parser.add_argument('--dual-clip', type=float, default=None)
-    parser.add_argument('--value-clip', action="store_true", default=False)
+    parser.add_argument('--value-clip', action="store_true", default=True)
+    # parser.add_argument('--resume', action="store_true")
 
     parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="A2C_with_emb")
+    parser.add_argument("--message", type=str, default="ContinuousPPO")
 
     args = parser.parse_known_args()[0]
     return args
@@ -61,8 +63,15 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
 
     # model
     net = Net(args.state_dim, hidden_sizes=args.hidden_sizes, device=args.device)
-    actor = Actor(net, args.action_shape, device=args.device).to(args.device)
-    critic = Critic(net, device=args.device).to(args.device)
+    
+    # 连续动作，不能在用设置state_tracker时设置的action_shape todo
+    actor = ActorProb(net, state_tracker.emb_dim, unbounded=True,
+                      device=args.device).to(args.device)
+    critic = Critic(
+        Net(args.state_dim, hidden_sizes=args.hidden_sizes, device=args.device),
+        device=args.device
+    ).to(args.device)
+    actor_critic = ActorCritic(actor, critic)
     # if torch.cuda.is_available():
     #     actor = DataParallelNet(
     #         Actor(net, args.action_shape, device=None).to(args.device)
@@ -71,11 +80,22 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     # else:
     #     actor = Actor(net, args.action_shape, device=args.device).to(args.device)
     #     critic = Critic(net, device=args.device).to(args.device)
-    optim_RL = torch.optim.Adam(ActorCritic(actor, critic).parameters(), lr=args.lr)
+    
+    # orthogonal initialization
+    for m in actor_critic.modules():
+        if isinstance(m, torch.nn.Linear):
+            torch.nn.init.orthogonal_(m.weight)
+            torch.nn.init.zeros_(m.bias)
+    
+    optim_RL = torch.optim.Adam(actor_critic.parameters(), lr=args.lr)
     optim_state = torch.optim.Adam(state_tracker.parameters(), lr=args.lr)
     optim = [optim_RL, optim_state]
 
-    dist = torch.distributions.Categorical
+   # replace DiagGuassian with Independent(Normal) which is equivalent
+    # pass *logits to be consistent with policy.forward
+    def dist(*logits):
+        return Independent(Normal(*logits), 1)
+    
     policy = PPOPolicy(
         actor,
         critic,
@@ -91,7 +111,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         reward_normalization=args.rew_norm,
         dual_clip=args.dual_clip,
         value_clip=args.value_clip,
-        action_space=Discrete(args.action_shape),
+        action_space=Box(shape=(state_tracker.emb_dim,), low=0, high=1),
         deterministic_eval=True,
         advantage_normalization=args.norm_adv,
         recompute_advantage=args.recompute_adv,
@@ -100,22 +120,24 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
     )
     policy.set_eps(args.eps)
 
+    rec_policy = RecPolicy(args, policy, state_tracker)
+
     # Prepare the collectors and logs
     train_collector = Collector(
-        policy, train_envs,
+        rec_policy, train_envs,
         VectorReplayBuffer(args.buffer_size, len(train_envs)),
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
     )
     
-    policy.set_collector(train_collector)
+    rec_policy.set_collector(train_collector)
 
-    test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
+    test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
-    return policy, train_collector, test_collector_set, optim
+    return rec_policy, train_collector, test_collector_set, optim
 
 
 

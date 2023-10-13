@@ -13,8 +13,6 @@ PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 class CoatData(BaseData):
-    metadata = {'render.modes': ['human']}
-
     def __init__(self):
         super(CoatData, self).__init__()
         self.train_data_path = "train.ascii"

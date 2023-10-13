@@ -74,4 +74,4 @@ class BaseEnv(ABC, gym.Env):
         self.max_history += 1
 
     def seed(self, sd=0):
-            torch.manual_seed(sd)
+        torch.manual_seed(sd)

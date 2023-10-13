@@ -9,6 +9,7 @@ import random
 
 import numpy as np
 import torch
+from gymnasium.spaces import Discrete
 
 sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
@@ -20,6 +21,7 @@ from core.collector.collector_set import CollectorSet
 from core.util.data import get_env_args, get_true_env
 from core.collector.collector import Collector
 from environments.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv
+from core.policy.RecPolicy import RecPolicy
 
 from tianshou.data import VectorReplayBuffer
 from tianshou.env import DummyVectorEnv
@@ -38,7 +40,7 @@ except ImportError:
 
 def get_args_DORL():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="MOPO")
+    parser.add_argument("--model_name", type=str, default="DORL")
     parser.add_argument('--vf-coef', type=float, default=0.5)
     parser.add_argument('--ent-coef', type=float, default=0.0)
     parser.add_argument('--max-grad-norm', type=float, default=None)
@@ -149,28 +151,30 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         ent_coef=args.ent_coef,
         max_grad_norm=args.max_grad_norm,
         reward_normalization=args.rew_norm,
-        action_space=args.action_shape,
+        action_space=Discrete(args.action_shape),
         action_bound_method="",  # not clip
         action_scaling=False
     )
     policy.set_eps(args.eps)
 
+    rec_policy = RecPolicy(args, policy, state_tracker)
+
     # Prepare the collectors and logs
     train_collector = Collector(
-        policy, train_envs,
+        rec_policy, train_envs,
         VectorReplayBuffer(args.buffer_size, len(train_envs)),
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
     )
     
-    policy.set_collector(train_collector)
+    rec_policy.set_collector(train_collector)
 
-    test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
+    test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
-    return policy, train_collector, test_collector_set, optim
+    return rec_policy, train_collector, test_collector_set, optim
 
 
 def main(args):
