@@ -79,7 +79,8 @@ class StateTracker_Base(nn.Module):
 
         self.num_user = user_columns[0].vocabulary_size
         self.num_item = action_columns[0].vocabulary_size
-        self.hidden_size = action_columns[0].embedding_dim
+        self.emb_dim = action_columns[0].embedding_dim
+        self.hidden_size = self.emb_dim
         
         if self.reward_handle == "cat" or self.reward_handle == "cat2":
             self.hidden_size += 1

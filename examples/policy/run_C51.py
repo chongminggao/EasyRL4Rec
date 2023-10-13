@@ -4,6 +4,7 @@ import os
 import pprint
 import sys
 import traceback
+from gymnasium.spaces import Discrete
 
 import torch
 
@@ -16,6 +17,7 @@ from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_te
 from core.collector.collector_set import CollectorSet
 from core.util.data import get_env_args
 from core.collector.collector import Collector
+from core.policy.RecPolicy import RecPolicy
 
 
 from tianshou.data import VectorReplayBuffer, PrioritizedVectorReplayBuffer
@@ -34,7 +36,7 @@ except ImportError:
 
 def get_args_C51():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="DQN")
+    parser.add_argument("--model_name", type=str, default="C51")
 
     parser.add_argument('--eps-test', type=float, default=0.05)
     parser.add_argument('--eps-train', type=float, default=0.1)
@@ -68,7 +70,7 @@ def get_args_C51():
     # parser.add_argument("--save-interval", type=int, default=4)
 
     parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="DQN")
+    parser.add_argument("--message", type=str, default="C51")
 
     args = parser.parse_known_args()[0]
     return args
@@ -105,8 +107,11 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         reward_normalization=args.reward_normalization,
         is_double=args.is_double, 
         clip_loss_grad=args.clip_loss_grad, 
+        action_space=Discrete(args.action_shape),
     ).to(args.device)
     policy.set_eps(args.eps)  ## args.eps_test
+
+    rec_policy = RecPolicy(args, policy, state_tracker)
 
     # buffer
     if args.prioritized_replay:
@@ -121,21 +126,21 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
 
     # Prepare the collectors and logs
     train_collector = Collector(
-        policy, train_envs,
+        rec_policy, train_envs,
         buffer=buf,
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
     )
 
-    policy.set_collector(train_collector)  ## TODO
+    rec_policy.set_collector(train_collector)  ## TODO
     # train_collector.collect(n_step=args.batch_size * args.training_num)  ## TODO
 
-    test_collector_set = CollectorSet(policy, test_envs_dict, args.buffer_size, args.test_num,
+    test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,
                                       exploration_noise=args.exploration_noise,
                                       force_length=args.force_length)
 
-    return policy, train_collector, test_collector_set, optim
+    return rec_policy, train_collector, test_collector_set, optim
 
 
 def main(args):

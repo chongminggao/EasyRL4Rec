@@ -27,7 +27,6 @@ def get_args_epsilonGreedy():
     parser.add_argument("--user_model_name", type=str, default="EpsilonGreedy")
     parser.add_argument('--epsilon', default=0.3, type=float)
     parser.add_argument('--n_models', default=1, type=int)
-    parser.add_argument('--epoch', default=200, type=int)
     parser.add_argument("--message", type=str, default="epsilon-greedy")
     args = parser.parse_known_args()[0]
     return args

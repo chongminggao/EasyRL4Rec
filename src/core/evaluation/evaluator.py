@@ -42,8 +42,9 @@ class Evaluator_Feat():
             is_end = np.zeros([num_tests], dtype=bool)
 
             # indices = results["idxs"]
+
             while not all(is_end):
-                acts = buffer.act[indices]
+                acts = buffer.obs_next[indices][:, 1]  # buffer.act[indices]
                 done = buffer.done[indices]
 
                 act_mat = np.vstack([act_mat, acts])
@@ -102,7 +103,7 @@ class Evaluator_Coverage_Count():
             all_acts = []
             res = {}
             while any(live_ind):
-                acts = buffer[inds].act
+                acts = buffer.obs_next[inds][:, 1]  # acts = buffer[inds].act
                 # print(acts)
                 all_acts.extend(acts)
 
@@ -158,7 +159,7 @@ class Evaluator_User_Experience():
             is_end = np.zeros([num_tests], dtype=bool)
 
             while not all(is_end):
-                acts = buffer.act[indices]
+                acts = buffer.obs_next[indices][:, 1]  # buffer.act[indices]
                 done = buffer.done[indices]
                 rews = buffer.rew[indices]
 
