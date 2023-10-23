@@ -55,11 +55,6 @@ def get_args_QRDQN():
     parser.add_argument('--no_random_init', dest='random_init', action='store_false')
     parser.set_defaults(random_init=True)
 
-    parser.add_argument('--is_exploration_noise', dest='exploration_noise', action='store_true')
-    parser.add_argument('--no_exploration_noise', dest='exploration_noise', action='store_false')
-    parser.set_defaults(exploration_noise=True)
-    parser.add_argument('--eps', default=0.2, type=float)
-
     parser.add_argument('--update-per-step', type=float, default=0.1)
     parser.add_argument('--prioritized-replay', action="store_true", default=False)
     parser.add_argument('--alpha', type=float, default=0.6)
@@ -103,7 +98,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         clip_loss_grad=args.clip_loss_grad, 
         action_space=Discrete(args.action_shape),
     ).to(args.device)
-    policy.set_eps(args.eps)  ## args.eps_test
+    policy.set_eps(args.eps_test)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 
@@ -125,8 +120,6 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
     )
-
-    rec_policy.set_collector(train_collector)  ## TODO
     # train_collector.collect(n_step=args.batch_size * args.training_num)  ## TODO
 
     test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,

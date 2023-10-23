@@ -6,12 +6,6 @@ import numpy as np
 from tianshou.policy import BasePolicy
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from tianshou.data import Batch, ReplayBuffer
-from core.util.layers import DNN
-
-# 计算score所用的item_emb？
-#   1.用item_feature（静态） 则认为返回的连续动作是对特征的weight_vector
-#   2.用全新的item_embedding并optimize（动态）则认为返回的连续动作是embedding
-#   3.还是用statetracker的item_embedding（动态），和state表征更接近？
 
 class RecPolicy(ABC, nn.Module):
     @staticmethod
@@ -89,8 +83,8 @@ class RecPolicy(ABC, nn.Module):
         use_batch_in_statetracker = False,
         **kwargs: Any,
     ) -> Batch:
-        # TODO: 是否需要修改输入？（是否可以在这里改state/obs_emb）
-
+        # batch.obs = self.state_tracker(buffer=buffer, indices=indices, is_seq=is_seq, batch=batch, is_train=is_train, use_batch_in_statetracker=use_batch_in_statetracker)
+        batch.mask = self._get_recommend_mask(remove_recommended_ids, batch.obs.shape[0], buffer)
         batch = self.policy(batch=batch, 
                             buffer=buffer,
                             indices=indices, 
@@ -104,16 +98,14 @@ class RecPolicy(ABC, nn.Module):
         
         return batch
     
-    # 要考虑的是暴露给collector，trainer以及eval的接口有哪些
-    
     def update(self, sample_size: int, buffer: Optional[ReplayBuffer],
                **kwargs: Any) -> Dict[str, Any]:
         if buffer is None:
             return {}
         batch, indices = buffer.sample(sample_size)
         self.updating = True
-        batch = self.process_fn(batch, buffer, indices)  # 自主实现
-        result = self.learn(batch, **kwargs)  # 自主实现
+        batch = self.process_fn(batch, buffer, indices)  # RecPolicy.process_fn()
+        result = self.policy.learn(batch, **kwargs)
 
         self.policy.post_process_fn(batch, buffer, indices)
         if self.policy.lr_scheduler is not None:
@@ -124,25 +116,15 @@ class RecPolicy(ABC, nn.Module):
     def process_fn(
         self, batch: Batch, buffer: ReplayBuffer, indices: np.ndarray
     ) -> Batch:
-        #TODO: update batch.obs obs_next using state_tracker
+        self.policy._buffer, self.policy._indices = buffer, indices
+        # calculate batch.obs&obs_next using state_tracker for policy to 'learn'
+        # batch.obs = self.state_tracker(buffer, indices, is_seq=True)
+        # batch.obs_next = self.state_tracker(buffer, indices, is_seq=False)
+        batch.mask = self._get_recommend_mask(False, batch.obs.shape[0], buffer)
         batch = self.policy.process_fn(batch, buffer, indices)
         return batch
 
-    # TODO： optim_state
-    def learn(
-        self, batch: Batch, **kwargs: Any
-    ) -> Dict[str, List[float]]:
-        # optim_state.zero_grad()
-        dict = self.policy.learn(batch, **kwargs)
-        # optim_state.step()
-        return dict
-
-    # TODO: could be deleted
-    def set_collector(self, train_collector):
-        self.policy.set_collector(train_collector)
-
-    
-    # collector 相关
+    # collector related
     def map_action_inverse(
         self, act: Union[Batch, List, np.ndarray]
     ) -> Union[Batch, List, np.ndarray]:
@@ -155,7 +137,7 @@ class RecPolicy(ABC, nn.Module):
         act = self.policy.map_action(batch.act)
         if self.action_type == "continuous":
             action_scores = self.get_score(act)  # [B, n_items]
-            # TODO: 处理 recommended item id
+            # TODO: remove recommended item id
 
             discrete_acts = self.select_action(action_scores)
         else:
@@ -166,7 +148,7 @@ class RecPolicy(ABC, nn.Module):
                           batch: Batch) -> Union[np.ndarray, Batch]:
         return self.policy.exploration_noise(act, batch)
     
-    # Trainer相关
+    # Trainer related
     def state_dict(self):
         return self.policy.state_dict()
 
@@ -176,3 +158,31 @@ class RecPolicy(ABC, nn.Module):
     def eval(self, mode: bool = True):
         self.policy.eval()
 
+    def _get_recommend_mask(self, remove_recommended_ids, batch_size, buffer):
+        mask = torch.ones((batch_size, self.n_items), dtype=torch.bool).to(device=self.device)
+        recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None
+        if recommended_ids is not None:
+            recommended_ids_torch = torch.LongTensor(recommended_ids).to(device=self.device)
+            mask = mask.scatter(1, recommended_ids_torch, 0)
+        return mask.detach()
+
+def get_recommended_ids(buffer):
+    if len(buffer) == 0:
+        recommended_ids = None
+    else:
+        indices = buffer.last_index[~buffer[buffer.last_index].done]
+
+        # is_alive = True
+        recommended_ids = np.zeros([0, len(indices)], dtype=int)
+        while True:
+            acts = buffer.obs_next[indices][:, 1]  # buffer.act[indices]
+            recommended_ids = np.vstack([recommended_ids, acts])
+
+            if all(indices == buffer.prev(indices)):
+                break
+            assert all(indices != buffer.prev(indices))
+
+            indices = buffer.prev(indices)
+
+        recommended_ids = recommended_ids.T
+    return recommended_ids
