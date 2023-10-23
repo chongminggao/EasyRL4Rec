@@ -81,6 +81,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         which_head=args.which_head,
         action_space=Discrete(args.action_shape),
     )
+    policy.set_eps(args.eps_test)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 

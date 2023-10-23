@@ -120,7 +120,6 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         action_bound_method="",  # not clip
         action_scaling=False
     )
-    policy.set_eps(args.eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 
@@ -131,8 +130,6 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
     )
-
-    rec_policy.set_collector(train_collector)
 
     test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,
                                     #   preprocess_fn=state_tracker.build_state,

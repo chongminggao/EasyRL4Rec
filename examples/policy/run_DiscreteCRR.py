@@ -39,7 +39,6 @@ except ImportError:
 def get_args_CRR():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="DiscreteCRR")
-    parser.add_argument("--eps-test", type=float, default=0.001)
     parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument('--step-per-epoch', type=int, default=1000)
