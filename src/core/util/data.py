@@ -124,9 +124,9 @@ def get_true_env(args, read_user_num=None):
         env = YahooEnv(**kwargs_um)
         dataset = YahooData()
     elif args.env == "MovieLensEnv-v0":
-        from environments.MovieLen.MovieLensEnv import MovielenEnv
-        from environments.MovieLen.MovieLensData import MovieLensData
-        mat, mat_distance = MovielenEnv.load_env_data()
+        from environments.MovieLens.MovieLensEnv import MovieLensEnv
+        from environments.MovieLens.MovieLensData import MovieLensData
+        mat, mat_distance = MovieLensEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "mat_distance": mat_distance,
                      "num_leave_compute": args.num_leave_compute,
@@ -134,7 +134,7 @@ def get_true_env(args, read_user_num=None):
                      "max_turn": args.max_turn,
                      "random_init": args.random_init}
 
-        env = MovielenEnv(**kwargs_um)
+        env = MovieLensEnv(**kwargs_um)
         dataset = MovieLensData()
     elif args.env == "KuaiRand-v0":
         from environments.KuaiRand_Pure.KuaiRandEnv import KuaiRandEnv
