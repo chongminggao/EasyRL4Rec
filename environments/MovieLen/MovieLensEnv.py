@@ -10,7 +10,7 @@ import numpy as np
 from environments.BaseEnv import BaseEnv
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from environments.MovieLen.MovieLensData import MovieLensData
+from environments.MovieLens.MovieLensData import MovieLensData
 
 #CODEPATH = os.path.dirname(__file__)
 #ROOTPATH = os.path.dirname(CODEPATH)
@@ -20,7 +20,7 @@ DATAPATH = os.path.join(ROOTPATH, "data_raw")
 
 
 
-class MovielenEnv(BaseEnv):
+class MovieLensEnv(BaseEnv):
     metadata = {'render.modes': ['human']}
 
     def __init__(self, mat=None, mat_distance=None,
@@ -36,13 +36,15 @@ class MovielenEnv(BaseEnv):
 
         # smallmat shape: (1411, 3327)
 
-        super(MovielenEnv, self).__init__(num_leave_compute, leave_threshold, max_turn, random_init)
+        super(MovieLensEnv, self).__init__(num_leave_compute, leave_threshold, max_turn, random_init)
 
     @staticmethod
     def load_env_data():
         mat = MovieLensData.load_mat()
+        print(mat.shape)
         mat_distance = MovieLensData.get_saved_distance_mat(mat)
-        mat = mat[:6040,:]
+        mat = mat[1:6041,:3952]
+        print(mat.shape)
         return mat, mat_distance
     
     def _determine_whether_to_leave(self, t, action):
