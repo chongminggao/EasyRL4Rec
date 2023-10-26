@@ -109,3 +109,8 @@ class MovieLensData(BaseData):
             mat_distance = get_distance_mat(mat, distance)
             pickle.dump(mat_distance, open(distance_mat_path, 'wb'))
         return mat_distance
+
+
+if __name__ == "__main__":
+    MovieLensData.load_mat()
+    
