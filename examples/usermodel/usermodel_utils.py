@@ -138,7 +138,7 @@ def get_datapath(envname):
     elif envname == 'YahooEnv-v0':
         DATAPATH = os.path.join(CODEPATH, "environments", "YahooR3")
     elif envname == 'MovieLensEnv-v0':
-        DATAPATH = os.path.join(CODEPATH, "environments", "MovieLen")
+        DATAPATH = os.path.join(CODEPATH, "environments", "MovieLens")
     elif envname == 'KuaiEnv-v0':
         DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRec", "data")
     elif envname == 'KuaiRand-v0':
