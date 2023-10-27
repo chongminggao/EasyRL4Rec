@@ -89,7 +89,6 @@ class RecPolicy(ABC, nn.Module):
                             buffer=buffer,
                             indices=indices, 
                             is_obs=is_obs,
-                            remove_recommended_ids=remove_recommended_ids,
                             is_train=is_train,
                             state=state,
                             input=input,
@@ -117,6 +116,7 @@ class RecPolicy(ABC, nn.Module):
         self, batch: Batch, buffer: ReplayBuffer, indices: np.ndarray
     ) -> Batch:
         self.policy._buffer, self.policy._indices = buffer, indices
+        batch.indices = indices
         # calculate batch.obs&obs_next using state_tracker for policy to 'learn'
         # batch.obs = self.state_tracker(buffer, indices, is_seq=True)
         # batch.obs_next = self.state_tracker(buffer, indices, is_seq=False)
@@ -137,8 +137,7 @@ class RecPolicy(ABC, nn.Module):
         act = self.policy.map_action(batch.act)
         if self.action_type == "continuous":
             action_scores = self.get_score(act)  # [B, n_items]
-            # TODO: remove recommended item id
-
+            action_scores = action_scores * batch.mask  # remove recommended item id
             discrete_acts = self.select_action(action_scores)
         else:
             discrete_acts = act

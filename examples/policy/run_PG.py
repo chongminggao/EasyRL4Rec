@@ -128,9 +128,9 @@ def main(args):
 if __name__ == '__main__':
     args_all = get_args_all()
     args = get_env_args(args_all)
-    args_A2C = get_args_PG()
+    args_PG = get_args_PG()
     args_all.__dict__.update(args.__dict__)
-    args_all.__dict__.update(args_A2C.__dict__)
+    args_all.__dict__.update(args_PG.__dict__)
     try:
         main(args_all)
     except Exception as e:
