@@ -197,6 +197,7 @@ def construct_buffer_from_offline_data(args, df_train, env):
     num_bins = args.test_num
 
     df_user_num = df_train[["user_id", "item_id"]].groupby("user_id").agg(len)
+    
 
     if args.env == 'KuaiEnv-v0':
         assert hasattr(env, "lbe_user")
@@ -206,79 +207,54 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
         assert hasattr(env, "lbe_item")
         df_numpy = df_train[["user_id", "item_id", args.yfeat]].to_numpy()
-        indices = [False] * len(df_numpy)
-        for k, (user, item, yfeat) in tqdm(enumerate(df_numpy), total=len(df_numpy)):
-            if int(item) in env.lbe_item.classes_:
-                indices[k] = True
-        df_filtered = df_train[["user_id", "item_id", args.yfeat]].loc[indices]
-        df_filtered["user_id"] = dummy_user = 0  # set to dummy user. Since these users are not in the evaluational environment.
-        df_filtered = df_filtered.reset_index(drop=True)
-        # df_user_items = df_filtered.groupby("user_id").agg(list)
+        
+        func = np.vectorize(lambda x: x in env.lbe_item.classes_)
+        indices_valid_item = func(df_numpy[:,1].astype(int))
+        
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]].loc[indices_valid_item]
+        # df_train_part["user_id"] = dummy_user = 0  # set to dummy user. Since these users are not in the evaluational environment.
+        df_train_part = df_train_part.reset_index(drop=True)
+        # df_user_items = df_train_part.groupby("user_id").agg(list)
 
-        df_filtered["item_id"] = env.lbe_item.transform(df_filtered["item_id"])
+        df_train_part["item_id"] = env.lbe_item.transform(df_train_part["item_id"])
 
-        num_each = int(np.ceil(len(df_filtered) / num_bins))
-        env.max_turn = num_each
-        buffer_size = num_each * num_bins
-        buffer = VectorReplayBuffer(buffer_size, num_bins)
+        func_replace_user = np.vectorize(lambda x: x if x in env.lbe_user.classes_ else np.random.choice(env.lbe_user.classes_))
+        users_replaced = func_replace_user(df_train_part["user_id"].to_numpy().astype(int))
 
-
-        ind_pair = zip(np.arange(0, buffer_size, num_each), np.arange(num_each, buffer_size + num_each, num_each))
-        for ind_buffer, (left, right) in tqdm(enumerate(ind_pair), total=num_bins,
-                                              desc="preparing offline data into buffer..."):
-            seq = df_filtered.iloc[int(left):int(right)]
-
-            items = [-1] + seq["item_id"].to_list()
-            rewards = seq[args.yfeat].to_numpy()
-            np_ui_pair = np.vstack([np.ones_like(items) * dummy_user, items]).T
-
-            env.reset()
-            env.cur_user = dummy_user
-            terminateds = np.zeros(len(rewards), dtype=bool)
-            truncateds = np.zeros(len(rewards), dtype=bool)
-
-            for k, item in enumerate(items[1:]):
-                obs_next, rew, terminated, truncated, info = env.step(item)
-                if terminated or truncated:  
-                    env.reset()
-                    env.cur_user = dummy_user
-                terminateds[k] = terminated
-                truncateds[k] = truncated
-                terminateds[-1] = True
-                # print(env.cur_user, obs_next, rew, done, info)
-
-            batch = Batch(obs=np_ui_pair[:-1], obs_next=np_ui_pair[1:], act=items[1:],
-                          policy={}, info={}, rew=rewards, terminated=terminateds, truncated=truncateds)
-
-            # print(batch)
-            # assert False
-            ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * ind_buffer)
-            
-
-        return buffer
+        df_train_part["user_id"] = env.lbe_user.transform(users_replaced)
 
     elif args.env == 'YahooEnv-v0':
         df_user_num_mapped = df_user_num.iloc[:len(env.mat)]
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]]
+
     else:  # KuaiRand-v0 and CoatEnv-v0
         df_user_num_mapped = df_user_num
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]]
 
 
+    MIN = df_train[args.yfeat].min()
+    MAX = df_train[args.yfeat].max()
+    Max_Min_Scaler = lambda x : (x-MIN)/(MAX-MIN)
+    df_train_part[args.yfeat] = df_train_part[args.yfeat].apply(Max_Min_Scaler)
+    
     bins_ind, max_size, buffer_size = evenly_distribute_trajectories_to_bins(df_user_num_mapped, num_bins)
     buffer = VectorReplayBuffer(buffer_size, num_bins)
 
     # env.max_turn = max_size
 
-    df_user_items = df_train[["user_id", "item_id", args.yfeat]].groupby("user_id").agg(list)
+    # df_user_items = df_train_part[["user_id", "item_id", args.yfeat]].groupby("user_id").agg(list)
+
+    df_user_items = df_train_part.groupby("user_id").agg(list)
     for indices, users in tqdm(bins_ind.items(), total=len(bins_ind), desc="preparing offline data into buffer..."):
         for user in users:
             (user_reset, item_reset), info = env.reset()
             env.cur_user = user
             # env.state = np.array([user, item_reset])
-            env.action
+            # env.action
 
             # items = [item_reset] + df_user_items.loc[user][0]
-            items = df_user_items.loc[user][0]
-            rewards = df_user_items.loc[user][1]
+            items = df_user_items.loc[user]["item_id"]
+            rewards = df_user_items.loc[user][args.yfeat]
             np_ui_pair = np.vstack([np.ones_like(items) * user, items]).T
 
             terminateds = np.zeros(len(rewards), dtype=bool)
