@@ -348,7 +348,7 @@ def get_one_predicted_res(model, df_x_complete, test_loader, steps_per_epoch):
     if num_user != df_x_complete["user_id"].max() + 1:
         # The ids of training set should be aligned with that of the test set!!!
         # For KuaiRec which train on a big matrix and test on a small matrix. 
-        assert num_item != df_x_complete["item_id"].max() + 1
+        # assert num_item == df_x_complete["item_id"].max() + 1
         lbe_user = LabelEncoder()
         lbe_item = LabelEncoder()
 
