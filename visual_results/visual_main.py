@@ -55,7 +55,7 @@ def load_dfs_to_visual(load_filepath_list, ways = {'FB', 'NX_0_', 'NX_10_'}, met
     return dfs
     
 
-def visual_groups(dfs, save_fig_dir, group_names, savename, way="NX_0_"):
+def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=10, visual_sample=True):
     visual_cols = ['R_tra', 'len_tra', 'ctr']
 
     series = "ABCDEFG"
@@ -66,8 +66,9 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way="NX_0_"):
 
     methods_list = set()
     for df in dfs:
-        df = df[way]
-        methods = df.columns.levels[1].to_list()
+        # df = df[way]
+        # methods = df.columns.levels[1].to_list()
+        methods = df.columns.levels[2].to_list()
         methods_list.update(methods)
     methods_list = list(methods_list)
 
@@ -86,73 +87,98 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way="NX_0_"):
     # methods_list = methods_list[::-1]
     # methods_order = dict(zip(methods_list, list(range(len(methods_list)))))
 
-    fig = plt.figure(figsize=(5, 6))
+    if way is None:
+        way = dfs[0].columns.levels[0].to_list()
+    else:
+        if isinstance(way, str):
+            way = [way]
+
+
+    fig = plt.figure(figsize=(2.5 * (len(way) + 1), 6))
     # plt.subplots_adjust(wspace=0.3)
     plt.subplots_adjust(wspace=0.3)
     plt.subplots_adjust(hspace=0.3)
     axs = []
+
+    assert len(dfs) == 1, "TODO: I have only implemented visual logic for one environment. Please modify the code if you want to visualize more than one environment!"
     for index in range(len(dfs)):
         alpha = series[index]
         cnt = 1
-        df = dfs[index][way]
-        # methods_list = df.columns.levels[1].to_list()
 
-        # df.sort_index(axis=1, key=lambda col: [methods_order[x] for x in col.to_list()], level=1, inplace=True)
+        for index_k, way_k in enumerate(way):
 
-        data_r = df[visual_cols[0]]
-        data_len = df[visual_cols[1]]
-        data_ctr = df[visual_cols[2]]
+            df = dfs[index][way_k]
+            # methods_list = df.columns.levels[1].to_list()
 
+            # df.sort_index(axis=1, key=lambda col: [methods_order[x] for x in col.to_list()], level=1, inplace=True)
 
+            data_r = df[visual_cols[0]]
+            data_len = df[visual_cols[1]]
+            data_ctr = df[visual_cols[2]]
 
-        color = [color_kv[name] for name in data_r.columns]
-        marker = [marker_kv[name] for name in data_r.columns]
+            if visual_sample:
+                visual_every = int(len(data_r) / visualnum)
+                visual_rows_idx = data_r.index % visual_every == 0
+                visual_rows_idx[0] = True
+                
+                data_r_visual = data_r.loc[visual_rows_idx]
+                data_len_visual = data_len.loc[visual_rows_idx]
+                data_ctr_visual = data_ctr.loc[visual_rows_idx]
+            else:
+                data_r_visual = data_r
+                data_len_visual = data_len
+                data_ctr_visual = data_ctr
 
-        ax1 = plt.subplot2grid((3, 2), (0, index))
-        data_r.plot(kind="line", linewidth=1, ax=ax1, legend=None, color=color, markevery=int(len(data_r) / 10)+1,
-                    fillstyle='none', alpha=.8, markersize=3)
-        for i, line in enumerate(ax1.get_lines()):
-            line.set_marker(marker[i])
-        plt.yticks(fontsize=10)
-        plt.xticks(fontsize=10)
-        plt.grid(linestyle='dashdot', linewidth=0.8)
-        ax1.set_title("({}{})".format(alpha, cnt), fontsize=fontsize, loc="left", x=0.4, y=.97)
-        ax1.set_title("{}".format(group_names[index]), fontsize=fontsize, y=1.1, fontweight=400)
-        cnt += 1
+            markevery = round(len(data_r_visual) / visualnum)
+            
+            color = [color_kv[name] for name in data_r.columns]
+            marker = [marker_kv[name] for name in data_r.columns]
 
-        ax2 = plt.subplot2grid((3, 2), (1, index))
-        data_len.plot(kind="line", linewidth=1, ax=ax2, legend=None, color=color, markevery=int(len(data_r) / 10),
-                      fillstyle='none', alpha=.8, markersize=3)
-        for i, line in enumerate(ax2.get_lines()):
-            line.set_marker(marker[i])
-        plt.yticks(fontsize=10)
-        plt.xticks(fontsize=10)
-        plt.grid(linestyle='dashdot', linewidth=0.8)
-        ax2.set_title("({}{})".format(alpha, cnt), fontsize=fontsize, y=.97)
-        # ax2.set_title(r"$\it{Max round=" + str(maxlen[index]) + r"}$", fontsize=fontsize - 1.5, loc="left", x=-0.2,
-        #               y=.97)
-        cnt += 1
+            ax1 = plt.subplot2grid((3, len(way)), (0, index_k))
+            data_r_visual.plot(kind="line", linewidth=1, ax=ax1, legend=None, color=color, markevery=markevery,
+                        fillstyle='none', alpha=.8, markersize=3)
+            for i, line in enumerate(ax1.get_lines()):
+                line.set_marker(marker[i])
+            plt.yticks(fontsize=10)
+            plt.xticks(fontsize=10)
+            plt.grid(linestyle='dashdot', linewidth=0.8)
+            ax1.set_title("({}{})".format(alpha, cnt), fontsize=fontsize, loc="left", x=0.4, y=.97)
+            ax1.set_title("{}:({})".format(group_names[index], way_k), fontsize=fontsize, y=1.15, fontweight=400)
+            cnt += 1
 
-        ax3 = plt.subplot2grid((3, 2), (2, index))
-        data_ctr.plot(kind="line", linewidth=1, ax=ax3, legend=None, color=color, markevery=int(len(data_r) / 10),
-                      fillstyle='none', alpha=.8, markersize=3)
-        for i, line in enumerate(ax3.get_lines()):
-            line.set_marker(marker[i])
-        plt.yticks(fontsize=10)
-        plt.xticks(fontsize=10)
-        ax3.set_title("({}{})".format(alpha, cnt), fontsize=fontsize, y=.97)
-        ax3.set_xlabel("epoch", fontsize=11)
-        cnt += 1
-        plt.grid(linestyle='dashdot', linewidth=0.8)
-        if index == 2:
-            axis_shift(ax1, .015)
-            axis_shift(ax2, .015)
-            axis_shift(ax3, .015)
-        if index == 3:
-            axis_shift(ax1, .005)
-            axis_shift(ax2, .005)
-            axis_shift(ax3, .005)
-        axs.append((ax1, ax2, ax3))
+            ax2 = plt.subplot2grid((3, len(way)), (1, index_k))
+            data_len_visual.plot(kind="line", linewidth=1, ax=ax2, legend=None, color=color, markevery=markevery,
+                        fillstyle='none', alpha=.8, markersize=3)
+            for i, line in enumerate(ax2.get_lines()):
+                line.set_marker(marker[i])
+            plt.yticks(fontsize=10)
+            plt.xticks(fontsize=10)
+            plt.grid(linestyle='dashdot', linewidth=0.8)
+            ax2.set_title("({}{})".format(alpha, cnt), fontsize=fontsize, y=.97)
+            # ax2.set_title(r"$\it{Max round=" + str(maxlen[index_k]) + r"}$", fontsize=fontsize - 1.5, loc="left", x=-0.2,
+            #               y=.97)
+            cnt += 1
+
+            ax3 = plt.subplot2grid((3, len(way)), (2, index_k))
+            data_ctr_visual.plot(kind="line", linewidth=1, ax=ax3, legend=None, color=color, markevery=markevery,
+                        fillstyle='none', alpha=.8, markersize=3)
+            for i, line in enumerate(ax3.get_lines()):
+                line.set_marker(marker[i])
+            plt.yticks(fontsize=10)
+            plt.xticks(fontsize=10)
+            ax3.set_title("({}{})".format(alpha, cnt), fontsize=fontsize, y=.97)
+            ax3.set_xlabel("epoch", fontsize=11)
+            cnt += 1
+            plt.grid(linestyle='dashdot', linewidth=0.8)
+            if index_k == 2:
+                axis_shift(ax1, .015)
+                axis_shift(ax2, .015)
+                axis_shift(ax3, .015)
+            if index_k == 3:
+                axis_shift(ax1, .005)
+                axis_shift(ax2, .005)
+                axis_shift(ax3, .005)
+            axs.append((ax1, ax2, ax3))
 
     ax1, ax2, ax3 = axs[0]
     ax1.set_ylabel("Cumulative reward", fontsize=9, fontweight=400)
@@ -166,9 +192,12 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way="NX_0_"):
         lines, labels = axx.get_legend_handles_labels()
         
         dict_label.update(dict(zip(labels, lines)))
+    # axx.legend(handles=dict_label.values(), labels=dict_label.keys(), fontsize=9.5, ncol=1, 
+    #            loc='upper right', bbox_to_anchor=(2, 1))
+    
 
-    axx.legend(handles=dict_label.values(), labels=dict_label.keys(), fontsize=9.5, ncol=1, 
-               loc='upper right', bbox_to_anchor=(2, 1))
+    axx = axs[-1][0]
+    axx.legend(handles=dict_label.values(), labels=dict_label.keys(), fontsize=9.5, ncol=1, bbox_to_anchor=(1.7, 1))
 
     # # axo = plt.axes([0, 0, 1, 1], facecolor=(1, 1, 1, 0))
     # # x, y = np.array([[0.505, 0.505], [0.06, 0.92]])
@@ -178,7 +207,7 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way="NX_0_"):
     # # plt.text(0.58, 0.02, "(C-D) Results with limited interaction rounds", fontsize=11, fontweight=400)
     # # plt.axis('off')
 
-    fig.savefig(os.path.join(save_fig_dir, savename + '.pdf'), format='pdf', bbox_inches='tight')
+    fig.savefig(os.path.join(save_fig_dir, savename + ("_sampled" if visual_sample else "") + '.pdf'), format='pdf', bbox_inches='tight')
     # fig.savefig(os.path.join(save_fig_dir, savename + '.png'), format='png', bbox_inches='tight')
     plt.show()
     plt.close(fig)
@@ -193,14 +222,15 @@ if __name__ == '__main__':
     create_dir(create_dirs)
     dirpath = os.path.join(realpath, "result_logs")
 
-    visual_group_list = ["CoatEnv-v0"]  # ["EtsyEnv-v0"]
+    visual_group_list = ["CoatEnv-v0"]  # You need to add your env name here.
+    visual_group_list = ["EtsyEnv-v0"]
     load_filepath_list = [os.path.join(dirpath, envname) for envname in visual_group_list]
 
     metrics = {'ctr', 'len_tra', 'R_tra'}
 
     dfs = load_dfs_to_visual(load_filepath_list, metrics = metrics)
 
-    way = "NX_0_"
+    way = None # way = "NX_0_"
     savename = "main_result"
     group_names = visual_group_list
     visual_groups(dfs, save_fig_dir, group_names, savename=savename, way=way)
