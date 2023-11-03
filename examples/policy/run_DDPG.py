@@ -2,7 +2,6 @@ import argparse
 import sys
 import traceback
 from gymnasium.spaces import Box
-from torch.distributions import Independent, Normal
 
 import torch
 
@@ -19,7 +18,7 @@ from core.policy.RecPolicy import RecPolicy
 
 from tianshou.data import VectorReplayBuffer
 
-from tianshou.utils.net.common import ActorCritic, DataParallelNet, Net
+from tianshou.utils.net.common import Net
 from tianshou.utils.net.continuous import Actor, Critic
 from tianshou.policy import DDPGPolicy
 from tianshou.exploration import GaussianNoise

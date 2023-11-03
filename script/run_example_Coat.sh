@@ -20,6 +20,7 @@ python examples/policy/run_DiscreteBCQ.py --env CoatEnv-v0  --seed 2023 --cuda 2
 # 2.1 onpolicy
 python examples/policy/run_A2C.py           --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C"
 python examples/policy/run_PG.py            --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "PG"
+python examples/policy/run_ContinuousPG.py  --env CoatEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "ContinuousPG"
 python examples/policy/run_DiscretePPO.py   --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DiscretePPO"
 python examples/policy/run_ContinuousPPO.py --env CoatEnv-v0  --seed 2023 --cuda 2 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "ContinuousPPO"
 
@@ -28,7 +29,7 @@ python examples/policy/run_DQN.py     --env CoatEnv-v0  --seed 2023 --cuda 0 --e
 python examples/policy/run_QRDQN.py   --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "QRDQN"
 python examples/policy/run_C51.py     --env CoatEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "C51"
 python examples/policy/run_DDPG.py    --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DDPG"
-
+python examples/policy/run_TD3.py     --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "TD3"
 
 # run advance
 python examples/advance/run_A2C_IPS.py    --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "DeepFM-IPS"  --message "IPS"
