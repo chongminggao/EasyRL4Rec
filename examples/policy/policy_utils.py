@@ -15,7 +15,6 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
 from core.state_tracker.Caser import StateTracker_Caser
@@ -33,9 +32,11 @@ from core.util.data import get_true_env
 from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
 from core.evaluation.loggers import LoggerEval_Policy
 
+from tianshou.data.buffer.base import ReplayBuffer
 from tianshou.data import VectorReplayBuffer, Batch
 from tianshou.env import DummyVectorEnv
 from tianshou.trainer import onpolicy_trainer, offpolicy_trainer
+from tianshou.trainer.offline import offline_trainer
 
 from core.util.utils import create_dir
 import logzero
@@ -197,6 +198,7 @@ def construct_buffer_from_offline_data(args, df_train, env):
     num_bins = args.test_num
 
     df_user_num = df_train[["user_id", "item_id"]].groupby("user_id").agg(len)
+    
 
     if args.env == 'KuaiEnv-v0':
         assert hasattr(env, "lbe_user")
@@ -206,79 +208,54 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
         assert hasattr(env, "lbe_item")
         df_numpy = df_train[["user_id", "item_id", args.yfeat]].to_numpy()
-        indices = [False] * len(df_numpy)
-        for k, (user, item, yfeat) in tqdm(enumerate(df_numpy), total=len(df_numpy)):
-            if int(item) in env.lbe_item.classes_:
-                indices[k] = True
-        df_filtered = df_train[["user_id", "item_id", args.yfeat]].loc[indices]
-        df_filtered["user_id"] = dummy_user = 0  # set to dummy user. Since these users are not in the evaluational environment.
-        df_filtered = df_filtered.reset_index(drop=True)
-        # df_user_items = df_filtered.groupby("user_id").agg(list)
+        
+        func = np.vectorize(lambda x: x in env.lbe_item.classes_)
+        indices_valid_item = func(df_numpy[:,1].astype(int))
+        
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]].loc[indices_valid_item]
+        # df_train_part["user_id"] = dummy_user = 0  # set to dummy user. Since these users are not in the evaluational environment.
+        df_train_part = df_train_part.reset_index(drop=True)
+        # df_user_items = df_train_part.groupby("user_id").agg(list)
 
-        df_filtered["item_id"] = env.lbe_item.transform(df_filtered["item_id"])
+        df_train_part["item_id"] = env.lbe_item.transform(df_train_part["item_id"])
 
-        num_each = int(np.ceil(len(df_filtered) / num_bins))
-        env.max_turn = num_each
-        buffer_size = num_each * num_bins
-        buffer = VectorReplayBuffer(buffer_size, num_bins)
+        func_replace_user = np.vectorize(lambda x: x if x in env.lbe_user.classes_ else np.random.choice(env.lbe_user.classes_))
+        users_replaced = func_replace_user(df_train_part["user_id"].to_numpy().astype(int))
 
-
-        ind_pair = zip(np.arange(0, buffer_size, num_each), np.arange(num_each, buffer_size + num_each, num_each))
-        for ind_buffer, (left, right) in tqdm(enumerate(ind_pair), total=num_bins,
-                                              desc="preparing offline data into buffer..."):
-            seq = df_filtered.iloc[int(left):int(right)]
-
-            items = [-1] + seq["item_id"].to_list()
-            rewards = seq[args.yfeat].to_numpy()
-            np_ui_pair = np.vstack([np.ones_like(items) * dummy_user, items]).T
-
-            env.reset()
-            env.cur_user = dummy_user
-            terminateds = np.zeros(len(rewards), dtype=bool)
-            truncateds = np.zeros(len(rewards), dtype=bool)
-
-            for k, item in enumerate(items[1:]):
-                obs_next, rew, terminated, truncated, info = env.step(item)
-                if terminated or truncated:  
-                    env.reset()
-                    env.cur_user = dummy_user
-                terminateds[k] = terminated
-                truncateds[k] = truncated
-                terminateds[-1] = True
-                # print(env.cur_user, obs_next, rew, done, info)
-
-            batch = Batch(obs=np_ui_pair[:-1], obs_next=np_ui_pair[1:], act=items[1:],
-                          policy={}, info={}, rew=rewards, terminated=terminateds, truncated=truncateds)
-
-            # print(batch)
-            # assert False
-            ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * ind_buffer)
-            
-
-        return buffer
+        df_train_part["user_id"] = env.lbe_user.transform(users_replaced)
 
     elif args.env == 'YahooEnv-v0':
         df_user_num_mapped = df_user_num.iloc[:len(env.mat)]
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]]
+
     else:  # KuaiRand-v0 and CoatEnv-v0
         df_user_num_mapped = df_user_num
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]]
 
 
+    MIN = df_train[args.yfeat].min()
+    MAX = df_train[args.yfeat].max()
+    Max_Min_Scaler = lambda x : (x-MIN)/(MAX-MIN)
+    df_train_part[args.yfeat] = df_train_part[args.yfeat].apply(Max_Min_Scaler)
+    
     bins_ind, max_size, buffer_size = evenly_distribute_trajectories_to_bins(df_user_num_mapped, num_bins)
     buffer = VectorReplayBuffer(buffer_size, num_bins)
 
     # env.max_turn = max_size
 
-    df_user_items = df_train[["user_id", "item_id", args.yfeat]].groupby("user_id").agg(list)
+    # df_user_items = df_train_part[["user_id", "item_id", args.yfeat]].groupby("user_id").agg(list)
+
+    df_user_items = df_train_part.groupby("user_id").agg(list)
     for indices, users in tqdm(bins_ind.items(), total=len(bins_ind), desc="preparing offline data into buffer..."):
         for user in users:
             (user_reset, item_reset), info = env.reset()
             env.cur_user = user
             # env.state = np.array([user, item_reset])
-            env.action
+            # env.action
 
             # items = [item_reset] + df_user_items.loc[user][0]
-            items = df_user_items.loc[user][0]
-            rewards = df_user_items.loc[user][1]
+            items = df_user_items.loc[user]["item_id"]
+            rewards = df_user_items.loc[user][args.yfeat]
             np_ui_pair = np.vstack([np.ones_like(items) * user, items]).T
 
             terminateds = np.zeros(len(rewards), dtype=bool)
@@ -458,13 +435,18 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict, 
 
 
 def learn_policy(args, env, dataset, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
-                 logger_path, is_onpolicy=True):
+                 logger_path, is_onpolicy=True, is_offline=False):
     # log
     # log_path = os.path.join(args.logdir, args.env, 'a2c')
     # writer = SummaryWriter(log_path)
     # logger1 = TensorboardLogger(writer)
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
+
+    if is_offline:
+        buffer = train_collector
+        train_collector = None
+        assert isinstance(buffer, ReplayBuffer)
 
     df_val, df_user_val, df_item_val, list_feat = dataset.get_val_data()
     item_feat_domination = dataset.get_domination()
@@ -481,47 +463,66 @@ def learn_policy(args, env, dataset, policy, train_collector, test_collector_set
         LoggerEval_Policy(args.force_length, metrics)]
     model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
 
-    # trainer
-    if is_onpolicy:
-        result = onpolicy_trainer(
-            policy,
-            train_collector,
-            test_collector_set,
-            args.epoch,
-            args.step_per_epoch,
-            args.repeat_per_collect,
-            args.test_num,
-            args.batch_size,
-            episode_per_collect=args.episode_per_collect,
-            # stop_fn=stop_fn,
-            # save_best_fn=save_best_fn,
-            # logger=logger1,
-            save_model_fn=functools.partial(save_model_fn,
-                                            model_save_path=model_save_path,
-                                            state_tracker=state_tracker,
-                                            optim=optim,
-                                            is_save=args.is_save)
-        )
-    else:
-        result = offpolicy_trainer(	
-            policy,	
-            train_collector,	
-            test_collector_set,	
-            args.epoch,	
-            args.step_per_epoch,	
-            args.step_per_collect,  ## yyq	
-            args.test_num,	
-            args.batch_size,	
-            update_per_step=args.update_per_step,  ## yyq	
-            # stop_fn=stop_fn,	
-            # save_best_fn=save_best_fn,	
-            # logger=logger1,	
-            save_model_fn=functools.partial(save_model_fn,	
-                                            model_save_path=model_save_path,	
-                                            state_tracker=state_tracker,	
-                                            optim=optim,	
-                                            is_save=args.is_save)
-        )
+    if is_offline:
+        result = offline_trainer(
+        policy,
+        buffer,
+        test_collector_set,
+        args.epoch,
+        args.step_per_epoch,
+        args.test_num,
+        args.batch_size,
+        # save_best_fn=save_best_fn,
+        # stop_fn=stop_fn,
+        # logger=logger1,
+        save_model_fn=functools.partial(save_model_fn,
+                                        model_save_path=model_save_path,
+                                        state_tracker=state_tracker,
+                                        optim=optim,
+                                        is_save=args.is_save)
+    )
+
+    else: # Non offline trainer
+        if is_onpolicy:
+            result = onpolicy_trainer(
+                policy,
+                train_collector,
+                test_collector_set,
+                args.epoch,
+                args.step_per_epoch,
+                args.repeat_per_collect,
+                args.test_num,
+                args.batch_size,
+                episode_per_collect=args.episode_per_collect,
+                # stop_fn=stop_fn,
+                # save_best_fn=save_best_fn,
+                # logger=logger1,
+                save_model_fn=functools.partial(save_model_fn,
+                                                model_save_path=model_save_path,
+                                                state_tracker=state_tracker,
+                                                optim=optim,
+                                                is_save=args.is_save)
+            )
+        else:
+            result = offpolicy_trainer(	
+                policy,	
+                train_collector,	
+                test_collector_set,	
+                args.epoch,	
+                args.step_per_epoch,	
+                args.step_per_collect,  ## yyq	
+                args.test_num,	
+                args.batch_size,	
+                update_per_step=args.update_per_step,  ## yyq	
+                # stop_fn=stop_fn,	
+                # save_best_fn=save_best_fn,	
+                # logger=logger1,	
+                save_model_fn=functools.partial(save_model_fn,	
+                                                model_save_path=model_save_path,	
+                                                state_tracker=state_tracker,	
+                                                optim=optim,	
+                                                is_save=args.is_save)
+            )
 
     print(__file__)
     pprint.pprint(result)

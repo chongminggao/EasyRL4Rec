@@ -34,7 +34,7 @@ def walk_paths(result_dir):
     return files
 
 
-def organize_df(dfs, ways, metrics):
+def organize_df(dfs, ways, metrics, rename_cols=None):
     indices = [list(dfs.keys()), ways, metrics]
 
     df_all = pd.DataFrame(columns=pd.MultiIndex.from_product(indices, names=["Exp", "ways", "metrics"]))
@@ -68,6 +68,11 @@ def organize_df(dfs, ways, metrics):
     df_all.rename(
         columns=all_method_map,
         level=2, inplace=True)
+    
+    if rename_cols:
+        df_all.rename(
+            columns=rename_cols,
+            level=2, inplace=True)
 
     df_all.rename(
         columns={"CIRSwoCI": 'CIRS w/o CI',
@@ -170,9 +175,13 @@ def handle_one_col(df_metric, final_rate, is_largest):
     std = df_metric[res_start:].std()
 
     # mean.nlargest(2).index[1]
-    res_latex = pd.Series(map(lambda mean, std: f"${mean:.4f}\pm {std:.4f}$", mean, std),
+    # res_latex = pd.Series(map(lambda mean, std: f"${mean:.4f}\pm {std:.4f}$", mean, std),
+    #                       index=mean.index)
+    # res_excel = pd.Series(map(lambda mean, std: f"{mean:.4f}+{std:.4f}", mean, std),
+    #                       index=mean.index)
+    res_latex = pd.Series(map(lambda mean: f"${mean:.4f}$", mean),
                           index=mean.index)
-    res_excel = pd.Series(map(lambda mean, std: f"{mean:.4f}+{std:.4f}", mean, std),
+    res_excel = pd.Series(map(lambda mean: f"{mean:.4f}", mean),
                           index=mean.index)
     res_avg = mean
 
@@ -185,9 +194,10 @@ def handle_one_col(df_metric, final_rate, is_largest):
 def handle_table(df_all, final_rate=1, methods=['DORL', 'MOPO', 'MBPO', 'IPS', 'BCQ', 'CQL', 'CRR', 'SQN', r'$\epsilon$-greedy', "UCB"]):
     df_all.rename(columns={"FB": "Free", "NX_0_": r"No Overlapping", "NX_10_": r"No Overlapping with 10 turns"},
                   level=0, inplace=True)
-    df_all.rename(columns={"R_tra": r"$\text{R}_\text{tra}$", "ifeat_feat": "MCD",
+    df_all.rename(columns={"R_tra": r"$\text{R}_\text{cumu}$", "ifeat_feat": "MCD",
                            "CV_turn": r"$\text{CV}_\text{M}$", "len_tra": "Length",
-                           "ctr": r"$\text{R}_\text{each}$"}, level=1,
+                           "ctr": r"$\text{R}_\text{avg}$",
+                           "CV": "Cov", "Diversity": "Div", "Novelty": "Nov"}, level=1,
                   inplace=True)
     df_all.rename(columns={"epsilon-greedy": r'$\epsilon$-greedy'}, inplace=True)
 

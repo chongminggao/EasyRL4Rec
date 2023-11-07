@@ -10,7 +10,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, prepare_test_envs, setup_state_tracker
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -100,56 +100,6 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
     return rec_policy, test_collector_set, optim
 
 
-def learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path):
-    # log
-    # t0 = datetime.datetime.now().strftime("%m%d_%H%M%S")
-    # log_file = f'seed_{args.seed}_{t0}-{args.env.replace("-", "_")}_sqn'
-    # log_path = os.path.join(args.logdir, args.env, 'sqn', log_file)
-    # writer = SummaryWriter(log_path)
-    # writer.add_text("args", str(args))
-    # logger1 = TensorboardLogger(writer)
-    # def save_best_fn(policy):
-    #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
-
-    df_val, df_user_val, df_item_val, list_feat = dataset.get_val_data()
-    item_feat_domination = dataset.get_domination()
-    item_similarity, item_popularity = dataset.get_item_similarity(), dataset.get_item_popularity()
-
-    # set metrics and related evaluator
-    metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
-
-    policy.callbacks = [
-        Evaluator_Feat(test_collector_set, df_item_val, args.need_transform, item_feat_domination,
-                                lbe_item=env.lbe_item if args.need_transform else None, top_rate=args.top_rate, draw_bar=args.draw_bar),
-        Evaluator_Coverage_Count(test_collector_set, df_item_val, args.need_transform),
-        Evaluator_User_Experience(test_collector_set, df_item_val, item_similarity, item_popularity,
-                                  args.need_transform, lbe_item=env.lbe_item if args.need_transform else None),
-        LoggerEval_Policy(args.force_length, metrics)]
-
-    model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
-
-    result = offline_trainer(
-        policy,
-        buffer,
-        test_collector_set,
-        args.epoch,
-        args.step_per_epoch,
-        args.test_num,
-        args.batch_size,
-        # save_best_fn=save_best_fn,
-        # stop_fn=stop_fn,
-        # logger=logger1,
-        save_model_fn=functools.partial(save_model_fn,
-                                        model_save_path=model_save_path,
-                                        state_tracker=state_tracker,
-                                        optim=optim,
-                                        is_save=args.is_save)
-    )
-
-    print(__file__)
-    pprint.pprint(result)
-    logger.info(result)
-
 
 def main(args):
     # %% 1. Prepare the saved path.
@@ -165,7 +115,7 @@ def main(args):
     policy, test_collector_set, optim = setup_policy_model(args, state_tracker, buffer, test_envs_dict)
 
     # %% 4. Learn policy
-    learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path)
+    learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path, is_offline=True)
 
 
 if __name__ == '__main__':
