@@ -17,15 +17,12 @@ environments/VirtualTaobao
 environments/RL4Rec/*
 
 saved_models/
-visualization/figures
-visualization/results
 
 *.zip
-results_for_paper/*.pdf
 *.pdf
 *.pth
-# *.png
-#results_for_paper/
+*.png
+results_for_paper/
 
 *.egg*
 events.*

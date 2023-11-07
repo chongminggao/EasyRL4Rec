@@ -47,14 +47,14 @@ def get_args_QRDQN():
     parser.add_argument('--clip-loss-grad', action="store_true", default=False)
     parser.add_argument('--num-quantiles', type=int, default=200)
 
-    parser.add_argument('--step-per-collect', type=int, default=2000)
-    parser.add_argument('--training-num', type=int, default=100)
-    parser.add_argument('--batch-size', type=int, default=64)
-
     parser.add_argument('--is_random_init', dest='random_init', action='store_true')
     parser.add_argument('--no_random_init', dest='random_init', action='store_false')
     parser.set_defaults(random_init=True)
 
+    parser.add_argument('--step-per-epoch', type=int, default=10000)
+    parser.add_argument('--step-per-collect', type=int, default=100)
+    parser.add_argument('--training-num', type=int, default=100)
+    parser.add_argument('--batch-size', type=int, default=64)
     parser.add_argument('--update-per-step', type=float, default=0.1)
     parser.add_argument('--prioritized-replay', action="store_true", default=False)
     parser.add_argument('--alpha', type=float, default=0.6)

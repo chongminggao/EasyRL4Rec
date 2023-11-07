@@ -60,8 +60,8 @@ class KuaiData(BaseData):
         if os.path.isfile(feature_domination_path):
             item_feat_domination = pickle.load(open(feature_domination_path, 'rb'))
         else:
-            # item_feat_domination = self.get_sorted_domination_features(
-            #     df_data, df_item, is_multi_hot=True, yname="watch_ratio_normed", threshold=0.6)
+            item_feat_domination = self.get_sorted_domination_features(
+                df_data, df_item, is_multi_hot=True, yname="watch_ratio_normed", threshold=0.6)
             pickle.dump(item_feat_domination, open(feature_domination_path, 'wb'))
         return item_feat_domination
     
@@ -323,7 +323,7 @@ def compute_exposure_effect_kuaiRec(df_x, timestamp, list_feat, tau, MODEL_SAVE_
         exposure_pos = exposure_pos_df.to_numpy()
         return exposure_pos
 
-    similarity_mat = get_similarity_mat(list_feat, DATAPATH)
+    similarity_mat = KuaiData.get_similarity_mat(list_feat, DATAPATH)
 
     distance_mat = 1 / similarity_mat
 

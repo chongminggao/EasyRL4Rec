@@ -48,15 +48,15 @@ def get_args_C51():
     parser.add_argument('--num-atoms', type=int, default=51)
     parser.add_argument('--v-min', type=float, default=-10.)
     parser.add_argument('--v-max', type=float, default=10.)
-    
-    parser.add_argument('--step-per-collect', type=int, default=2000)
-    parser.add_argument('--training-num', type=int, default=100)
-    parser.add_argument('--batch-size', type=int, default=64)
 
     parser.add_argument('--is_random_init', dest='random_init', action='store_true')
     parser.add_argument('--no_random_init', dest='random_init', action='store_false')
     parser.set_defaults(random_init=True)
 
+    parser.add_argument('--step-per-epoch', type=int, default=10000)
+    parser.add_argument('--step-per-collect', type=int, default=100)
+    parser.add_argument('--training-num', type=int, default=100)
+    parser.add_argument('--batch-size', type=int, default=64)
     parser.add_argument('--update-per-step', type=float, default=0.125)
     parser.add_argument('--prioritized-replay', action="store_true", default=False)
     parser.add_argument('--alpha', type=float, default=0.6)
