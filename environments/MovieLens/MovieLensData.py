@@ -4,8 +4,8 @@ import pickle
 import pandas as pd
 import numpy as np
 
+sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from environments.BaseData import BaseData, get_distance_mat
-sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
@@ -112,5 +112,8 @@ class MovieLensData(BaseData):
 
 
 if __name__ == "__main__":
-    MovieLensData.load_mat()
-    
+    dataset = MovieLensData()
+    df_train, df_user_train, df_item_train, _ = dataset.get_train_data()
+    df_val, df_user_val, df_item_val, _ = dataset.get_val_data()
+    print("MovieLens-1M: Train #user={}  #item={}  #inter={}".format(df_train['user_id'].nunique(), df_train['item_id'].nunique(), len(df_train)))
+    print("MovieLens-1M: Test  #user={}  #item={}  #inter={}".format(df_val['user_id'].nunique(), df_val['item_id'].nunique(), len(df_val)))
