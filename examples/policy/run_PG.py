@@ -38,7 +38,6 @@ def get_args_PG():
     parser.add_argument('--rew-norm', action="store_true", default=False)
     parser.add_argument('--action-scaling', action="store_true", default=True)
     parser.add_argument('--action-bound-method', type=str, default="clip")
-    parser.add_argument('--deterministic-eval', action="store_true", default=False)
 
     parser.add_argument("--read_message", type=str, default="UM")
     parser.add_argument("--message", type=str, default="PG")
@@ -83,7 +82,6 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         action_space=Discrete(args.action_shape),
         action_scaling=args.action_scaling,
         action_bound_method=args.action_bound_method,  # clip by default
-        deterministic_eval=args.deterministic_eval   
     )
 
     rec_policy = RecPolicy(args, policy, state_tracker)

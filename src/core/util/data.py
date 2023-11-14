@@ -42,6 +42,20 @@ def get_env_args(args):
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
 
+    elif env == "MovieLensEnv-v0":
+        parser.set_defaults(is_userinfo=True)
+        parser.set_defaults(is_binarize=True)
+        parser.set_defaults(need_transform=False)
+        # args.entropy_on_user = True
+        parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
+        parser.add_argument("--rating_threshold", type=float, default=4)
+        parser.add_argument("--yfeat", type=str, default="rating")
+
+        parser.add_argument('--leave_threshold', default=120, type=float)
+        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--max_turn', default=30, type=int)
+        # parser.add_argument('--window_size', default=3, type=int)
+
     elif env == "KuaiRand-v0":
         parser.set_defaults(is_userinfo=False)
         parser.set_defaults(is_binarize=True)
@@ -109,6 +123,19 @@ def get_true_env(args, read_user_num=None):
 
         env = YahooEnv(**kwargs_um)
         dataset = YahooData()
+    elif args.env == "MovieLensEnv-v0":
+        from environments.MovieLens.MovieLensEnv import MovieLensEnv
+        from environments.MovieLens.MovieLensData import MovieLensData
+        mat, mat_distance = MovieLensEnv.load_env_data()
+        kwargs_um = {"mat": mat,
+                     "mat_distance": mat_distance,
+                     "num_leave_compute": args.num_leave_compute,
+                     "leave_threshold": args.leave_threshold,
+                     "max_turn": args.max_turn,
+                     "random_init": args.random_init}
+
+        env = MovieLensEnv(**kwargs_um)
+        dataset = MovieLensData()
     elif args.env == "KuaiRand-v0":
         from environments.KuaiRand_Pure.KuaiRandEnv import KuaiRandEnv
         from environments.KuaiRand_Pure.KuaiRandData import KuaiRandData

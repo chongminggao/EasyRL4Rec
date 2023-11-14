@@ -102,6 +102,12 @@ def get_args_dataset_specific(envname):
         parser.add_argument('--batch_size', default=128, type=int)
         parser.add_argument('--leave_threshold', default=120, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
+    elif envname == 'MovieLensEnv-v0':
+        parser.add_argument("--feature_dim", type=int, default=8)
+        parser.add_argument("--entity_dim", type=int, default=8)
+        parser.add_argument('--batch_size', default=128, type=int)
+        parser.add_argument('--leave_threshold', default=120, type=float)
+        parser.add_argument('--num_leave_compute', default=3, type=int)
     elif envname == 'KuaiEnv-v0':
         parser.add_argument('--neg_K', default=3, type=int)
         parser.add_argument("--feature_dim", type=int, default=8)
@@ -131,6 +137,8 @@ def get_datapath(envname):
         DATAPATH = os.path.join(CODEPATH, "environments", "coat")
     elif envname == 'YahooEnv-v0':
         DATAPATH = os.path.join(CODEPATH, "environments", "YahooR3")
+    elif envname == 'MovieLensEnv-v0':
+        DATAPATH = os.path.join(CODEPATH, "environments", "MovieLens")
     elif envname == 'KuaiEnv-v0':
         DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRec", "data")
     elif envname == 'KuaiRand-v0':
@@ -333,6 +341,9 @@ def get_task(envname, yfeat):
         task = "regression"
         is_ranking = True
     elif envname == 'YahooEnv-v0':
+        task = "regression"
+        is_ranking = True
+    elif envname == 'MovieLensEnv-v0':
         task = "regression"
         is_ranking = True
     elif envname == 'KuaiEnv-v0':

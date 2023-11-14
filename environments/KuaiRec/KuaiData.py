@@ -8,8 +8,8 @@ from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix
 
+sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from environments.BaseData import BaseData
-sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
@@ -323,7 +323,7 @@ def compute_exposure_effect_kuaiRec(df_x, timestamp, list_feat, tau, MODEL_SAVE_
         exposure_pos = exposure_pos_df.to_numpy()
         return exposure_pos
 
-    similarity_mat = get_similarity_mat(list_feat, DATAPATH)
+    similarity_mat = KuaiData.get_similarity_mat(list_feat, DATAPATH)
 
     distance_mat = 1 / similarity_mat
 
@@ -350,3 +350,10 @@ def compute_exposure_effect_kuaiRec(df_x, timestamp, list_feat, tau, MODEL_SAVE_
 
     return exposure_pos
 
+
+if __name__ == "__main__":
+    dataset = KuaiData()
+    df_train, df_user_train, df_item_train, _ = dataset.get_train_data()
+    df_val, df_user_val, df_item_val, _ = dataset.get_val_data()
+    print("KuaiRec: Train #user={}  #item={}  #inter={}".format(df_train['user_id'].nunique(), df_train['item_id'].nunique(), len(df_train)))
+    print("KuaiRec: Test  #user={}  #item={}  #inter={}".format(df_val['user_id'].nunique(), df_val['item_id'].nunique(), len(df_val)))

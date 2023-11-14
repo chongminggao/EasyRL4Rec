@@ -12,11 +12,11 @@ DATAPATH = os.path.join(ROOTPATH, "data_raw")
 PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
-class YahooData(BaseData):
+class MovieLensData(BaseData):
     def __init__(self):
-        super(YahooData, self).__init__()
-        self.train_data_path = "ydata-ymusic-rating-study-v1_0-train.txt"
-        self.val_data_path = "ydata-ymusic-rating-study-v1_0-test.txt"
+        super(MovieLensData, self).__init__()
+        self.train_data_path = "movielen-1m-train.csv"
+        self.val_data_path = "movielen-1m-test.csv"
         
     def get_features(self, is_userinfo=None):
         user_features = ["user_id"]
@@ -24,10 +24,11 @@ class YahooData(BaseData):
         reward_features = ["rating"]
         return user_features, item_features, reward_features
 
-    def get_df(self, name="ydata-ymusic-rating-study-v1_0-train.txt"):
+    def get_df(self, name="movielen-1m-train.csv"):
         # read interaction
         filename = os.path.join(DATAPATH, name)
-        df_data = pd.read_csv(filename, sep="\s+", header=None, names=["user_id", "item_id", "rating"])
+        #df_data = pd.read_csv(filename, sep="\s+", header=None, names=["user_id", "item_id", "rating"])
+        df_data = pd.read_csv(filename,  header=0, names=["user_id", "item_id", "rating"])
 
         df_data["user_id"] -= 1
         df_data["item_id"] -= 1
@@ -46,8 +47,8 @@ class YahooData(BaseData):
         if os.path.isfile(item_similarity_path):
             item_similarity = pickle.load(open(item_similarity_path, 'rb'))
         else:
-            mat = YahooData.load_mat()
-            mat_distance = YahooData.get_saved_distance_mat(mat)
+            mat = MovieLensData.load_mat()
+            mat_distance = MovieLensData.get_saved_distance_mat(mat)
             item_similarity = 1 / (mat_distance + 1)
             pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
         return item_similarity
@@ -58,7 +59,7 @@ class YahooData(BaseData):
         if os.path.isfile(item_popularity_path):
             item_popularity = pickle.load(open(item_popularity_path, 'rb'))
         else:
-            df_data, df_user, df_item, list_feat = self.get_df("ydata-ymusic-rating-study-v1_0-train.txt")
+            df_data, df_user, df_item, list_feat = self.get_df("movielen-1m-train.csv")
 
             n_users = df_data['user_id'].nunique()
             n_items = df_data['item_id'].nunique()
@@ -78,20 +79,23 @@ class YahooData(BaseData):
         return item_popularity
 
     def load_user_feat(self):
-        df_user = pd.DataFrame(np.arange(15400), columns=["user_id"])
+        df_user = pd.DataFrame(np.arange(6040), columns=["user_id"])
         df_user.set_index("user_id", inplace=True)
         return df_user
 
     def load_item_feat(self):
-        df_item = pd.DataFrame(np.arange(1000), columns=["item_id"])
+        df_item = pd.DataFrame(np.arange(3952), columns=["item_id"])
         df_item.set_index("item_id", inplace=True)
         return df_item
 
 
     @staticmethod
     def load_mat():
-        filename_GT = os.path.join(DATAPATH, "RL4Rec_data", "yahoo_pseudoGT_ratingM.ascii")
-        mat = pd.read_csv(filename_GT, sep="\s+", header=None, dtype=str).to_numpy(dtype=int)
+        #filename_GT = os.path.join(DATAPATH, "RL4Rec_data", "yahoo_pseudoGT_ratingM.ascii")
+        filename_GT = os.path.join(DATAPATH, "movielen.csv")
+        #mat = pd.read_csv(filename_GT, sep="\s+", header=None, dtype=str).to_numpy(dtype=int)
+        mat = pd.read_csv(filename_GT, header=0).to_numpy(dtype=int)
+        mat = mat.T
         return mat
 
     @staticmethod
@@ -108,8 +112,8 @@ class YahooData(BaseData):
 
 
 if __name__ == "__main__":
-    dataset = YahooData()
+    dataset = MovieLensData()
     df_train, df_user_train, df_item_train, _ = dataset.get_train_data()
     df_val, df_user_val, df_item_val, _ = dataset.get_val_data()
-    print("YahooR3: Train #user={}  #item={}  #inter={}".format(df_train['user_id'].nunique(), df_train['item_id'].nunique(), len(df_train)))
-    print("YahooR3: Test  #user={}  #item={}  #inter={}".format(df_val['user_id'].nunique(), df_val['item_id'].nunique(), len(df_val)))
+    print("MovieLens-1M: Train #user={}  #item={}  #inter={}".format(df_train['user_id'].nunique(), df_train['item_id'].nunique(), len(df_train)))
+    print("MovieLens-1M: Test  #user={}  #item={}  #inter={}".format(df_val['user_id'].nunique(), df_val['item_id'].nunique(), len(df_val)))
