@@ -120,7 +120,6 @@ def main(args, is_save=False):
 
     # %% 6. Save model
     if is_save:
-        ensemble_models.get_save_entropy_mat(dataset, args.entropy_window)
         ensemble_models.save_all_models(dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
                                         dataset, args.is_userinfo, args.deterministic)
 

@@ -123,7 +123,6 @@ def main(args):
                                             callbacks=[LoggerEval_UserModel()])
 
     # %% 6. Save model
-    # ensemble_models.get_save_entropy_mat(dataset, args.entropy_window)
     ensemble_models.save_all_models(dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
                                     dataset, args.is_userinfo, args.deterministic)
 
