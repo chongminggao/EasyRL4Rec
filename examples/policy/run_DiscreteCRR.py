@@ -56,7 +56,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         args.action_shape,
         hidden_sizes=args.hidden_sizes,
         device=args.device,
-        softmax_output=False
+        # softmax_output=False  # 如果不经过softmax, dist概率采样会有bug
     )
     critic = Critic(
         net,

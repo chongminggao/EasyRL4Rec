@@ -106,6 +106,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         VectorReplayBuffer(args.buffer_size, len(train_envs)),
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
+        remove_recommended_ids = args.remove_recommended_ids
     )
 
     test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,

@@ -33,7 +33,7 @@ except ImportError:
 
 def get_args_PPO():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", type=str, default="DiscretePPO")
+    parser.add_argument("--model_name", type=str, default="PPO")
     # ppo special
     parser.add_argument('--vf-coef', type=float, default=0.5)
     parser.add_argument('--ent-coef', type=float, default=0.0)
@@ -47,7 +47,7 @@ def get_args_PPO():
     parser.add_argument('--value-clip', action="store_true", default=False)
 
     parser.add_argument("--read_message", type=str, default="UM")
-    parser.add_argument("--message", type=str, default="DiscretePPO")
+    parser.add_argument("--message", type=str, default="PPO")
 
     args = parser.parse_known_args()[0]
     return args
@@ -108,6 +108,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         VectorReplayBuffer(args.buffer_size, len(train_envs)),
         # preprocess_fn=state_tracker.build_state,
         exploration_noise=args.exploration_noise,
+        remove_recommended_ids = args.remove_recommended_ids
     )
 
     test_collector_set = CollectorSet(rec_policy, test_envs_dict, args.buffer_size, args.test_num,

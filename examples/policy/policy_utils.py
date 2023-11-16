@@ -48,6 +48,9 @@ def get_args_all():
     parser.add_argument("--user_model_name", type=str, default="DeepFM")
     parser.add_argument('--seed', default=2022, type=int)
     parser.add_argument('--cuda', default=0, type=int)
+    
+    # training
+    parser.add_argument('--remove_recommended_ids', action="store_true", default=False)
 
     parser.add_argument('--is_draw_bar', dest='draw_bar', action='store_true')
     parser.add_argument('--no_draw_bar', dest='draw_bar', action='store_false')

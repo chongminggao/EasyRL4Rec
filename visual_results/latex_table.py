@@ -53,13 +53,10 @@ def main():
     final_rate = 0.25
     force_length = 10
     random_seed = 2023
-    force_length_ways = 'NX_{}_'.format(force_length)
-    ways = {'FB', 'NX_0_', force_length_ways}
-
-    save_sub_dir = "table_NX_{}_{}".format(force_length, random_seed)
-    dirpath = os.path.join(realpath, "result_logs")
-
     env_list = ["CoatEnv-v0"]
+    ways = ['FB', 'NX_0_', 'NX_{}_'.format(force_length)]
+
+    dirpath = os.path.join(realpath, "result_logs")
     load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
 
     save_table_dir = os.path.join(realpath, "tables")
@@ -67,29 +64,33 @@ def main():
     create_dir(create_dirs)
 
     
-    # metrics = {'ctr', 'len_tra', 'R_tra'}
-    metrics = {'CV', 'Diversity', 'Novelty'}
+    metrics = {'ctr', 'len_tra', 'R_tra'}
+    latex_metrics = [r"$\text{R}_\text{cumu}$", r"$\text{R}_\text{avg}$", "Length"]
+    # metrics = {'CV', 'Diversity', 'Novelty'}
+    # latex_metrics = ["Cov", "Div", "Nov"]
 
     rename_cols = {
         "DiscreteBCQ": "BCQ",
         "DiscreteCQL": "CQL",
         "DQN": "DQN",
         "C51": "C51",
+        "DDPG": "DDPG",
+        "TD3": "TD3",
         "PG": "PG",
         "A2C": "A2C",
         "DiscretePPO": "PPO",
+        "ContinuousPG": "PG(C)",
+        "ContinuousA2C": "A2C(C)",
         "ContinuousPPO": "PPO(C)",
     }
 
     dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
 
-    # _used_way = "No Overlapping with {} turns".format(force_length)
-    _used_way = "No Overlapping"
-    # _used_way = "Free"
+    rename_ways = ['Free', 'No Overlapping', "No Overlapping with {} turns".format(force_length)]
+    _used_way = rename_ways[1]
+    savename = "table_{}_{}".format(ways[1], random_seed)
 
-    # latex_metrics = [r"$\text{R}_\text{cumu}$", r"$\text{R}_\text{avg}$", "Length"]
-    latex_metrics = ["Cov", "Div", "Nov"]
-    combile_two_tables(dfs, used_way=_used_way, save_table_dir=save_table_dir, methods=list(rename_cols.values()), metrics=latex_metrics, final_rate=final_rate, savename=save_sub_dir)
+    combile_two_tables(dfs, used_way=_used_way, save_table_dir=save_table_dir, methods=list(rename_cols.values()), metrics=latex_metrics, final_rate=final_rate, savename=savename)
 
 
 if __name__ == '__main__':

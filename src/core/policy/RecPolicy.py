@@ -34,6 +34,7 @@ class RecPolicy(ABC, nn.Module):
 
         # self.slate_size = args.slate_size
         self.slate_size = 1
+        self.remove_recommended_ids = args.remove_recommended_ids
 
     def get_score(self, action_emb, do_softmax = False):
         '''
@@ -84,7 +85,7 @@ class RecPolicy(ABC, nn.Module):
         **kwargs: Any,
     ) -> Batch:
         # batch.obs = self.state_tracker(buffer=buffer, indices=indices, is_seq=is_seq, batch=batch, is_train=is_train, use_batch_in_statetracker=use_batch_in_statetracker)
-        batch.mask = self._get_recommend_mask(remove_recommended_ids, batch.obs.shape[0], buffer)
+        batch.mask, batch.next_mask = self._get_recommend_mask(remove_recommended_ids, batch.obs.shape[0], buffer, indices, stage="Planning")
         batch = self.policy(batch=batch, 
                             buffer=buffer,
                             indices=indices, 
@@ -120,7 +121,8 @@ class RecPolicy(ABC, nn.Module):
         # calculate batch.obs&obs_next using state_tracker for policy to 'learn'
         # batch.obs = self.state_tracker(buffer, indices, is_seq=True)
         # batch.obs_next = self.state_tracker(buffer, indices, is_seq=False)
-        batch.mask = self._get_recommend_mask(False, batch.obs.shape[0], buffer)
+        batch.mask, batch.next_mask = self._get_recommend_mask(self.remove_recommended_ids, batch.obs.shape[0], buffer, indices, stage="Learning")
+        
         batch = self.policy.process_fn(batch, buffer, indices)
         return batch
 
@@ -157,31 +159,43 @@ class RecPolicy(ABC, nn.Module):
     def eval(self, mode: bool = True):
         self.policy.eval()
 
-    def _get_recommend_mask(self, remove_recommended_ids, batch_size, buffer):
-        mask = torch.ones((batch_size, self.n_items), dtype=torch.bool).to(device=self.device)
-        recommended_ids = get_recommended_ids(buffer) if remove_recommended_ids else None
-        if recommended_ids is not None:
-            recommended_ids_torch = torch.LongTensor(recommended_ids).to(device=self.device)
-            mask = mask.scatter(1, recommended_ids_torch, 0)
-        return mask.detach()
+    def _get_recommend_mask(self, remove_rec_ids, batch_size, buffer, indices, stage="Planning"):
+        obs_mask = torch.ones((batch_size, self.n_items+1), dtype=torch.bool).to(device=self.device)  # acts=n_items when is dead 最后进行处理
+        obs_next_mask = torch.ones((batch_size, self.n_items+1), dtype=torch.bool).to(device=self.device)
+        if remove_rec_ids:
+            obs_rec_ids, obs_next_rec_ids = get_rec_ids(buffer, indices, stage)
+        else:
+            obs_rec_ids, obs_next_rec_ids = None, None
+        if obs_rec_ids is not None:
+            obs_rec_ids_torch = torch.LongTensor(obs_rec_ids).to(device=self.device)
+            obs_mask = obs_mask.scatter(1, obs_rec_ids_torch, 0)
+        if obs_next_rec_ids is not None:
+            obs_next_rec_ids_torch = torch.LongTensor(obs_next_rec_ids).to(device=self.device)
+            obs_next_mask = obs_next_mask.scatter(1, obs_next_rec_ids_torch, 0)
+        return obs_mask[:, :self.n_items].detach(), obs_next_mask[:, :self.n_items].detach()
 
-def get_recommended_ids(buffer):
+def get_rec_ids(buffer, indices, stage="Planning"):
     if len(buffer) == 0:
-        recommended_ids = None
+        obs_rec_ids, obs_next_rec_ids = None, None
     else:
-        indices = buffer.last_index[~buffer[buffer.last_index].done]
+        if stage == "Planning":  # Planning: indices = last_indices
+            obs_rec_ids = buffer.obs_next[indices][:, 1]
+            obs_next_rec_ids = np.zeros([0, len(indices)], dtype=int)  # 实际上Planning阶段不会用到obs_next_mask，暂时令其等于obs_rec_ids
+        else:  # Learning: indices = current_indices
+            obs_rec_ids = np.zeros([0, len(indices)], dtype=int)
+            obs_next_rec_ids = buffer.obs_next[indices][:, 1]
+  
+        live_ids = np.ones_like(indices, dtype=bool)
+        while any(live_ids):
+            acts = buffer.obs[indices][:, 1]
+            obs_rec_ids = np.vstack([obs_rec_ids, acts])
 
-        # is_alive = True
-        recommended_ids = np.zeros([0, len(indices)], dtype=int)
-        while True:
-            acts = buffer.obs_next[indices][:, 1]  # buffer.act[indices]
-            recommended_ids = np.vstack([recommended_ids, acts])
+            dead = buffer.is_start[indices]  # acts=n_items when is dead 
+            live_ids[dead] = False
+            indices = buffer.prev(indices)   
 
-            if all(indices == buffer.prev(indices)):
-                break
-            assert all(indices != buffer.prev(indices))
+        obs_next_rec_ids = np.vstack([obs_next_rec_ids, obs_rec_ids])  # 初始化后直接拼接上obs_rec_ids
 
-            indices = buffer.prev(indices)
-
-        recommended_ids = recommended_ids.T
-    return recommended_ids
+        obs_rec_ids = obs_rec_ids.T
+        obs_next_rec_ids = obs_next_rec_ids.T
+    return obs_rec_ids, obs_next_rec_ids

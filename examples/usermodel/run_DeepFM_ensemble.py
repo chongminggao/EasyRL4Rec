@@ -92,7 +92,7 @@ def main(args, is_save=True):
     env, dataset, kwargs_um = get_true_env(args, read_user_num=None)
 
     dataset_train, dataset_val, df_user, df_item, df_user_val, df_item_val, x_columns, y_columns, ab_columns = \
-        prepare_dataset(args, dataset, MODEL_SAVE_PATH, DATAPATH)
+        prepare_dataset(args, dataset, MODEL_SAVE_PATH, DATAPATH)  # TODO 修改简化！
 
     # %% 3. Setup model
     task, task_logit_dim, is_ranking = get_task(args.env, args.yfeat)
@@ -108,9 +108,9 @@ def main(args, is_save=True):
 
     # %% 5. Learn and evaluate model
 
-    history_list = ensemble_models.fit_data(dataset_train, dataset_val,
-                                            batch_size=args.batch_size, epochs=args.epoch, shuffle=True,
-                                            callbacks=[LoggerEval_UserModel()])
+    ensemble_models.fit_data(dataset_train, dataset_val,
+                            batch_size=args.batch_size, epochs=args.epoch, shuffle=True,
+                            callbacks=[LoggerEval_UserModel()])
 
     # %% 6. Save model
     if is_save:

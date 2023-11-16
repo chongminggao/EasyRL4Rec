@@ -158,9 +158,11 @@ class StateTracker_Base(nn.Module):
         return normed_r
 
     def convert_to_k_state_embedding(self, buffer=None, indices=None, is_obs=None, batch=None, use_batch_in_statetracker=False, is_train=True):
+        # Planning: indices = last_indices
+        # Learning: indices = current_indices
         if use_batch_in_statetracker: # when collector collects the data, batch is not None.
             assert batch is not None
-            user_item_pair_all = batch.obs
+            user_item_pair_all = batch.obs # 需要多收集一步
             rew_all = batch.rew_prev
             live_mat = np.ones([1, len(user_item_pair_all)], dtype=bool)
             assert is_obs == True
