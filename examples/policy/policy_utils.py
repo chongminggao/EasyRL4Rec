@@ -438,7 +438,7 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict, 
 
 
 def learn_policy(args, env, dataset, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
-                 logger_path, is_onpolicy=True, is_offline=False):
+                 logger_path, trainer="onpolicy"):  # , is_onpolicy=True, is_offline=False
     # log
     # log_path = os.path.join(args.logdir, args.env, 'a2c')
     # writer = SummaryWriter(log_path)
@@ -446,11 +446,7 @@ def learn_policy(args, env, dataset, policy, train_collector, test_collector_set
     # def save_best_fn(policy):
     #     torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
 
-    if is_offline:
-        buffer = train_collector
-        train_collector = None
-        assert isinstance(buffer, ReplayBuffer)
-
+    # Evaluation
     df_val, df_user_val, df_item_val, list_feat = dataset.get_val_data()
     item_feat_domination = dataset.get_domination()
     item_similarity, item_popularity = dataset.get_item_similarity(), dataset.get_item_popularity()
@@ -466,66 +462,73 @@ def learn_policy(args, env, dataset, policy, train_collector, test_collector_set
         LoggerEval_Policy(args.force_length, metrics)]
     model_save_path = os.path.join(MODEL_SAVE_PATH, "{}_{}.pt".format(args.model_name, args.message))
 
-    if is_offline:
+    if trainer == "offline":
+        buffer = train_collector
+        train_collector = None
+        assert isinstance(buffer, ReplayBuffer)
+
         result = offline_trainer(
-        policy,
-        buffer,
-        test_collector_set,
-        args.epoch,
-        args.step_per_epoch,
-        args.test_num,
-        args.batch_size,
-        # save_best_fn=save_best_fn,
-        # stop_fn=stop_fn,
-        # logger=logger1,
-        save_model_fn=functools.partial(save_model_fn,
+            policy,
+            buffer,
+            test_collector_set,
+            args.epoch,
+            args.step_per_epoch,
+            args.test_num,
+            args.batch_size,
+            # save_best_fn=save_best_fn,
+            # stop_fn=stop_fn,
+            # logger=logger1,
+            save_model_fn=functools.partial(save_model_fn,
                                         model_save_path=model_save_path,
                                         state_tracker=state_tracker,
                                         optim=optim,
                                         is_save=args.is_save)
     )
 
-    else: # Non offline trainer
-        if is_onpolicy:
-            result = onpolicy_trainer(
-                policy,
-                train_collector,
-                test_collector_set,
-                args.epoch,
-                args.step_per_epoch,
-                args.repeat_per_collect,
-                args.test_num,
-                args.batch_size,
-                episode_per_collect=args.episode_per_collect,
-                # stop_fn=stop_fn,
-                # save_best_fn=save_best_fn,
-                # logger=logger1,
-                save_model_fn=functools.partial(save_model_fn,
-                                                model_save_path=model_save_path,
-                                                state_tracker=state_tracker,
-                                                optim=optim,
-                                                is_save=args.is_save)
-            )
-        else:
-            result = offpolicy_trainer(	
-                policy,	
-                train_collector,	
-                test_collector_set,	
-                args.epoch,	
-                args.step_per_epoch,	
-                args.step_per_collect,  ## yyq	
-                args.test_num,	
-                args.batch_size,	
-                update_per_step=args.update_per_step,  ## yyq	
-                # stop_fn=stop_fn,	
-                # save_best_fn=save_best_fn,	
-                # logger=logger1,	
-                save_model_fn=functools.partial(save_model_fn,	
-                                                model_save_path=model_save_path,	
-                                                state_tracker=state_tracker,	
-                                                optim=optim,	
-                                                is_save=args.is_save)
-            )
+    elif trainer == "onpolicy":
+        result = onpolicy_trainer(
+            policy,
+            train_collector,
+            test_collector_set,
+            args.epoch,
+            args.step_per_epoch,
+            args.repeat_per_collect,
+            args.test_num,
+            args.batch_size,
+            episode_per_collect=args.episode_per_collect,
+            # stop_fn=stop_fn,
+            # save_best_fn=save_best_fn,
+            # logger=logger1,
+            save_model_fn=functools.partial(save_model_fn,
+                                            model_save_path=model_save_path,
+                                            state_tracker=state_tracker,
+                                            optim=optim,
+                                            is_save=args.is_save)
+        )
+
+    elif trainer == "offpolicy":
+        result = offpolicy_trainer(	
+            policy,	
+            train_collector,	
+            test_collector_set,	
+            args.epoch,	
+            args.step_per_epoch,	
+            args.step_per_collect,
+            args.test_num,	
+            args.batch_size,	
+            update_per_step=args.update_per_step,
+            # stop_fn=stop_fn,	
+            # save_best_fn=save_best_fn,	
+            # logger=logger1,	
+            save_model_fn=functools.partial(save_model_fn,	
+                                            model_save_path=model_save_path,	
+                                            state_tracker=state_tracker,	
+                                            optim=optim,	
+                                            is_save=args.is_save)
+        )
+
+    else:
+        raise ValueError("Unexpected Trainer")
 
     print(__file__)
     pprint.pprint(result)

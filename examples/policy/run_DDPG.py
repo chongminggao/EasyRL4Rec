@@ -135,7 +135,7 @@ def main(args):
 
     # %% 4. Learn policy
     learn_policy(args, env, dataset, policy, train_collector, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH,
-                 logger_path, is_onpolicy=False)
+                 logger_path, trainer="offpolicy")
 
 
 if __name__ == '__main__':

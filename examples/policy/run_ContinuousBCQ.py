@@ -179,7 +179,7 @@ def main(args):
     policy, test_collector_set, optim = setup_policy_model(args, state_tracker, buffer, test_envs_dict)
 
     # %% 4. Learn policy
-    learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path, is_offline=True)
+    learn_policy(args, env, dataset, policy, buffer, test_collector_set, state_tracker, optim, MODEL_SAVE_PATH, logger_path, trainer="offline")
 
 
 if __name__ == '__main__':

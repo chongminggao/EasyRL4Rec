@@ -72,12 +72,14 @@ def main():
     rename_cols = {
         "DiscreteBCQ": "BCQ",
         "DiscreteCQL": "CQL",
+        "DiscreteCRR-softmax": "CRR",
         "DQN": "DQN",
         "C51": "C51",
         "DDPG": "DDPG",
         "TD3": "TD3",
         "PG": "PG",
         "A2C": "A2C",
+        "A2C-remove": "A2C-remove",
         "DiscretePPO": "PPO",
         "ContinuousPG": "PG(C)",
         "ContinuousA2C": "A2C(C)",
@@ -87,8 +89,8 @@ def main():
     dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
 
     rename_ways = ['Free', 'No Overlapping', "No Overlapping with {} turns".format(force_length)]
-    _used_way = rename_ways[1]
-    savename = "table_{}_{}".format(ways[1], random_seed)
+    _used_way = rename_ways[0]
+    savename = "table_{}_{}".format(ways[0], random_seed)
 
     combile_two_tables(dfs, used_way=_used_way, save_table_dir=save_table_dir, methods=list(rename_cols.values()), metrics=latex_metrics, final_rate=final_rate, savename=savename)
 

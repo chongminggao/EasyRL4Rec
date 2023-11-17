@@ -15,8 +15,7 @@ python examples/policy/run_A2C.py     --env CoatEnv-v0  --seed 2023 --cuda 1 --e
 python examples/policy/run_DiscreteCRR.py --env CoatEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat"  --window_size 3 --read_message "pointneg"  --message "DiscreteCRR-softmax"
 python examples/policy/run_DiscreteCQL.py --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 100 --which_tracker avg --reward_handle "cat"  --num-quantiles 20 --min-q-weight 10 --window_size 3 --read_message "pointneg"  --message "DiscreteCQL"
 python examples/policy/run_DiscreteBCQ.py --env CoatEnv-v0  --seed 2023 --cuda 2 --epoch 100 --which_tracker avg --reward_handle "cat"  --unlikely-action-threshold 0.6 --window_size 3 --read_message "pointneg"  --message "DiscreteBCQ"
-
-python examples/policy/run_ContinuousBCQ.py --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 3 --which_tracker avg --reward_handle "cat"  --window_size 3 --read_message "pointneg"  --message "ContinuousBCQ"
+# python examples/policy/run_ContinuousBCQ.py --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 3 --which_tracker avg --reward_handle "cat"  --window_size 3 --read_message "pointneg"  --message "ContinuousBCQ"
 
 
 # 2. Online RL with User Model (Model-based or simulation-based RL) 
@@ -30,11 +29,12 @@ python examples/policy/run_PPO.py           --env CoatEnv-v0  --seed 2023 --cuda
 python examples/policy/run_ContinuousPPO.py --env CoatEnv-v0  --seed 2023 --cuda 2 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "ContinuousPPO"
 
 # 2.2 offpolicy
-python examples/policy/run_DQN.py     --env CoatEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DQN"
+python examples/policy/run_DQN.py     --env CoatEnv-v0  --seed 2023 --cuda 1 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DQN"
+python examples/policy/run_DQN.py     --env CoatEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --remove_recommended_ids --message "DQN-remove"
 python examples/policy/run_DQN.py     --env CoatEnv-v0  --seed 2023 --cuda 1 --step-per-collect 200 --step-per-epoch 10000 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DQN-1w-200"
 python examples/policy/run_DQN.py     --env CoatEnv-v0  --seed 2023 --cuda 2 --step-per-collect 200 --step-per-epoch 20000 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DQN-2w-200"
 python examples/policy/run_QRDQN.py   --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "QRDQN"
-python examples/policy/run_C51.py     --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "C51-remove"
+python examples/policy/run_C51.py     --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --remove_recommended_ids --message "C51-remove"
 python examples/policy/run_DDPG.py    --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DDPG"
 python examples/policy/run_TD3.py     --env CoatEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "TD3"
 
