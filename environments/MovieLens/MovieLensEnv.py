@@ -13,6 +13,7 @@ from environments.MovieLens.MovieLensData import MovieLensData
 #DATAPATH = ROOTPATH
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
+PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 
@@ -39,7 +40,7 @@ class MovieLensEnv(BaseEnv):
         mat = MovieLensData.load_mat()
         lbe_user, lbe_item = MovieLensData.get_lbe()
         #print(mat.shape)
-        mat_distance = MovieLensData.get_saved_distance_mat(mat)
+        mat_distance = MovieLensData.get_saved_distance_mat(mat, PRODATAPATH)
         #print(mat.shape)
         
         # np.percentile(mat_distance, 30)

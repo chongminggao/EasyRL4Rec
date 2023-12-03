@@ -51,7 +51,7 @@ class YahooData(BaseData):
             item_similarity = pickle.load(open(item_similarity_path, 'rb'))
         else:
             mat = YahooData.load_mat()
-            mat_distance = YahooData.get_saved_distance_mat(mat)
+            mat_distance = YahooData.get_saved_distance_mat(mat, PRODATAPATH)
             item_similarity = 1 / (mat_distance + 1)
             pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
         return item_similarity
@@ -98,18 +98,6 @@ class YahooData(BaseData):
         filename_GT = os.path.join(DATAPATH, "RL4Rec_data", "yahoo_pseudoGT_ratingM.ascii")
         mat = pd.read_csv(filename_GT, sep="\s+", header=None, dtype=str).to_numpy(dtype=int)
         return mat
-
-    @staticmethod
-    def get_saved_distance_mat(mat):
-        distance_mat_path = os.path.join(PRODATAPATH, f"distance_mat.pickle")
-        if os.path.isfile(distance_mat_path):
-            mat_distance = pickle.load(open(distance_mat_path, "rb"))
-        else:
-            num_item = mat.shape[1]
-            distance = np.zeros([num_item, num_item])
-            mat_distance = get_distance_mat(mat, distance)
-            pickle.dump(mat_distance, open(distance_mat_path, 'wb'))
-        return mat_distance
 
 
 if __name__ == "__main__":

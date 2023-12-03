@@ -9,6 +9,7 @@ from environments.YahooR3.YahooData import YahooData
 
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
+PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 class YahooEnv(BaseEnv):
@@ -27,7 +28,7 @@ class YahooEnv(BaseEnv):
     @staticmethod
     def load_env_data():
         mat = YahooData.load_mat()
-        mat_distance = YahooData.get_saved_distance_mat(mat)
+        mat_distance = YahooData.get_saved_distance_mat(mat, PRODATAPATH)
         mat = mat[:5400,:]
         return mat, mat_distance
     

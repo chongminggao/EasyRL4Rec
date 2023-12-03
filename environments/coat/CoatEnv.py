@@ -9,6 +9,7 @@ from environments.coat.CoatData import CoatData
 
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
+PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 class CoatEnv(BaseEnv):
@@ -29,7 +30,7 @@ class CoatEnv(BaseEnv):
     def load_env_data():
         mat = CoatData.load_mat()
         df_item = CoatData.load_item_feat()
-        mat_distance = CoatData.get_saved_distance_mat(mat)
+        mat_distance = CoatData.get_saved_distance_mat(mat, PRODATAPATH)
         return mat, df_item, mat_distance
 
     def _determine_whether_to_leave(self, t, action):

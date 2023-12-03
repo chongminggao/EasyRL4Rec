@@ -66,7 +66,7 @@ class MovieLensData(BaseData):
             item_similarity = pickle.load(open(item_similarity_path, 'rb'))
         else:
             mat = MovieLensData.load_mat()
-            mat_distance = MovieLensData.get_saved_distance_mat(mat)
+            mat_distance = MovieLensData.get_saved_distance_mat(mat, PRODATAPATH)
             item_similarity = 1 / (mat_distance + 1)
             pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
         return item_similarity
@@ -142,6 +142,7 @@ class MovieLensData(BaseData):
     def load_item_feat():
         list_feat, df_feat = MovieLensData.load_category()
         df_item = df_feat
+        print("item features loaded!")
         return df_item
 
     @staticmethod
@@ -166,6 +167,7 @@ class MovieLensData(BaseData):
             df_user[col] += 1
 
         df_user.set_index("user_id", inplace=True)
+        print("user featuers loaded")
         
         return df_user
 
@@ -198,17 +200,6 @@ class MovieLensData(BaseData):
 
         return lbe_user, lbe_item
 
-    @staticmethod
-    def get_saved_distance_mat(mat):
-        distance_mat_path = os.path.join(PRODATAPATH, f"distance_mat.pickle")
-        if os.path.isfile(distance_mat_path):
-            mat_distance = pickle.load(open(distance_mat_path, "rb"))
-        else:
-            num_item = mat.shape[1]
-            distance = np.zeros([num_item, num_item])
-            mat_distance = get_distance_mat(mat, distance)
-            pickle.dump(mat_distance, open(distance_mat_path, 'wb'))
-        return mat_distance
 
 
 if __name__ == "__main__":
