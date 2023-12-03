@@ -11,6 +11,9 @@ ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
 PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
+for path in [PRODATAPATH]:
+    if not os.path.exists(path):
+        os.mkdir(path)
 
 class CoatData(BaseData):
     def __init__(self):
@@ -136,6 +139,7 @@ class CoatData(BaseData):
     
     @staticmethod
     def load_mat():
+        # Note: The data file `coat_pseudoGT_ratingM.ascii` is sourced from the https://github.com/BetsyHJ/RL4Rec repository.
         filename_GT = os.path.join(DATAPATH, "RL4Rec_data", "coat_pseudoGT_ratingM.ascii")
         mat = pd.read_csv(filename_GT, sep="\s+", header=None, dtype=str).to_numpy(dtype=int)
         return mat

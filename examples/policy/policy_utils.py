@@ -146,7 +146,6 @@ def prepare_dir_log(args):
     args.hostname = hostname
     logger.info(json.dumps(vars(args), indent=2))
 
-
     return MODEL_SAVE_PATH, logger_path
 
 

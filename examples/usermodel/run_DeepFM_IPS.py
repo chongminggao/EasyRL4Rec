@@ -31,14 +31,14 @@ def get_args_ips():
     args = parser.parse_known_args()[0]
     return args
 
-def prepare_dataset(args, EnvClass, MODEL_SAVE_PATH, DATAPATH):
+def prepare_dataset(args, dataset, MODEL_SAVE_PATH, DATAPATH):
     dataset_train, df_user, df_item, x_columns, y_columns, ab_columns = \
-        load_dataset_train_IPS(args, EnvClass,
+        load_dataset_train_IPS(args, dataset,
                            args.tau, args.entity_dim, args.feature_dim, MODEL_SAVE_PATH, DATAPATH)
     if not args.is_ab:
         ab_columns = None
 
-    dataset_val, df_user_val, df_item_val = load_dataset_val(args, EnvClass,
+    dataset_val, df_user_val, df_item_val = load_dataset_val(args, dataset,
                                                              args.entity_dim, args.feature_dim)
     return dataset_train, dataset_val, df_user, df_item, df_user_val, df_item_val, x_columns, y_columns, ab_columns
 
@@ -124,7 +124,7 @@ def main(args):
 
     # %% 6. Save model
     ensemble_models.save_all_models(dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
-                                    dataset, args.is_userinfo, args.deterministic)
+                                    dataset, args.is_userinfo, args.deterministic, args.use_auxiliary)
 
 
 

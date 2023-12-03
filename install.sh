@@ -1,7 +1,10 @@
 #!/bin/bash
 
-pip install  --upgrade --no-cache-dir torch tensorflow scipy scikit-learn tqdm logzero pandas seaborn numba gym paramiko jupyterlab 
-pip install --upgrade --no-cache-dir gymnasium pettingzoo # for tianshou's new version
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade --no-cache-dir torch
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade --no-cache-dir tensorflow
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade --no-cache-dir scipy scikit-learn tqdm logzero pandas seaborn numba paramiko jupyterlab
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade --no-cache-dir gymnasium pettingzoo # for tianshou's new version
+
 
 #pip install -i https://mirrors.aliyun.com/pypi/simple/ --upgrade torch
 

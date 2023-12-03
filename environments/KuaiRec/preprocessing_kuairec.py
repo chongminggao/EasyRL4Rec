@@ -8,13 +8,12 @@ from tqdm import tqdm
 
 
 CODEPATH = os.path.dirname(__file__)
-DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRec", "data")
+DATAPATH = os.path.join(CODEPATH, "data_raw")
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--method", type=str, default='gaussian')
 args = parser.parse_known_args()[0]
-
 
 
 filename_big = os.path.join(DATAPATH, "big_matrix.csv")

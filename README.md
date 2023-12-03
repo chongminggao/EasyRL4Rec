@@ -96,7 +96,7 @@ The implementation is as follows:
 1. Download the compressed dataset
 
     ```bash 
-    wget https://chongming.myds.me:61364/DORL/environments.tar.gz
+    wget https://nas.chongminggao.top:4430/openrl4rec/environments.tar.gz
     ```
    or you can manually download it from this website:
    https://rec.ustc.edu.cn/share/9fe264f0-ae09-11ed-b9ef-ed1045d76757

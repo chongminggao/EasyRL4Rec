@@ -20,6 +20,9 @@ from core.util.loss import loss_pointwise_negative, loss_pointwise, loss_pairwis
 from usermodel_utils import get_datapath, prepare_dir_log, load_dataset_train, load_dataset_val, get_task, get_args_all, \
     get_args_dataset_specific
 
+import os
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
+
 def prepare_dataset(args, dataset, MODEL_SAVE_PATH, DATAPATH):
     dataset_train, df_user, df_item, x_columns, y_columns, ab_columns = \
         load_dataset_train(args, dataset,
@@ -115,7 +118,7 @@ def main(args, is_save=True):
     # %% 6. Save model
     if is_save:
         ensemble_models.save_all_models(dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
-                                        dataset, args.is_userinfo, args.deterministic)
+                                        dataset, args.is_userinfo, args.deterministic, args.use_auxiliary)
 
 
 if __name__ == '__main__':

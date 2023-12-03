@@ -15,6 +15,10 @@ ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
 PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
+for path in [PRODATAPATH]:
+    if not os.path.exists(path):
+        os.mkdir(path)
+
 
 class KuaiData(BaseData):
     def __init__(self):
@@ -72,7 +76,7 @@ class KuaiData(BaseData):
             item_similarity = pickle.load(open(item_similarity_path, 'rb'))
         else:
             list_feat, df_feat = KuaiData.load_category()
-            item_similarity = KuaiData.get_similarity_mat(list_feat, DATAPATH)
+            item_similarity = KuaiData.get_similarity_mat(list_feat)
             pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
         return item_similarity
         
@@ -239,8 +243,8 @@ class KuaiData(BaseData):
         return video_mean_duration
 
     @staticmethod
-    def get_similarity_mat(list_feat, DATAPATH):
-        similarity_mat_path = os.path.join(DATAPATH, "similarity_mat_video.csv")
+    def get_similarity_mat(list_feat):
+        similarity_mat_path = os.path.join(PRODATAPATH, "similarity_mat_video.csv")
         if os.path.isfile(similarity_mat_path):
             # with open(similarity_mat_path, 'rb') as f:
             #     similarity_mat = np.load(f, allow_pickle=True, fix_imports=True)
@@ -269,16 +273,16 @@ class KuaiData(BaseData):
         return similarity_mat
 
     @staticmethod
-    def get_saved_distance_mat(list_feat, sub_index_list, DATAPATH):
+    def get_saved_distance_mat(list_feat, sub_index_list):
         if sub_index_list is not None:
-            distance_mat_small_path = os.path.join(DATAPATH, "distance_mat_video_small.csv")
+            distance_mat_small_path = os.path.join(PRODATAPATH, "distance_mat_video_small.csv")
             if os.path.isfile(distance_mat_small_path):
                 print("loading small distance matrix...")
                 df_dist_small = pd.read_csv(distance_mat_small_path, index_col=0)
                 df_dist_small.columns = df_dist_small.columns.astype(int)
                 print("loading completed.")
             else:
-                similarity_mat = KuaiData.get_similarity_mat(list_feat, DATAPATH)
+                similarity_mat = KuaiData.get_similarity_mat(list_feat)
                 df_sim = pd.DataFrame(similarity_mat)
                 df_sim_small = df_sim.loc[sub_index_list, sub_index_list]
 
@@ -323,7 +327,7 @@ def compute_exposure_effect_kuaiRec(df_x, timestamp, list_feat, tau, MODEL_SAVE_
         exposure_pos = exposure_pos_df.to_numpy()
         return exposure_pos
 
-    similarity_mat = KuaiData.get_similarity_mat(list_feat, DATAPATH)
+    similarity_mat = KuaiData.get_similarity_mat(list_feat)
 
     distance_mat = 1 / similarity_mat
 
