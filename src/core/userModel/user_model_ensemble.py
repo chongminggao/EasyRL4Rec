@@ -110,8 +110,8 @@ class EnsembleModel():
              "feat_item": torch.nn.Embedding.from_pretrained(item_embedding, freeze=freeze_emb)})
         return saved_embedding
 
-    def compute_mean_var(self, dataset_val, df_user, df_item, user_features, item_features, x_columns, y_columns):
-        df_x_complete = construct_complete_val_x(dataset_val, df_user, df_item, user_features, item_features)
+    def compute_mean_var(self, dataset_val, df_user, df_item, user_features, item_features, x_columns, y_columns, use_auxiliary=False):
+        df_x_complete = construct_complete_val_x(dataset_val, df_user, df_item, user_features, item_features, use_auxiliary=use_auxiliary)
         n_user, n_item = df_x_complete[["user_id", "item_id"]].nunique()
 
         print("predict all users' rewards on all items")
@@ -157,82 +157,13 @@ class EnsembleModel():
 
         return prediction, var_max
 
-    def get_save_entropy_mat(self, dataset, entropy_window):
-        df_train, df_user, df_item, list_feat = dataset.get_train_data()
-
-        num_item = df_train["item_id"].nunique()
-        if not "timestamp" in df_train.columns:
-            df_train.rename(columns={"time_ms": "timestamp"}, inplace=True)
-
-        def get_entropy(mylist, need_count=True):
-            if len(mylist) <= 1:
-                return 1
-            if need_count:
-                cnt_dict = Counter(mylist)
-            else:
-                cnt_dict = mylist
-            prob = np.array(list(cnt_dict.values())) / sum(cnt_dict.values())
-            log_prob = np.log2(prob)
-            entropy = - np.sum(log_prob * prob) / np.log2(len(cnt_dict))
-            # entropy = - np.sum(log_prob * prob) / np.log2(len(cnt_dict) + 1)
-            return entropy
-
-        entropy_user, map_entropy = None, None
-
-        # if 0 in entropy_window:
-        #     df_train = df_train.sort_values("user_id")
-        #     interaction_list = df_train[["user_id", "item_id"]].groupby("user_id").agg(list)
-        #     entropy_user = interaction_list["item_id"].map(partial(get_entropy))
-        #
-        #     savepath = os.path.join(self.Entropy_PATH, "user_entropy.csv")
-        #     entropy_user.to_csv(savepath, index=True)
-
-        if len(set(entropy_window) - set([0])):
-
-            df_uit = df_train[["user_id", "item_id", "timestamp"]].sort_values(["user_id", "timestamp"])
-
-            map_hist_count = defaultdict(lambda: defaultdict(int))
-            lastuser = int(-1)
-
-            def update_map(map_hist_count, hist_tra, item, require_len):
-                if len(hist_tra) < require_len:
-                    return
-                # if require_len == 0:
-                #     map_hist_count[tuple()][item] += 1
-                # else:
-                map_hist_count[tuple(sorted(hist_tra[-require_len:]))][item] += 1
-
-            hist_tra = []
-            # for k, (user, item, time) in tqdm(df_uit.iterrows(), total=len(df_uit), desc="count frequency..."):
-            for (user, item, time) in tqdm(df_uit.to_numpy(), total=len(df_uit), desc="count frequency..."):
-                user = int(user)
-                item = int(item)
-
-                if user != lastuser:
-                    lastuser = user
-                    hist_tra = []
-
-                for require_len in set(entropy_window) - set([0]):
-                    update_map(map_hist_count, hist_tra, item, require_len)
-                hist_tra.append(item)
-
-            map_entropy = {}
-            for k, v in tqdm(map_hist_count.items(), total=len(map_hist_count), desc="compute entropy..."):
-                map_entropy[k] = get_entropy(v, need_count=False)
-
-            savepath = os.path.join(self.Entropy_PATH, "map_entropy.pickle")
-            pickle.dump(map_entropy, open(savepath, 'wb'))
-
-            # print(map_hist_count)
-
-        return entropy_user, map_entropy
 
     def save_all_models(self, dataset_val, x_columns, y_columns, df_user, df_item, df_user_val, df_item_val,
-                        dataset, is_userinfo, deterministic):
+                        dataset, is_userinfo, deterministic, use_auxiliary=False):
         user_features, item_features, reward_features = dataset.get_features(is_userinfo)
         # (1) Compute and save Mat
         mean_mat_list, var_mat_list = self.compute_mean_var(dataset_val, df_user, df_item, user_features, item_features,
-                                                            x_columns, y_columns)
+                                                            x_columns, y_columns, use_auxiliary=use_auxiliary)
 
         prediction, var_max = self.get_prediction_and_maxvar(mean_mat_list, var_mat_list, deterministic)
 
@@ -310,9 +241,13 @@ def get_detailed_path(Path_old, num):
     return Path_new
 
 
-def construct_complete_val_x(dataset_val, df_user, df_item, user_features, item_features):
-    user_ids = np.unique(dataset_val.x_numpy[:, dataset_val.user_col].astype(int))
-    item_ids = np.unique(dataset_val.x_numpy[:, dataset_val.item_col].astype(int))
+def construct_complete_val_x(dataset_val, df_user, df_item, user_features, item_features, use_auxiliary=False):
+    if use_auxiliary: # Movielens use this way
+        user_ids = df_user.index.to_numpy()
+        item_ids = df_item.index.to_numpy()
+    else: # KuaiRec, KuaiRand, Yahoo, Coat use this way
+        user_ids = np.unique(dataset_val.x_numpy[:, dataset_val.user_col].astype(int))
+        item_ids = np.unique(dataset_val.x_numpy[:, dataset_val.item_col].astype(int))
 
     df_user_complete = pd.DataFrame(
         df_user.loc[user_ids].reset_index()[user_features].to_numpy().repeat(len(item_ids), axis=0),

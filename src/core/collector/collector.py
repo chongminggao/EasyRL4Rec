@@ -364,8 +364,7 @@ class Collector(object):
             # get bounded and remapped actions first (not saved into buffer)
             action_remap = self.policy.map_action(self.data)  # RecPolicy transform!
 
-            obs_next, rew, terminated, truncated, info = self.env.step(
-                action_remap, ready_env_ids)
+            obs_next, rew, terminated, truncated, info = self.env.step(action_remap, ready_env_ids)
 
             cnt_loop += 1
             if self.force_length > 0:

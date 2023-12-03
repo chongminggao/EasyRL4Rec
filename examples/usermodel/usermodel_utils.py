@@ -40,6 +40,10 @@ def get_args_all():
     parser.add_argument('--no_deterministic', dest='deterministic', action='store_false')
     parser.set_defaults(deterministic=True)
 
+    parser.add_argument('--is_sample_neg_popularity', dest='sample_neg_popularity', action='store_true')
+    parser.add_argument('--no_sample_neg_popularity', dest='sample_neg_popularity', action='store_false')
+    parser.set_defaults(sample_neg_popularity=False)
+
     parser.add_argument('--is_draw_bar', dest='draw_bar', action='store_true')
     parser.add_argument('--no_draw_bar', dest='draw_bar', action='store_false')
     parser.set_defaults(draw_bar=False)
@@ -67,7 +71,7 @@ def get_args_all():
     parser.add_argument('--dnn', default=(128, 128), type=int, nargs="+")
     parser.add_argument('--dnn_var', default=(), type=int, nargs="+")
     parser.add_argument('--batch_size', default=256, type=int)
-    parser.add_argument('--epoch', default=200, type=int)
+    parser.add_argument('--epoch', default=5, type=int)
     parser.add_argument('--cuda', default=0, type=int)
 
     # exposure parameters:
@@ -92,20 +96,20 @@ def get_args_dataset_specific(envname):
     if envname == 'CoatEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
-        parser.add_argument('--batch_size', default=1024, type=int)
+        parser.add_argument('--batch_size', default=2048, type=int)
         # parser.add_argument("--dnn_activation", type=str, default="prelu")
         parser.add_argument('--leave_threshold', default=10, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
     elif envname == 'YahooEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
-        parser.add_argument('--batch_size', default=128, type=int)
+        parser.add_argument('--batch_size', default=2048, type=int)
         parser.add_argument('--leave_threshold', default=120, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
     elif envname == 'MovieLensEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
-        parser.add_argument('--batch_size', default=128, type=int)
+        parser.add_argument('--batch_size', default=2048, type=int)
         parser.add_argument('--leave_threshold', default=120, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
     elif envname == 'KuaiEnv-v0':
@@ -180,14 +184,12 @@ def load_dataset_train(args, dataset, tau, entity_dim, feature_dim,
     df_user = df_user[user_features[1:]]
     df_item = df_item[item_features[1:]]
 
-    x_columns, y_columns, ab_columns = get_xy_columns(args, df_train, df_user, df_item, user_features, item_features,
-                                                      entity_dim, feature_dim)
+    x_columns, y_columns, ab_columns = get_xy_columns(args, df_train, df_user, df_item, user_features, item_features, entity_dim, feature_dim)
 
     neg_in_train = True if args.env == "KuaiRand-v0" and reward_features[0] != "watch_ratio_normed" else False
     neg_in_train = False  # todo: test for kuairand
 
-    df_pos, df_neg = negative_sampling(df_train, df_item, df_user, reward_features[0],
-                                       is_rand=True, neg_in_train=neg_in_train, neg_K=args.neg_K)
+    df_pos, df_neg = negative_sampling(df_train, df_item, df_user, reward_features[0], is_rand=True, neg_in_train=neg_in_train, neg_K=args.neg_K, sample_neg_popularity=args.sample_neg_popularity)
 
     df_x = df_pos[user_features + item_features]
     if reward_features[0] == "hybrid":  # for kuairand
@@ -214,8 +216,7 @@ def load_dataset_train(args, dataset, tau, entity_dim, feature_dim,
 
     return dataset, df_user, df_item, x_columns, y_columns, ab_columns
 
-def load_dataset_train_IPS(args, dataset, tau, entity_dim, feature_dim,
-                       MODEL_SAVE_PATH, DATAPATH):
+def load_dataset_train_IPS(args, dataset, tau, entity_dim, feature_dim, MODEL_SAVE_PATH, DATAPATH):
     user_features, item_features, reward_features = dataset.get_features(args.is_userinfo)
     df_train, df_user, df_item, list_feat = dataset.get_train_data()
 
@@ -231,7 +232,7 @@ def load_dataset_train_IPS(args, dataset, tau, entity_dim, feature_dim,
     neg_in_train = False  # todo: test for kuairand
 
     df_pos, df_neg = negative_sampling(df_train, df_item, df_user, reward_features[0],
-                                       is_rand=True, neg_in_train=neg_in_train, neg_K=args.neg_K)
+                                       is_rand=True, neg_in_train=neg_in_train, neg_K=args.neg_K, sample_neg_popularity=args.sample_neg_popularity)
 
     df_x = df_pos[user_features + item_features]
     if reward_features[0] == "hybrid":  # for kuairand
@@ -359,8 +360,7 @@ def get_xy_columns(args, df_data, df_user, df_item, user_features, item_features
     if args.env == "KuaiRand-v0" or args.env == "KuaiEnv-v0":
         feat = [x for x in df_item.columns if x[:4] == "feat"]
         x_columns = [SparseFeatP("user_id", df_data['user_id'].max() + 1, embedding_dim=entity_dim)] + \
-                    [SparseFeatP(col, df_user[col].max() + 1, embedding_dim=feature_dim, padding_idx=0) for col in
-                     user_features[1:]] + \
+                    [SparseFeatP(col, df_user[col].max() + 1, embedding_dim=feature_dim, padding_idx=0) for col in user_features[1:]] + \
                     [SparseFeatP("item_id", df_data['item_id'].max() + 1, embedding_dim=entity_dim)] + \
                     [SparseFeatP(x,
                                  df_item[feat].max().max() + 1,
@@ -369,8 +369,18 @@ def get_xy_columns(args, df_data, df_user, df_item, user_features, item_features
                                  padding_idx=0  # using padding_idx in embedding!
                                  ) for x in feat] + \
                     [DenseFeat("duration_normed", 1)]
-
-    else:
+    elif args.env == "MovieLensEnv-v0":
+        feat = [x for x in df_item.columns if x[:4] == "feat"]
+        x_columns = [SparseFeatP("user_id", df_data['user_id'].max() + 1, embedding_dim=entity_dim)] + \
+                    [SparseFeatP(col, df_user[col].max() + 1, embedding_dim=feature_dim, padding_idx=0) for col in user_features[1:]] + \
+                    [SparseFeatP("item_id", df_data['item_id'].max() + 1, embedding_dim=entity_dim)] + \
+                    [SparseFeatP(x,
+                                 df_item[feat].max().max() + 1,
+                                 embedding_dim=feature_dim,
+                                 embedding_name="feat",  # Share the same feature!
+                                 padding_idx=0  # using padding_idx in embedding!
+                                 ) for x in feat]
+    else: # For Yahoo and Coat dataset
         x_columns = [SparseFeatP("user_id", df_data['user_id'].max() + 1, embedding_dim=entity_dim)] + \
                     [SparseFeatP(col, df_user[col].max() + 1, embedding_dim=feature_dim) for col in user_features[1:]] + \
                     [SparseFeatP("item_id", df_data['item_id'].max() + 1, embedding_dim=entity_dim)] + \

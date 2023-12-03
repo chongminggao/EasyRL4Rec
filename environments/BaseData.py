@@ -1,8 +1,10 @@
-
+import pickle
 from abc import ABC
 import numpy as np
 from numba import njit
 import collections
+from logzero import logger
+import os
 
 class BaseData(ABC):
 
@@ -60,6 +62,20 @@ class BaseData(ABC):
             item_feat_domination["feat"] = sorted_items
 
         return item_feat_domination
+    
+    @staticmethod
+    def get_saved_distance_mat(mat, PRODATAPATH):
+        distance_mat_path = os.path.join(PRODATAPATH, f"distance_mat.pickle")
+        if os.path.isfile(distance_mat_path):
+            mat_distance = pickle.load(open(distance_mat_path, "rb"))
+        else:
+            num_item = mat.shape[1]
+            distance = np.zeros([num_item, num_item])
+            logger.info("Compute the distance matrix for the first time. It may take some time... \n(The computed data will be saved for the further usage).")
+            mat_distance = get_distance_mat(mat, distance)
+            pickle.dump(mat_distance, open(distance_mat_path, 'wb'))
+            logger.info(f"The computed distance matrix has been saved in {distance_mat_path}")
+        return mat_distance
 
 @njit
 def get_distance_mat(mat, distance):

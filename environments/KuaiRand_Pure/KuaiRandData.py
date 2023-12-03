@@ -13,6 +13,10 @@ ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
 PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
+for path in [PRODATAPATH]:
+    if not os.path.exists(path):
+        os.mkdir(path)
+
 
 class KuaiRandData(BaseData):
     def __init__(self):
@@ -207,7 +211,7 @@ class KuaiRandData(BaseData):
 
     @staticmethod
     def load_video_duration():
-        duration_path = os.path.join(DATAPATH, "video_duration_normed.csv")
+        duration_path = os.path.join(PRODATAPATH, "video_duration_normed.csv")
         if os.path.isfile(duration_path):
             video_mean_duration = pd.read_csv(duration_path, header=0)["duration_normed"]
         else:

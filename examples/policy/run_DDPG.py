@@ -45,9 +45,9 @@ def get_args_DDPG():
     parser.add_argument('--rew-norm', action="store_true", default=False)
     parser.add_argument('--n-step', type=int, default=3)
 
-    parser.add_argument('--step-per-epoch', type=int, default=10000)
-    parser.add_argument('--step-per-collect', type=int, default=100)
-    parser.add_argument('--training-num', type=int, default=100)
+    parser.add_argument('--step-per-epoch', type=int, default=10000) 
+    parser.add_argument('--step-per-collect', type=int, default=100) 
+    parser.add_argument('--training-num', type=int, default=100) 
     parser.add_argument('--batch-size', type=int, default=64)
     parser.add_argument('--update-per-step', type=float, default=0.125)
 

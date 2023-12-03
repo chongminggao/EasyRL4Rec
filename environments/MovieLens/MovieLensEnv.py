@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2023/8/24
-# @Author  : Yuefeng Sun
-# @FileName: MovieLen.py  movielens-1m
 
 import os
 import sys
@@ -17,35 +13,39 @@ from environments.MovieLens.MovieLensData import MovieLensData
 #DATAPATH = ROOTPATH
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
+PRODATAPATH = os.path.join(ROOTPATH, "data_processed")
 
 
 
 class MovieLensEnv(BaseEnv):
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, mat=None, mat_distance=None,
-                 num_leave_compute=5, leave_threshold=1, max_turn=100,random_init=False):
+    def __init__(self, mat=None, lbe_user=None, lbe_item=None, mat_distance=None,
+                 num_leave_compute=5, leave_threshold=80, max_turn=100, random_init=False):
 
         #self.max_turn = max_turn
 
         if mat is not None:
             self.mat = mat
+            self.lbe_user = lbe_user
+            self.lbe_item = lbe_item
             self.mat_distance = mat_distance
         else:
-            self.mat, self.mat_distance = self.load_mat()
-
-        # smallmat shape: (1411, 3327)
+            self.mat, self.lbe_user, self.lbe_item, self.mat_distance = self.load_env_data()
 
         super(MovieLensEnv, self).__init__(num_leave_compute, leave_threshold, max_turn, random_init)
 
     @staticmethod
     def load_env_data():
         mat = MovieLensData.load_mat()
+        lbe_user, lbe_item = MovieLensData.get_lbe()
         #print(mat.shape)
-        mat_distance = MovieLensData.get_saved_distance_mat(mat)
-        mat = mat[1:6041,:3952]
+        mat_distance = MovieLensData.get_saved_distance_mat(mat, PRODATAPATH)
         #print(mat.shape)
-        return mat, mat_distance
+        
+        # np.percentile(mat_distance, 30)
+        
+        return mat, lbe_user, lbe_item, mat_distance
     
     def _determine_whether_to_leave(self, t, action):
         if t == 0:

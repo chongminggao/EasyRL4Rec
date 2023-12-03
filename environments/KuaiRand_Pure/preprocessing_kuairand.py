@@ -7,7 +7,7 @@ import numpy as np
 
 
 CODEPATH = os.path.dirname(__file__)
-DATAPATH = os.path.join(CODEPATH, "environments", "KuaiRand_Pure", "data")
+DATAPATH = os.path.join(CODEPATH, "data_raw")
 
 
 parser = argparse.ArgumentParser()

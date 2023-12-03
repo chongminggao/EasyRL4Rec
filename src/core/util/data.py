@@ -13,13 +13,17 @@ def get_env_args(args):
     parser.add_argument('--is_need_transform', dest='need_transform', action='store_true')
     parser.add_argument('--no_need_transform', dest='need_transform', action='store_false')
 
+    parser.add_argument('--is_use_auxiliary', dest='use_auxiliary', action='store_true')
+    parser.add_argument('--no_use_auxiliary', dest='use_auxiliary', action='store_false')
+    parser.set_defaults(use_auxiliary=False)
+
 
     if env == "CoatEnv-v0":
         parser.set_defaults(is_userinfo=True)
         parser.set_defaults(is_binarize=True)
         parser.set_defaults(need_transform=False)
         # args.entropy_on_user = True
-        parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
+        parser.add_argument("--entropy_window", type=int, nargs="*", default=[1,2])
         parser.add_argument("--rating_threshold", type=float, default=4)
         parser.add_argument("--yfeat", type=str, default="rating")
 
@@ -33,7 +37,7 @@ def get_env_args(args):
         parser.set_defaults(is_binarize=True)
         parser.set_defaults(need_transform=False)
         # args.entropy_on_user = True
-        parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
+        parser.add_argument("--entropy_window", type=int, nargs="*", default=[1,2])
         parser.add_argument("--rating_threshold", type=float, default=4)
         parser.add_argument("--yfeat", type=str, default="rating")
 
@@ -45,13 +49,14 @@ def get_env_args(args):
     elif env == "MovieLensEnv-v0":
         parser.set_defaults(is_userinfo=True)
         parser.set_defaults(is_binarize=True)
-        parser.set_defaults(need_transform=False)
+        parser.set_defaults(need_transform=True)
+        parser.set_defaults(use_auxiliary=True)
         # args.entropy_on_user = True
         parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
         parser.add_argument("--rating_threshold", type=float, default=4)
         parser.add_argument("--yfeat", type=str, default="rating")
 
-        parser.add_argument('--leave_threshold', default=120, type=float)
+        parser.add_argument('--leave_threshold', default=80, type=float)
         parser.add_argument('--num_leave_compute', default=3, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
@@ -126,8 +131,10 @@ def get_true_env(args, read_user_num=None):
     elif args.env == "MovieLensEnv-v0":
         from environments.MovieLens.MovieLensEnv import MovieLensEnv
         from environments.MovieLens.MovieLensData import MovieLensData
-        mat, mat_distance = MovieLensEnv.load_env_data()
+        mat, lbe_user, lbe_item, mat_distance = MovieLensEnv.load_env_data()
         kwargs_um = {"mat": mat,
+                     "lbe_user": lbe_user,
+                     "lbe_item": lbe_item,
                      "mat_distance": mat_distance,
                      "num_leave_compute": args.num_leave_compute,
                      "leave_threshold": args.leave_threshold,

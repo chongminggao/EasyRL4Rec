@@ -34,7 +34,7 @@ class KuaiEnv(BaseEnv):
     def load_env_data():
         mat, lbe_user, lbe_item = KuaiData.load_mat()
         list_feat, df_feat = KuaiData.load_category()
-        df_dist_small = KuaiData.get_saved_distance_mat(list_feat, lbe_item.classes_, DATAPATH)
+        df_dist_small = KuaiData.get_saved_distance_mat(list_feat, lbe_item.classes_)
         return mat, lbe_user, lbe_item, list_feat, df_dist_small
 
     def render(self, mode='human', close=False):

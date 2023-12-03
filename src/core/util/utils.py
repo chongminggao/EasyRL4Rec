@@ -154,7 +154,7 @@ def align_pos_neg(df_positive, df_negative, can_divide:bool):
 
     return df_pos, df_neg
 
-def negative_sampling(df_train, df_item, df_user, y_name, is_rand=True, neg_in_train=False, neg_K=5, num_break=3):
+def negative_sampling(df_train, df_item, df_user, y_name, is_rand=True, neg_in_train=False, neg_K=5, num_break=3, sample_neg_popularity=False):
     print("negative sampling...")
     if neg_in_train: # 仅从已知样本中采负样本。
         neg_index = df_train[y_name] == 0
@@ -177,8 +177,14 @@ def negative_sampling(df_train, df_item, df_user, y_name, is_rand=True, neg_in_t
         df_negative = pd.DataFrame([], columns=["user_id", "item_id", y_name])
         for k in tqdm(range(neg_K), desc="Negative sampling..."):
             array_k = np.zeros([len(df_train), 3])
-            neg_u_list = np.random.randint(max(user_ids) + 1, size=len(user_ids) * num_break)
-            neg_i_list = np.random.randint(max(item_ids) + 1, size=len(user_ids) * num_break)
+            # neg_u_list = np.random.choice(min(user_ids), max(user_ids) + 1, size=len(user_ids) * num_break)
+            # neg_i_list = np.random.choice(min(item_ids), max(item_ids) + 1, size=len(user_ids) * num_break)
+            if sample_neg_popularity:
+                neg_u_list = np.random.choice(user_ids, size=len(user_ids) * num_break)
+                neg_i_list = np.random.choice(item_ids, size=len(user_ids) * num_break)
+            else:
+                neg_u_list = np.random.choice(list(set(user_ids)), size=len(user_ids) * num_break)
+                neg_i_list = np.random.choice(list(set(item_ids)), size=len(user_ids) * num_break)
             find_negative(user_ids, item_ids, neg_u_list, neg_i_list, mat_train, array_k, is_rand=is_rand, num_break=num_break)
             df_k = pd.DataFrame(array_k, columns=["user_id", "item_id", y_name])
             # df_negative = df_negative.append(df_k, ignore_index=True)
