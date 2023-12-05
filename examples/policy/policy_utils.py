@@ -201,8 +201,18 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
     df_user_num = df_train[["user_id", "item_id"]].groupby("user_id").agg(len)
     
+    if args.env == 'MovieLensEnv-v0': # need to add missing users and items in df_train
+        assert hasattr(env, "lbe_user")
+        assert hasattr(env, "lbe_item")
 
-    if args.env == 'KuaiEnv-v0':
+        df_user_num_mapped = df_user_num.copy()
+        df_user_num_mapped.index = env.lbe_user.transform(df_user_num.index)
+
+        df_train_part = df_train[["user_id", "item_id", args.yfeat]]
+        df_train_part.loc[:, "user_id"] = env.lbe_user.transform(df_train_part["user_id"])
+        df_train_part.loc[:, "item_id"] = env.lbe_item.transform(df_train_part["item_id"])
+
+    elif args.env == 'KuaiEnv-v0': # need to remove irrelated users and items in df_train
         assert hasattr(env, "lbe_user")
         df_user_num_mapped = df_user_num.loc[env.lbe_user.classes_]
         df_user_num_mapped = df_user_num_mapped.reset_index(drop=True)
@@ -238,7 +248,7 @@ def construct_buffer_from_offline_data(args, df_train, env):
     MIN = df_train[args.yfeat].min()
     MAX = df_train[args.yfeat].max()
     Max_Min_Scaler = lambda x : (x-MIN)/(MAX-MIN)
-    df_train_part[args.yfeat] = df_train_part[args.yfeat].apply(Max_Min_Scaler)
+    df_train_part.loc[:, args.yfeat] = df_train_part[args.yfeat].apply(Max_Min_Scaler)
     
     bins_ind, max_size, buffer_size = evenly_distribute_trajectories_to_bins(df_user_num_mapped, num_bins)
     buffer = VectorReplayBuffer(buffer_size, num_bins)

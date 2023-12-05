@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 
+
 from environments.BaseEnv import BaseEnv
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
@@ -40,6 +41,18 @@ class CoatEnv(BaseEnv):
         window_actions = self.sequence_action[t - self.num_leave_compute:t]
 
         dist_list = np.array([self.mat_distance[action, x] for x in window_actions])
+
+        # # for debug:
+        # np.percentile(self.mat_distance, [0,10,25,50,75,90,100])
+        # res = [ 0.        ,  7.48331477,  8.83176087, 10.67707825, 13.11487705,
+        #        16.1245155 , 30.88689042]
+        # np.percentile(self.mat_distance, 0.33)
+        # np.percentile(self.mat_distance, 0.34)
+        # np.percentile(self.mat_distance, 50)
+        #
+        # from matplotlib import pyplot as plt
+        # plt.hist(self.mat_distance.reshape(-1), bins=100, alpha=0.5, color='blue', edgecolor='black')
+        # plt.show()
 
         if any(dist_list < self.leave_threshold):
             return True

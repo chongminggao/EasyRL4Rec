@@ -50,6 +50,19 @@ class MovieLensEnv(BaseEnv):
     def _determine_whether_to_leave(self, t, action):
         if t == 0:
             return False
+
+        # # for debug:
+        # np.percentile(self.mat_distance, [0,10,25,50,75,90,100])
+        # res = [  0.        ,  53.60730985,  72.51212281, 100.98297015,
+        #        142.92329426, 219.51983722, 810.23231568]
+        # np.percentile(self.mat_distance, 0.33)
+        # np.percentile(self.mat_distance, 0.34)
+        # np.percentile(self.mat_distance, 30) # res = 78.04005882754639
+        #
+        # from matplotlib import pyplot as plt
+        # plt.hist(self.mat_distance.reshape(-1), bins=100, alpha=0.5, color='blue', edgecolor='black')
+        # plt.show()
+
         window_actions = self.sequence_action[t - self.num_leave_compute:t]
         dist_list = np.array([self.mat_distance[action, x] for x in window_actions])
         if any(dist_list < self.leave_threshold):
