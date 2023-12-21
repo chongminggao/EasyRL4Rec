@@ -41,7 +41,6 @@ def get_args_CRR():
     parser.add_argument("--model_name", type=str, default="DiscreteCRR")
     parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
-    parser.add_argument('--step-per-epoch', type=int, default=1000)
     parser.add_argument("--message", type=str, default="DiscreteCRR")
 
     args = parser.parse_known_args()[0]

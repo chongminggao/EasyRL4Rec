@@ -81,8 +81,12 @@ def get_args_all():
 
     parser.add_argument('--is_exploration_noise', dest='exploration_noise', action='store_true')
     parser.add_argument('--no_exploration_noise', dest='exploration_noise', action='store_false')
-    parser.set_defaults(exploration_noise=False)
-    parser.add_argument('--eps', default=0.2, type=float)
+    parser.set_defaults(exploration_noise=True)
+    parser.add_argument('--explore_eps', default=0.06, type=float)
+
+    parser.add_argument('--is_need_state_norm', dest='need_state_norm', action='store_true')
+    parser.add_argument('--no_need_state_norm', dest='need_state_norm', action='store_false')
+    parser.set_defaults(need_state_norm=False)
 
     parser.add_argument('--is_freeze_emb', dest='freeze_emb', action='store_true')
     parser.add_argument('--no_freeze_emb', dest='freeze_emb', action='store_false')
@@ -97,7 +101,7 @@ def get_args_all():
 
     parser.add_argument('--is_random_init', dest='random_init', action='store_true')
     parser.add_argument('--no_random_init', dest='random_init', action='store_false')
-    parser.set_defaults(random_init=False)
+    parser.set_defaults(random_init=True)
 
     # State_tracker Caser
     parser.add_argument('--filter_sizes', type=int, nargs='*', default=[2, 3, 4])
@@ -113,17 +117,22 @@ def get_args_all():
     parser.add_argument('--buffer-size', type=int, default=100000)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--epoch', type=int, default=200)
-    parser.add_argument('--batch-size', type=int, default=1024)
+    parser.add_argument('--batch-size', type=int, default=128)
     parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[64, 64])
 
+    # For off-policy methods: DDPG, DQN, C51
     parser.add_argument('--episode-per-collect', type=int, default=100)
+    parser.add_argument('--n-step', type=int, default=3)
+    parser.add_argument('--update-per-step', type=float, default=0.125)
+
     parser.add_argument('--training-num', type=int, default=100)
     parser.add_argument('--test-num', type=int, default=100)
 
     parser.add_argument('--render', type=float, default=0)
     parser.add_argument('--reward-threshold', type=float, default=None)
     parser.add_argument('--gamma', type=float, default=0.9)
-    parser.add_argument('--step-per-epoch', type=int, default=100000)
+    parser.add_argument('--step-per-epoch', type=int, default=10000)
+    parser.add_argument('--step-per-collect', type=int, default=100)
     parser.add_argument('--repeat-per-collect', type=int, default=1)
     parser.add_argument('--logdir', type=str, default='log')
 
@@ -331,9 +340,7 @@ def prepare_buffer_via_offline_data(args):
 
     return env, dataset, buffer
 
-def prepare_train_envs(args, ensemble_models):
-    env, dataset, kwargs_um = get_true_env(args)
-
+def prepare_train_envs(args, ensemble_models, env, kwargs_um):
     with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
         predicted_mat = pickle.load(file)
 
@@ -353,11 +360,9 @@ def prepare_train_envs(args, ensemble_models):
     torch.manual_seed(args.seed)
     train_envs.seed(args.seed)
 
-    return env, dataset, train_envs
+    return train_envs
 
-
-def prepare_test_envs(args):
-    env, dataset, kwargs_um = get_true_env(args)
+def prepare_test_envs(args, env, kwargs_um):
     env_task_class = type(env)
     test_envs = DummyVectorEnv(
         [lambda: env_task_class(**kwargs_um) for _ in range(args.test_num)])
@@ -375,6 +380,13 @@ def prepare_test_envs(args):
     test_envs.seed(args.seed)
 
     return test_envs_dict
+
+def prepare_train_test_envs(args, ensemble_models):
+    env, dataset, kwargs_um = get_true_env(args)
+    train_envs = prepare_train_envs(args, ensemble_models, env, kwargs_um)
+    test_envs_dict = prepare_test_envs(args, env, kwargs_um)
+    return env, dataset, train_envs, test_envs_dict
+
 
 
 
@@ -439,7 +451,8 @@ def setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict, 
                                          use_userEmbedding=args.use_userEmbedding).to(args.device)
     else:
         return None
-    
+
+    state_tracker.set_need_normalization(args.need_state_norm)
     args.state_dim = state_tracker.final_dim
     
 
@@ -459,6 +472,10 @@ def learn_policy(args, env, dataset, policy, train_collector, test_collector_set
     df_val, df_user_val, df_item_val, list_feat = dataset.get_val_data()
     item_feat_domination = dataset.get_domination()
     item_similarity, item_popularity = dataset.get_item_similarity(), dataset.get_item_popularity()
+
+    if args.need_transform:
+        assert len(item_similarity) > max(env.lbe_item.classes_) # computing similarity requires
+    item_popularity[item_popularity == 0] = min(item_popularity[item_popularity > 0]) # addressing novelty==inf problem
 
     metrics = ['len_tra', 'R_tra', 'ctr', 'CV', 'CV_turn', 'ifeat_', 'Diversity', 'Novelty']
 

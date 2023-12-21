@@ -7,9 +7,6 @@ from scipy.sparse import coo_matrix
 CODEPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(CODEPATH, "data_raw")
 
-num_user = 6040
-num_item = 3952
-
 df_mat  = pd.read_csv(os.path.join(DATAPATH,"rating_matrix.csv"), header=None)
 mat = df_mat.to_numpy()
 # mat = np.ones_like(mat) * 3.5
@@ -19,6 +16,8 @@ test_data = pd.read_csv(os.path.join(DATAPATH,"movielens-1m-test.csv"))
 
 
 def get_dense_mat(df_data):
+    num_user = 6040
+    num_item = 3952
     sparse_matrix = coo_matrix((df_data["Rating"], (df_data["UserID"], df_data["MovieID"])), shape=(num_user + 1, num_item + 1))
     dense_matrix = sparse_matrix.toarray()
     return dense_matrix

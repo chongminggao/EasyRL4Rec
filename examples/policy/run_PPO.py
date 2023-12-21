@@ -7,7 +7,8 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_train_envs, prepare_test_envs, setup_state_tracker
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_train_envs, \
+    prepare_test_envs, setup_state_tracker, prepare_train_test_envs
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -46,7 +47,7 @@ def get_args_PPO():
     parser.add_argument('--dual-clip', type=float, default=None)
     parser.add_argument('--value-clip', action="store_true", default=False)
 
-    parser.add_argument("--read_message", type=str, default="UM")
+    
     parser.add_argument("--message", type=str, default="PPO")
 
     args = parser.parse_known_args()[0]
@@ -128,8 +129,7 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, dataset, train_envs = prepare_train_envs(args, ensemble_models)
-    test_envs_dict = prepare_test_envs(args)
+    env, dataset, train_envs, test_envs_dict = prepare_train_test_envs(args, ensemble_models)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)

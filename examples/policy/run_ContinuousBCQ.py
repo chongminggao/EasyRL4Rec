@@ -43,7 +43,6 @@ def get_args_BCQ():
     parser.add_argument('--critic-lr', type=float, default=1e-3)
     
     parser.add_argument("--n-step", type=int, default=3)
-    parser.add_argument('--step-per-epoch', type=int, default=1000)
     # parser.add_argument("--update-per-epoch", type=int, default=5000)
 
     parser.add_argument("--vae-hidden-sizes", type=int, nargs='*', default=[32, 32])
@@ -56,7 +55,7 @@ def get_args_BCQ():
     # Max perturbation hyper-parameter for BCQ
     parser.add_argument("--phi", default=0.05)
 
-    parser.add_argument("--read_message", type=str, default="UM")
+    
     parser.add_argument("--message", type=str, default="ContinuousBCQ")
 
     args = parser.parse_known_args()[0]

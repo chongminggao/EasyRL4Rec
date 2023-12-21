@@ -44,12 +44,12 @@ def extract_axis_1(data, indices):
 
 
 class StateTracker_Base(nn.Module):
-    def __init__(self, user_columns, action_columns, feedback_columns, 
+    def __init__(self, user_columns, action_columns, feedback_columns,
                  dim_model,
-                 train_max=None, 
-                 train_min=None, 
-                 test_max=None, 
-                 test_min=None, 
+                 train_max=None,
+                 train_min=None,
+                 test_max=None,
+                 test_min=None,
                  reward_handle=None,
                  saved_embedding=None,
                  device="cpu",
@@ -64,7 +64,6 @@ class StateTracker_Base(nn.Module):
         self.action_index = build_input_features(action_columns)
         self.feedback_index = build_input_features(feedback_columns)
 
-
         self.dim_model = dim_model
         self.window_size = window_size
         # self.random_init = random_init
@@ -76,22 +75,21 @@ class StateTracker_Base(nn.Module):
         self.train_max = train_max
         self.reward_handle = reward_handle
 
-
         self.num_user = user_columns[0].vocabulary_size
         self.num_item = action_columns[0].vocabulary_size
         self.emb_dim = action_columns[0].embedding_dim
         self.hidden_size = self.emb_dim
-        
+
         if self.reward_handle == "cat" or self.reward_handle == "cat2":
             self.hidden_size += 1
-        
+
         if saved_embedding is None:
             embedding_dict = torch.nn.ModuleDict({
                 "feat_item": torch.nn.Embedding(
                     num_embeddings=self.num_item + 1, embedding_dim=self.hidden_size),
                 "feat_user": torch.nn.Embedding(
                     num_embeddings=self.num_user, embedding_dim=self.hidden_size)
-                })
+            })
             self.embedding_dict = embedding_dict.to(device)
 
             # Initialize embedding
@@ -112,11 +110,15 @@ class StateTracker_Base(nn.Module):
             self.embedding_dict.feat_item = new_item_embedding
 
         if self.use_userEmbedding:
-            pass 
+            pass
             # Todo
             # self.ffn_user = nn.Linear(compute_input_dim(self.user_columns), self.dim_model, device=self.device)
-            
-    
+
+    def set_need_normalization(self, need_state_norm):
+        self.need_state_norm = need_state_norm
+        # if need_state_norm:
+        self.batch_norm = nn.BatchNorm1d(self.hidden_size)
+
     def get_embedding(self, X, type):
         if type == "user":
             feat_columns = self.user_columns
@@ -150,19 +152,20 @@ class StateTracker_Base(nn.Module):
             normed_r = (e_r - r_min) / (r_max - r_min)
             # if not (all(normed_r<=1) and all(normed_r>=0)):
             #     a = 1
-            normed_r[normed_r>1] = 1 # todo: corresponding to the initialize reward line above.
+            normed_r[normed_r > 1] = 1  # todo: corresponding to the initialize reward line above.
             # assert (all(normed_r<=1) and all(normed_r>=0))
         else:
             normed_r = e_r
 
         return normed_r
 
-    def convert_to_k_state_embedding(self, buffer=None, indices=None, is_obs=None, batch=None, use_batch_in_statetracker=False, is_train=True):
+    def convert_to_k_state_embedding(self, buffer=None, indices=None, is_obs=None, batch=None,
+                                     use_batch_in_statetracker=False, is_train=True):
         # Planning: indices = last_indices
         # Learning: indices = current_indices
-        if use_batch_in_statetracker: # when collector collects the data, batch is not None.
+        if use_batch_in_statetracker:  # when collector collects the data, batch is not None.
             assert batch is not None
-            user_item_pair_all = batch.obs # 需要多收集一步
+            user_item_pair_all = batch.obs  # 需要多收集一步
             rew_all = batch.rew_prev
             live_mat = np.ones([1, len(user_item_pair_all)], dtype=bool)
             assert is_obs == True
@@ -176,18 +179,17 @@ class StateTracker_Base(nn.Module):
             index = indices
             live_ids = np.ones_like(index, dtype=bool)
 
-            
             while any(live_ids) and len(live_mat) < self.window_size:
-                if is_obs: # modeling the obs in the batch
+                if is_obs:  # modeling the obs in the batch
                     user_item_pair = buffer[index].obs
                     rew = buffer.rew_prev[index]
-                else: # modeling the obs_next in the batch
+                else:  # modeling the obs_next in the batch
                     user_item_pair = buffer[index].obs_next
                     rew = buffer[index].rew
-                
+
                 # users = np.expand_dims(user_item_pair[:, 0], -1)
                 # items = np.expand_dims(user_item_pair[:, 1], -1)
-                
+
                 live_mat = np.vstack([live_mat, live_ids])
                 user_item_pair_all = np.concatenate([user_item_pair_all, user_item_pair])
                 rew_all = np.concatenate([rew_all, rew])
@@ -235,10 +237,17 @@ class StateTracker_Base(nn.Module):
         emb_state_reverse = reverse_padded_sequence(emb_state, len_states)
         seq = emb_state_reverse
 
+        if self.need_state_norm:
+            seq_normed = self.batch_norm(seq.view(-1, seq.shape[-1])).view(seq.shape)
+        else:
+            seq_normed = seq
+
         # assert seq.shape[1] == mask.shape[1]
-        if seq.shape[1] < self.window_size:
-            seq = torch.cat([seq, torch.zeros([seq.shape[0], self.window_size - seq.shape[1], seq.shape[2]], device=self.device)], dim=1)
-            mask = torch.cat([mask, torch.zeros([mask.shape[0], self.window_size - mask.shape[1], mask.shape[2]], device=self.device)], dim=1)
+        if seq_normed.shape[1] < self.window_size:
+            seq_normed = torch.cat([seq_normed, torch.zeros(
+                [seq_normed.shape[0], self.window_size - seq_normed.shape[1], seq_normed.shape[2]],
+                device=self.device)], dim=1)
+            mask = torch.cat([mask, torch.zeros([mask.shape[0], self.window_size - mask.shape[1], mask.shape[2]],
+                                                device=self.device)], dim=1)
 
-        return seq, mask, len_states
-
+        return seq_normed, mask, len_states

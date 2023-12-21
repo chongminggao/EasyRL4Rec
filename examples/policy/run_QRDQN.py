@@ -10,7 +10,8 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_test_envs, prepare_train_envs, prepare_user_model, setup_state_tracker
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_test_envs, prepare_train_envs, \
+    prepare_user_model, setup_state_tracker, prepare_train_test_envs
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -38,29 +39,23 @@ def get_args_QRDQN():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="QRDQN")
 
-    parser.add_argument('--eps-test', type=float, default=0.05)
-    parser.add_argument('--eps-train', type=float, default=0.1)
-    parser.add_argument('--n-step', type=int, default=3)
+    # parser.add_argument('--eps-train', type=float, default=0.1)
+    
     parser.add_argument('--target-update-freq', type=int, default=320)
     parser.add_argument('--reward-normalization', action="store_true", default=False)
     parser.add_argument('--is-double', type=bool, default=True)
     parser.add_argument('--clip-loss-grad', action="store_true", default=False)
     parser.add_argument('--num-quantiles', type=int, default=200)
 
-    parser.add_argument('--is_random_init', dest='random_init', action='store_true')
-    parser.add_argument('--no_random_init', dest='random_init', action='store_false')
-    parser.set_defaults(random_init=True)
 
-    parser.add_argument('--step-per-epoch', type=int, default=10000)
-    parser.add_argument('--step-per-collect', type=int, default=100)
-    parser.add_argument('--training-num', type=int, default=100)
-    parser.add_argument('--batch-size', type=int, default=64)
+    
+    
     parser.add_argument('--update-per-step', type=float, default=0.1)
     parser.add_argument('--prioritized-replay', action="store_true", default=False)
     parser.add_argument('--alpha', type=float, default=0.6)
     parser.add_argument('--beta', type=float, default=0.4)
 
-    parser.add_argument("--read_message", type=str, default="UM")
+    
     parser.add_argument("--message", type=str, default="QRDQN")
 
     args = parser.parse_known_args()[0]
@@ -98,7 +93,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         clip_loss_grad=args.clip_loss_grad, 
         action_space=Discrete(args.action_shape),
     ).to(args.device)
-    policy.set_eps(args.eps_test)
+    policy.set_eps(args.explore_eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 
@@ -137,8 +132,7 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, dataset, train_envs = prepare_train_envs(args, ensemble_models)
-    test_envs_dict = prepare_test_envs(args)
+    env, dataset, train_envs, test_envs_dict = prepare_train_test_envs(args, ensemble_models)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)

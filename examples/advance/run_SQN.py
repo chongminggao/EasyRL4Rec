@@ -45,7 +45,7 @@ def get_args_SQN():
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument("--unlikely-action-threshold", type=float, default=0.6)
     parser.add_argument("--imitation-logits-penalty", type=float, default=0.01)
-    parser.add_argument("--eps-test", type=float, default=0.001)
+    parser.add_argument("--explore_eps", type=float, default=0.01)
     # parser.add_argument('--step-per-epoch', type=int, default=1000)
     parser.add_argument('--step-per-epoch', type=int, default=1000)
 
@@ -81,7 +81,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         which_head=args.which_head,
         action_space=Discrete(args.action_shape),
     )
-    policy.set_eps(args.eps_test)
+    policy.set_eps(args.explore_eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 

@@ -27,7 +27,7 @@ class MovieLensData(BaseData):
     def get_features(self, is_userinfo=True):
         user_features = ["user_id", "gender", "age_range", "occupation"]
         if not is_userinfo:
-            user_features = ["user_id"]    
+            user_features = ["user_id"]
         item_features = ['item_id'] + ["feat{}".format(i) for i in range(6)]
         reward_features = ["rating"]
         return user_features, item_features, reward_features
@@ -61,15 +61,17 @@ class MovieLensData(BaseData):
         return item_feat_domination
 
     def get_item_similarity(self):
-        item_similarity_path = os.path.join(PRODATAPATH, "item_similarity.pickle")
+        item_similarity_path = os.path.join(PRODATAPATH, "item_similarity_add1.pickle")
         if os.path.isfile(item_similarity_path):
-            item_similarity = pickle.load(open(item_similarity_path, 'rb'))
+            item_similarity_add1 = pickle.load(open(item_similarity_path, 'rb'))
         else:
             mat = MovieLensData.load_mat()
             mat_distance = MovieLensData.get_saved_distance_mat(mat, PRODATAPATH)
             item_similarity = 1 / (mat_distance + 1)
-            pickle.dump(item_similarity, open(item_similarity_path, 'wb'))
-        return item_similarity
+            item_similarity_add1 = np.nan * np.ones([item_similarity.shape[0] + 1, item_similarity.shape[1] + 1])  # This is very important since the item_id of Movielens starts from 1. And similarity use the raw ids as index.
+            item_similarity_add1[1:, 1:] = item_similarity
+            pickle.dump(item_similarity_add1, open(item_similarity_path, 'wb'))
+        return item_similarity_add1
 
     def get_item_popularity(self):
         item_popularity_path = os.path.join(PRODATAPATH, "item_popularity.pickle")
@@ -93,18 +95,16 @@ class MovieLensData(BaseData):
             item_pop_df['popularity'].fillna(0, inplace=True)
             item_popularity = item_pop_df['popularity']
 
-
-
             pickle.dump(item_popularity, open(item_popularity_path, 'wb'))
 
         return item_popularity
 
     @staticmethod
     def load_category(tag_label="tags"):
-        
+
         filepath = os.path.join(DATAPATH, 'movies.dat')
-        df_item = pd.read_csv(filepath, 
-                              sep="::", 
+        df_item = pd.read_csv(filepath,
+                              sep="::",
                               header=None,
                               names=["item_id", "movie_title", "genre"],
                               dtype={0: int, 1: str, 2: str},
@@ -118,15 +118,17 @@ class MovieLensData(BaseData):
         df_item["num_genre"] = df_item["genre"].apply(lambda x: len(x))
 
         df_item.set_index("item_id", inplace=True)
-        df_item_all = df_item.reindex(list(range(df_item.index.min(),df_item.index.max()+1)))
-        df_item_all.loc[df_item_all["genre"].isna(), "genre"] = df_item_all.loc[df_item_all["genre"].isna(), "genre"].apply(lambda x: [])
+        df_item_all = df_item.reindex(list(range(df_item.index.min(), df_item.index.max() + 1)))
+        df_item_all.loc[df_item_all["genre"].isna(), "genre"] = df_item_all.loc[
+            df_item_all["genre"].isna(), "genre"].apply(lambda x: [])
 
         list_feat = df_item_all['genre'].to_list()
 
         # df_item["year_range"] = pd.cut(df_item["release_year"], bins=[1900, 1950, 2000, 2050], labels=False)
 
-        df_feat = pd.DataFrame(list_feat, columns=['feat0', 'feat1', 'feat2', 'feat3', 'feat4', 'feat5'], index=df_item_all.index)
-        
+        df_feat = pd.DataFrame(list_feat, columns=['feat0', 'feat1', 'feat2', 'feat3', 'feat4', 'feat5'],
+                               index=df_item_all.index)
+
         lbe = LabelEncoder()
         tags_array = lbe.fit_transform(df_feat.to_numpy().reshape(-1)).reshape(df_feat.shape)
         tags_array += 1
@@ -135,7 +137,7 @@ class MovieLensData(BaseData):
 
         list_feat_num = list(map(lambda x: lbe.transform(x) + 1, list_feat))
         df_feat[tag_label] = list_feat_num
-        
+
         return list_feat_num, df_feat
 
     @staticmethod
@@ -149,13 +151,14 @@ class MovieLensData(BaseData):
     def load_user_feat():
         # df_user = pd.DataFrame(np.arange(6040), columns=["user_id"])
         # df_user = pd.read_csv(os.path.join(DATAPATH, "users.dat"), sep="::", engine="python", header=None, names=["user_id", "gender",
-                                                                                                                    #   def load_user_feat():
+        #   def load_user_feat():
         print("load user features")
         filepath = os.path.join(DATAPATH, "users.dat")
-        df_user = pd.read_csv(filepath, sep="::", header=None, names=["user_id", "gender", "age", "occupation", "zip_code"], dtype={0: int, 1: str, 2: int, 3: int, 4: str}, engine="python")
+        df_user = pd.read_csv(filepath, sep="::", header=None,
+                              names=["user_id", "gender", "age", "occupation", "zip_code"],
+                              dtype={0: int, 1: str, 2: int, 3: int, 4: str}, engine="python")
         df_user["zip_code"] = df_user["zip_code"].apply(lambda x: x.split("-")[0])
-        
-        
+
         age_range = [0, 18, 25, 35, 45, 50, 56]
         df_user['age_range'] = pd.cut(df_user['age'], bins=age_range, labels=False)
         df_user['age_range'] += 1
@@ -163,14 +166,13 @@ class MovieLensData(BaseData):
         for col in ['gender', 'occupation', 'zip_code']:
             lbe = LabelEncoder()
             df_user[col] = lbe.fit_transform(df_user[col])
-            
+
             df_user[col] += 1
 
         df_user.set_index("user_id", inplace=True)
         print("user featuers loaded")
-        
-        return df_user
 
+        return df_user
 
     # def load_item_feat(self):
     #     df_item = pd.DataFrame(np.arange(3952), columns=["item_id"])
@@ -184,7 +186,7 @@ class MovieLensData(BaseData):
             mat = pd.read_csv(filename_GT, header=None).to_numpy()
         else:
             mat = provide_MF_results.main()
-            
+
         mat[mat < 0] = 0
         mat[mat > 5] = 5
         return mat
@@ -199,7 +201,6 @@ class MovieLensData(BaseData):
         lbe_item.fit(df_item.index)
 
         return lbe_user, lbe_item
-
 
 
 if __name__ == "__main__":

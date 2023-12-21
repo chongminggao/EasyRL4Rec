@@ -42,10 +42,8 @@ def get_args_BCQ():
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument("--unlikely-action-threshold", type=float, default=0.6)
     parser.add_argument("--imitation-logits-penalty", type=float, default=0.01)
-    parser.add_argument("--eps-test", type=float, default=0.001)
-    parser.add_argument('--step-per-epoch', type=int, default=1000)
     # parser.add_argument("--update-per-epoch", type=int, default=5000)
-    parser.add_argument("--read_message", type=str, default="UM")
+    
     parser.add_argument("--message", type=str, default="DiscreteBCQ")
 
     args = parser.parse_known_args()[0]
@@ -85,7 +83,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         buffer=buffer,
         action_space=Discrete(args.action_shape),
     )
-    policy.set_eps(args.eps_test)
+    policy.set_eps(args.explore_eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 

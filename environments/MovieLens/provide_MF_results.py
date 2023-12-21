@@ -11,7 +11,7 @@ import numpy as np
 # Load the Movielens ratings data
 CODEPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(CODEPATH, "data_raw")
-device = torch.device('cuda:2' if torch.cuda.is_available() else 'cpu')
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 def load_data():
     ratings_df = pd.read_csv(os.path.join(DATAPATH, "ratings.dat"), delimiter='::', header=None, names=['UserID', 'MovieID', 'Rating', 'Timestamp'], engine='python')
