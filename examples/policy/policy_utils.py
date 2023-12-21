@@ -117,7 +117,7 @@ def get_args_all():
     parser.add_argument('--buffer-size', type=int, default=100000)
     parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--epoch', type=int, default=200)
-    parser.add_argument('--batch-size', type=int, default=128)
+    parser.add_argument('--batch-size', type=int, default=64)
     parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[64, 64])
 
     # For off-policy methods: DDPG, DQN, C51

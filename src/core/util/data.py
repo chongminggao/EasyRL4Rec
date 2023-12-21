@@ -27,8 +27,8 @@ def get_env_args(args):
         parser.add_argument("--rating_threshold", type=float, default=4)
         parser.add_argument("--yfeat", type=str, default="rating")
 
-        parser.add_argument('--leave_threshold', default=10, type=float)
-        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--leave_threshold', default=6, type=float)
+        parser.add_argument('--num_leave_compute', default=7, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
 
@@ -56,8 +56,8 @@ def get_env_args(args):
         parser.add_argument("--rating_threshold", type=float, default=4)
         parser.add_argument("--yfeat", type=str, default="rating")
 
-        parser.add_argument('--leave_threshold', default=80, type=float)
-        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--leave_threshold', default=75, type=float)
+        parser.add_argument('--num_leave_compute', default=7, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
 
@@ -85,8 +85,8 @@ def get_env_args(args):
 
         # parser.add_argument('--leave_threshold', default=1, type=float)
         # parser.add_argument('--num_leave_compute', default=3, type=int)
-        parser.add_argument('--leave_threshold', default=0, type=float)
-        parser.add_argument('--num_leave_compute', default=10, type=int)
+        parser.add_argument('--leave_threshold', default=1, type=float)
+        parser.add_argument('--num_leave_compute', default=9, type=int)
         parser.add_argument('--max_turn', default=30, type=int)
         # parser.add_argument('--window_size', default=3, type=int)
 

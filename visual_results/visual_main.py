@@ -35,13 +35,12 @@ def remove_redundent(df, level=1):
     methods = df.columns.levels[level]
     pattern_name = re.compile("(.*)[-\s]leave[=]?(\d+)")
     # methods = [pattern_name.match(method).group(1) for method in methods if pattern_name.match(method)]
-    df.rename(columns={method:pattern_name.match(method).group(1) for method in methods if pattern_name.match(method)},
-               level=level, inplace=True)
+    df.rename(columns={method: pattern_name.match(method).group(1) for method in methods if pattern_name.match(method)},
+              level=level, inplace=True)
     df.rename(columns={"Ours": "DORL"}, level=level, inplace=True)
 
 
-def load_dfs_to_visual(load_filepath_list, ways = {'FB', 'NX_0_', 'NX_10_'}, metrics = {'ctr', 'len_tra', 'R_tra'}):
-    
+def load_dfs_to_visual(load_filepath_list, ways={'FB', 'NX_0_', 'NX_10_'}, metrics={'ctr', 'len_tra', 'R_tra'}):
     dfs = []
     for load_path in load_filepath_list:
         # result_dir1 = os.path.join(dirpath, envname)
@@ -51,9 +50,9 @@ def load_dfs_to_visual(load_filepath_list, ways = {'FB', 'NX_0_', 'NX_10_'}, met
 
         remove_redundent(df1, level=2)
         dfs.append(df1)
-    
+
     return dfs
-    
+
 
 def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=10, visual_sample=True):
     visual_cols = ['R_tra', 'len_tra', 'ctr']
@@ -62,7 +61,6 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
     # group_names = ["KuaiRec", "KuaiRand"]
     # maxlen = [50, 100, 10, 30]
     fontsize = 11.5
-    
 
     methods_list = set()
     for df in dfs:
@@ -78,9 +76,9 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
     markers = ["o", "s", "p", "P", "X", "*", "h", "D", "v", "^", ">", "<", "x", "H"]
     if len(markers) < num_methods:
         markers = markers * (num_methods // len(markers) + 1)
-                             
+
     markers = markers[:num_methods]
-    
+
     color_kv = dict(zip(methods_list, colors))
     marker_kv = dict(zip(methods_list, markers))
 
@@ -92,7 +90,6 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
     else:
         if isinstance(way, str):
             way = [way]
-
 
     fig = plt.figure(figsize=(2.5 * (len(way) + 1), 6))
     # plt.subplots_adjust(wspace=0.3)
@@ -120,7 +117,7 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
                 visual_every = int(len(data_r) / visualnum)
                 visual_rows_idx = data_r.index % visual_every == 0
                 visual_rows_idx[0] = True
-                
+
                 data_r_visual = data_r.loc[visual_rows_idx]
                 data_len_visual = data_len.loc[visual_rows_idx]
                 data_ctr_visual = data_ctr.loc[visual_rows_idx]
@@ -130,13 +127,13 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
                 data_ctr_visual = data_ctr
 
             markevery = round(len(data_r_visual) / visualnum)
-            
+
             color = [color_kv[name] for name in data_r.columns]
             marker = [marker_kv[name] for name in data_r.columns]
 
             ax1 = plt.subplot2grid((3, len(way)), (0, index_k))
             data_r_visual.plot(kind="line", linewidth=1, ax=ax1, legend=None, color=color, markevery=markevery,
-                        fillstyle='none', alpha=.8, markersize=3)
+                               fillstyle='none', alpha=.8, markersize=3)
             for i, line in enumerate(ax1.get_lines()):
                 line.set_marker(marker[i])
             plt.yticks(fontsize=10)
@@ -148,7 +145,7 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
 
             ax2 = plt.subplot2grid((3, len(way)), (1, index_k))
             data_len_visual.plot(kind="line", linewidth=1, ax=ax2, legend=None, color=color, markevery=markevery,
-                        fillstyle='none', alpha=.8, markersize=3)
+                                 fillstyle='none', alpha=.8, markersize=3)
             for i, line in enumerate(ax2.get_lines()):
                 line.set_marker(marker[i])
             plt.yticks(fontsize=10)
@@ -161,7 +158,7 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
 
             ax3 = plt.subplot2grid((3, len(way)), (2, index_k))
             data_ctr_visual.plot(kind="line", linewidth=1, ax=ax3, legend=None, color=color, markevery=markevery,
-                        fillstyle='none', alpha=.8, markersize=3)
+                                 fillstyle='none', alpha=.8, markersize=3)
             for i, line in enumerate(ax3.get_lines()):
                 line.set_marker(marker[i])
             plt.yticks(fontsize=10)
@@ -190,11 +187,10 @@ def visual_groups(dfs, save_fig_dir, group_names, savename, way=None, visualnum=
     for group, df in enumerate(dfs):
         axx = axs[group][0]
         lines, labels = axx.get_legend_handles_labels()
-        
+
         dict_label.update(dict(zip(labels, lines)))
-    # axx.legend(handles=dict_label.values(), labels=dict_label.keys(), fontsize=9.5, ncol=1, 
+    # axx.legend(handles=dict_label.values(), labels=dict_label.keys(), fontsize=9.5, ncol=1,
     #            loc='upper right', bbox_to_anchor=(2, 1))
-    
 
     axx = axs[-1][0]
     axx.legend(handles=dict_label.values(), labels=dict_label.keys(), fontsize=9.5, ncol=1, bbox_to_anchor=(1.7, 1))
@@ -223,14 +219,14 @@ if __name__ == '__main__':
     dirpath = os.path.join(realpath, "result_logs")
 
     visual_group_list = ["CoatEnv-v0"]  # You need to add your env name here.
-    visual_group_list = ["EtsyEnv-v0"]
+    # visual_group_list = ["EtsyEnv-v0"]
     load_filepath_list = [os.path.join(dirpath, envname) for envname in visual_group_list]
 
     metrics = {'ctr', 'len_tra', 'R_tra'}
 
-    dfs = load_dfs_to_visual(load_filepath_list, metrics = metrics)
+    dfs = load_dfs_to_visual(load_filepath_list, metrics=metrics)
 
-    way = None # way = "NX_0_"
+    way = None  # way = "NX_0_"
     savename = "main_result"
     group_names = visual_group_list
     visual_groups(dfs, save_fig_dir, group_names, savename=savename, way=way)

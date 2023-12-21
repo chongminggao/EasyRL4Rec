@@ -82,6 +82,7 @@ class StateTracker_Base(nn.Module):
 
         if self.reward_handle == "cat" or self.reward_handle == "cat2":
             self.hidden_size += 1
+        self.batch_norm = nn.BatchNorm1d(self.hidden_size)
 
         if saved_embedding is None:
             embedding_dict = torch.nn.ModuleDict({
@@ -116,8 +117,6 @@ class StateTracker_Base(nn.Module):
 
     def set_need_normalization(self, need_state_norm):
         self.need_state_norm = need_state_norm
-        # if need_state_norm:
-        self.batch_norm = nn.BatchNorm1d(self.hidden_size)
 
     def get_embedding(self, X, type):
         if type == "user":
@@ -157,6 +156,7 @@ class StateTracker_Base(nn.Module):
         else:
             normed_r = e_r
 
+        normed_r[e_r <= 0] = 0
         return normed_r
 
     def convert_to_k_state_embedding(self, buffer=None, indices=None, is_obs=None, batch=None,
@@ -238,7 +238,7 @@ class StateTracker_Base(nn.Module):
         seq = emb_state_reverse
 
         if self.need_state_norm:
-            seq_normed = self.batch_norm(seq.view(-1, seq.shape[-1])).view(seq.shape)
+            seq_normed = self.batch_norm(seq.reshape(-1, seq.shape[-1])).reshape(seq.shape)
         else:
             seq_normed = seq
 

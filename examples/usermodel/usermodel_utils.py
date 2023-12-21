@@ -98,8 +98,8 @@ def get_args_dataset_specific(envname):
         parser.add_argument("--entity_dim", type=int, default=8)
         parser.add_argument('--batch_size', default=2048, type=int)
         # parser.add_argument("--dnn_activation", type=str, default="prelu")
-        parser.add_argument('--leave_threshold', default=10, type=float)
-        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--leave_threshold', default=6, type=float)
+        parser.add_argument('--num_leave_compute', default=7, type=int)
     elif envname == 'YahooEnv-v0':
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
@@ -110,16 +110,16 @@ def get_args_dataset_specific(envname):
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
         parser.add_argument('--batch_size', default=2048, type=int)
-        parser.add_argument('--leave_threshold', default=120, type=float)
-        parser.add_argument('--num_leave_compute', default=3, type=int)
+        parser.add_argument('--leave_threshold', default=75, type=float)
+        parser.add_argument('--num_leave_compute', default=7, type=int)
     elif envname == 'KuaiEnv-v0':
         parser.add_argument('--neg_K', default=3, type=int)
         parser.add_argument("--feature_dim", type=int, default=8)
         parser.add_argument("--entity_dim", type=int, default=8)
         parser.add_argument('--batch_size', default=4096, type=int)
         # parser.add_argument("--dnn_activation", type=str, default="swish")
-        parser.add_argument('--leave_threshold', default=0, type=int)  # todo
-        parser.add_argument('--num_leave_compute', default=1, type=int)  # todo
+        parser.add_argument('--leave_threshold', default=1, type=int)  # todo
+        parser.add_argument('--num_leave_compute', default=9, type=int)  # todo
     elif envname == 'KuaiRand-v0':
         parser.add_argument("--yfeat", type=str, default='is_click')
         parser.add_argument("--feature_dim", type=int, default=4)
