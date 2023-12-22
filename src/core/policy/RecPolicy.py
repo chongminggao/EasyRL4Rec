@@ -48,7 +48,7 @@ class RecPolicy(ABC, nn.Module):
 
         item_embs = F.normalize(item_embs, dim=-1)  # 归一化
         batch_item_embs = item_embs.repeat(action_emb.shape[0],1,1)  # [B, n_items, emb_dim]
-        
+
         action_emb = torch.Tensor(action_emb).to(self.device)
         scores = torch.sum(action_emb.view(-1,1,self.emb_dim) * batch_item_embs, dim = -1)  # [B, n_items]
 
@@ -61,7 +61,7 @@ class RecPolicy(ABC, nn.Module):
         # two types of greedy selection
         if not deterministic and np.random.rand() >= self.topk_rate:
             # e-greedy dist sample
-            # TODO
+            # TODO: use args.explore_eps to randomly select actions.
             pass
         else:
             _, indices = torch.topk(action_scores, k = self.slate_size, dim = 1)
