@@ -42,6 +42,7 @@ def get_args_DDPG():
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--tau', type=float, default=0.005)
     parser.set_defaults(exploration_noise=True)
+    parser.add_argument('--eps', default=0.1, type=float)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 
     parser.add_argument("--message", type=str, default="DDPG")
@@ -83,7 +84,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         state_tracker=state_tracker,
         tau=args.tau,
         gamma=args.gamma,
-        exploration_noise=GaussianNoise(sigma=args.explore_eps),
+        exploration_noise=GaussianNoise(sigma=args.eps),
         reward_normalization=args.rew_norm,
         estimation_step=args.n_step,
         action_space=Box(shape=(state_tracker.emb_dim,), low=0, high=1),

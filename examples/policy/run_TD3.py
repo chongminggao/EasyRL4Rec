@@ -45,6 +45,7 @@ def get_args_TD3():
     parser.add_argument('--noise-clip', type=float, default=0.5)
     parser.add_argument('--update-actor-freq', type=int, default=2)
     parser.set_defaults(exploration_noise=True)
+    parser.add_argument('--eps', default=0.1, type=float)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 
     parser.add_argument("--message", type=str, default="TD3")
@@ -98,7 +99,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         state_tracker=state_tracker,
         tau=args.tau,
         gamma=args.gamma,
-        exploration_noise=GaussianNoise(sigma=args.explore_eps),
+        exploration_noise=GaussianNoise(sigma=args.eps),
         policy_noise=args.policy_noise,
         update_actor_freq=args.update_actor_freq,
         noise_clip=args.noise_clip,

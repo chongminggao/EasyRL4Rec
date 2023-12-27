@@ -1,4 +1,5 @@
 from abc import ABC
+import random
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -35,6 +36,10 @@ class RecPolicy(ABC, nn.Module):
         # self.slate_size = args.slate_size
         self.slate_size = 1
         self.remove_recommended_ids = args.remove_recommended_ids
+        self.remap_exploration_noise = args.exploration_noise
+        if self.remap_exploration_noise:
+            self.eps = args.eps
+
 
     def get_score(self, action_emb, do_softmax = False):
         '''
@@ -57,18 +62,15 @@ class RecPolicy(ABC, nn.Module):
         else:
             return scores
         
-    def select_action(self, action_scores, deterministic=True):
-        # two types of greedy selection
-        if not deterministic and np.random.rand() >= self.topk_rate:
-            # e-greedy dist sample
-            # TODO: use args.explore_eps to randomly select actions.
-            pass
-        else:
-            _, indices = torch.topk(action_scores, k = self.slate_size, dim = 1)
-            item_ids = torch.arange(self.n_items).to(self.device)
-            action = item_ids[indices].detach()  # [B, slate_size]
+    def select_action(self, action_scores):
+        _, indices = torch.topk(action_scores, k = self.slate_size, dim = 1)
+        if self.remap_exploration_noise and random.random() < self.eps:
+            for indice in indices:
+                indice[0] = random.randint(0, len(action_scores[0])-1)
+        item_ids = torch.arange(self.n_items).to(self.device)
+        action = item_ids[indices].detach()  # [B, slate_size]
 
-            action = action.squeeze(1)  # item-wise
+        action = action.squeeze(1)  # item-wise
         return np.array(action.cpu())
     
     def forward(
