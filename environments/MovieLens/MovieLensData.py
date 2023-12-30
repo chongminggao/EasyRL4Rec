@@ -74,10 +74,10 @@ class MovieLensData(BaseData):
         return item_similarity_add1
 
     def get_item_popularity(self):
-        item_popularity_path = os.path.join(PRODATAPATH, "item_popularity.pickle")
+        item_popularity_path = os.path.join(PRODATAPATH, "item_popularity_add1.pickle")
 
         if os.path.isfile(item_popularity_path):
-            item_popularity = pickle.load(open(item_popularity_path, 'rb'))
+            item_popularity_add1 = pickle.load(open(item_popularity_path, 'rb'))
         else:
             df_data, df_user, df_item, list_feat = self.get_df("movielens-1m-train.csv")
 
@@ -94,10 +94,12 @@ class MovieLensData(BaseData):
             item_pop_df = item_pop_df.merge(df_pop, how="left", on="item_id")
             item_pop_df['popularity'].fillna(0, inplace=True)
             item_popularity = item_pop_df['popularity']
+            item_popularity_add1 = np.nan * np.ones([item_popularity.shape[0] + 1])  # This is very important since the item_id of Movielens starts from 1. And similarity use the raw ids as index.
+            item_popularity_add1[1:] = item_popularity
 
-            pickle.dump(item_popularity, open(item_popularity_path, 'wb'))
+            pickle.dump(item_popularity_add1, open(item_popularity_path, 'wb'))
 
-        return item_popularity
+        return item_popularity_add1
 
     @staticmethod
     def load_category(tag_label="tags"):

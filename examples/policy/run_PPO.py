@@ -7,8 +7,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_train_envs, \
-    prepare_test_envs, setup_state_tracker, prepare_train_test_envs
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, setup_state_tracker, prepare_train_test_envs
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -19,7 +18,7 @@ from core.policy.RecPolicy import RecPolicy
 
 from tianshou.data import VectorReplayBuffer
 
-from tianshou.utils.net.common import ActorCritic, DataParallelNet, Net
+from tianshou.utils.net.common import ActorCritic, Net
 from tianshou.utils.net.discrete import Actor, Critic
 from tianshou.policy import PPOPolicy
 
@@ -141,7 +140,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args_all = get_args_all()
+    trainer = "onpolicy"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_PPO = get_args_PPO()
     args_all.__dict__.update(args.__dict__)

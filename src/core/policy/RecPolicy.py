@@ -59,6 +59,9 @@ class RecPolicy(ABC, nn.Module):
         
     def select_action(self, action_scores, deterministic=True):
         # two types of greedy selection
+
+        # explore_eps = self.policy.eps  # default 0.6
+
         if not deterministic and np.random.rand() >= self.topk_rate:
             # e-greedy dist sample
             # TODO: use args.explore_eps to randomly select actions.

@@ -1,7 +1,4 @@
 import argparse
-import functools
-import os
-import pprint
 import sys
 import traceback
 from gymnasium.spaces import Discrete
@@ -10,7 +7,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_test_envs, prepare_train_envs, \
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, \
     prepare_user_model, setup_state_tracker, prepare_train_test_envs
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -144,7 +141,8 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args_all = get_args_all()
+    trainer = "offpolicy"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_QRDQN = get_args_QRDQN()
     args_all.__dict__.update(args.__dict__)

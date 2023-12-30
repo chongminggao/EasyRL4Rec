@@ -13,7 +13,7 @@ from gymnasium.spaces import Discrete
 
 sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
+from ..policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -56,9 +56,7 @@ def get_args_MOPO():
     args = parser.parse_known_args()[0]
     return args
 
-def prepare_train_envs(args, ensemble_models):
-    env, dataset, kwargs_um = get_true_env(args)
-
+def prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um):
     with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
         predicted_mat = pickle.load(file)
 
@@ -84,7 +82,7 @@ def prepare_train_envs(args, ensemble_models):
     torch.manual_seed(args.seed)
     train_envs.seed(args.seed)
 
-    return env, dataset, train_envs
+    return train_envs
 
 
 def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
@@ -144,8 +142,9 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, dataset, train_envs = prepare_train_envs(args, ensemble_models)
-    test_envs_dict = prepare_test_envs(args)
+    env, dataset, kwargs_um = get_true_env(args)
+    train_envs = prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um)
+    test_envs_dict = prepare_test_envs(args, env, kwargs_um)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)
@@ -157,7 +156,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args_all = get_args_all()
+    trainer = "onpolicy"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_MOPO = get_args_MOPO()
     args_all.__dict__.update(args.__dict__)

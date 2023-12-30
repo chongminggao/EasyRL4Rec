@@ -95,8 +95,6 @@ def get_env_args(args):
 
     args_new = parser.parse_known_args()[0]
     args.__dict__.update(args_new.__dict__)
-    if env == "KuaiEnv-v0":
-        args.use_userEmbedding = False
 
     return args
 

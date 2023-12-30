@@ -1,7 +1,4 @@
 import argparse
-import functools
-import os
-import pprint
 import sys
 import traceback
 from gymnasium.spaces import Discrete
@@ -10,7 +7,7 @@ import torch
 
 sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_train_envs, prepare_test_envs, setup_state_tracker
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, setup_state_tracker, prepare_train_test_envs
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -111,8 +108,7 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, dataset, train_envs = prepare_train_envs(args, ensemble_models)
-    test_envs_dict = prepare_test_envs(args)
+    env, dataset, train_envs, test_envs_dict = prepare_train_test_envs(args, ensemble_models)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, train_envs, test_envs_dict)
@@ -124,7 +120,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args_all = get_args_all()
+    trainer = "onpolicy"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_IPS = get_args_ips_policy()
     args_all.__dict__.update(args.__dict__)

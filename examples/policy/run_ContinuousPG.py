@@ -9,8 +9,7 @@ import torch
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_train_envs, \
-    prepare_test_envs, setup_state_tracker, prepare_train_test_envs
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, setup_state_tracker, prepare_train_test_envs
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -124,7 +123,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args_all = get_args_all()
+    trainer = "onpolicy"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_PG = get_args_PG()
     args_all.__dict__.update(args.__dict__)

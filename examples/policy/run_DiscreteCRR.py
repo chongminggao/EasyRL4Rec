@@ -1,7 +1,4 @@
 import argparse
-import functools
-import os
-import pprint
 import sys
 import traceback
 from gymnasium.spaces import Discrete
@@ -9,26 +6,24 @@ from gymnasium.spaces import Discrete
 import numpy as np
 import torch
 
-sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_buffer_via_offline_data, prepare_test_envs, setup_state_tracker
+
+sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
+from policy_offline_utils import prepare_buffer_via_offline_data
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 from core.collector.collector_set import CollectorSet
-from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
-from core.evaluation.loggers import LoggerEval_Policy
 from core.util.data import get_env_args
 from core.policy.RecPolicy import RecPolicy
 
 from tianshou.utils.net.common import ActorCritic, Net
 from tianshou.utils.net.discrete import Actor, Critic
 from tianshou.policy import DiscreteCRRPolicy
-from tianshou.trainer import offline_trainer
 
 # from util.upload import my_upload
 import logzero
-from logzero import logger
 
 try:
     import envpool
@@ -99,8 +94,8 @@ def main(args):
 
     # %% 2. Prepare user model and environment
     ensemble_models = prepare_user_model(args)
-    env, dataset, buffer = prepare_buffer_via_offline_data(args)
-    test_envs_dict = prepare_test_envs(args)
+    env, dataset, kwargs_um, buffer = prepare_buffer_via_offline_data(args)
+    test_envs_dict = prepare_test_envs(args, env, kwargs_um)
 
     # %% 3. Setup policy
     state_tracker = setup_state_tracker(args, ensemble_models, env, buffer, test_envs_dict, use_buffer_in_train=True)
@@ -111,7 +106,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args_all = get_args_all()
+    trainer = "offline"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_CRR = get_args_CRR()
     args_all.__dict__.update(args.__dict__)

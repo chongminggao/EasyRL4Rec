@@ -1,5 +1,4 @@
 import argparse
-import os
 import sys
 import traceback
 from gymnasium.spaces import Discrete
@@ -119,7 +118,8 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args_all = get_args_all()
+    trainer = "onpolicy"
+    args_all = get_args_all(trainer)
     args = get_env_args(args_all)
     args_A2C = get_args_A2C()
     args_all.__dict__.update(args.__dict__)
