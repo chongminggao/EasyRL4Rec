@@ -41,7 +41,8 @@ def get_args_DDPG():
     parser.add_argument('--critic-lr', type=float, default=1e-3)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--tau', type=float, default=0.005)
-    parser.set_defaults(exploration_noise=True)
+
+    parser.add_argument('--remap_eps', default=0.01, type=float)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 
     parser.add_argument("--message", type=str, default="DDPG")

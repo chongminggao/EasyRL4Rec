@@ -49,6 +49,7 @@ def get_args_PPO():
     parser.add_argument('--value-clip', action="store_true", default=True)
     # parser.add_argument('--resume', action="store_true")
 
+    parser.add_argument('--remap_eps', default=0.01, type=float)
     parser.add_argument("--message", type=str, default="ContinuousPPO")
 
     args = parser.parse_known_args()[0]

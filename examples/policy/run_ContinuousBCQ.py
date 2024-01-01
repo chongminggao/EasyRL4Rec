@@ -50,6 +50,7 @@ def get_args_BCQ():
     parser.add_argument("--lmbda", default=0.75)
     # Max perturbation hyper-parameter for BCQ
     parser.add_argument("--phi", default=0.05)
+    parser.add_argument('--remap_eps', default=0.01, type=float)
 
     
     parser.add_argument("--message", type=str, default="ContinuousBCQ")

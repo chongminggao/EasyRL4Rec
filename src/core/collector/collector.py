@@ -357,7 +357,7 @@ class Collector(object):
                 if state is not None:
                     policy.hidden_state = state  # save state into buffer
                 act = to_numpy(result.act)
-                if self.exploration_noise and hasattr(self.policy.policy, "eps") and self.policy.action_type == 'discrete':  # Policy-based methods (e.g., A2C) has no eps.
+                if self.exploration_noise:
                     act = self.policy.exploration_noise(act, self.data)
                 self.data.update(policy=policy, act=act)
 

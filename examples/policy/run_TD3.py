@@ -43,7 +43,8 @@ def get_args_TD3():
     parser.add_argument('--policy-noise', type=float, default=0.2)
     parser.add_argument('--noise-clip', type=float, default=0.5)
     parser.add_argument('--update-actor-freq', type=int, default=2)
-    parser.set_defaults(exploration_noise=True)
+    
+    parser.add_argument('--remap_eps', default=0.01, type=float)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 
     parser.add_argument("--message", type=str, default="TD3")

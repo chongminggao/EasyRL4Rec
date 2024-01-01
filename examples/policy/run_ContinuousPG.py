@@ -41,7 +41,7 @@ def get_args_PG():
     parser.add_argument('--action-scaling', action="store_true", default=True)
     parser.add_argument('--action-bound-method', type=str, default="clip")
 
-    
+    parser.add_argument('--remap_eps', default=0.01, type=float)
     parser.add_argument("--message", type=str, default="ContinuousPG")
 
     args = parser.parse_known_args()[0]

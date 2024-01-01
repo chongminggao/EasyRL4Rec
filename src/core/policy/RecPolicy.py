@@ -38,7 +38,7 @@ class RecPolicy(ABC, nn.Module):
         self.remove_recommended_ids = args.remove_recommended_ids
         self.remap_exploration_noise = args.exploration_noise
         if self.remap_exploration_noise:
-            self.eps = args.eps
+            self.remap_eps = args.remap_eps
 
 
     def get_score(self, action_emb, do_softmax = False):
@@ -64,7 +64,7 @@ class RecPolicy(ABC, nn.Module):
         
     def select_action(self, action_scores):
         _, indices = torch.topk(action_scores, k = self.slate_size, dim = 1)
-        if self.remap_exploration_noise and random.random() < self.eps:
+        if self.remap_exploration_noise and random.random() < self.remap_eps:
             for indice in indices:
                 indice[0] = random.randint(0, len(action_scores[0])-1)
         item_ids = torch.arange(self.n_items).to(self.device)
