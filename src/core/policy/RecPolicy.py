@@ -36,8 +36,7 @@ class RecPolicy(ABC, nn.Module):
         # self.slate_size = args.slate_size
         self.slate_size = 1
         self.remove_recommended_ids = args.remove_recommended_ids
-        self.remap_exploration_noise = args.exploration_noise
-        if self.remap_exploration_noise:
+        if self.action_type == "continuous":
             self.remap_eps = args.remap_eps
 
 
@@ -64,7 +63,7 @@ class RecPolicy(ABC, nn.Module):
         
     def select_action(self, action_scores):
         _, indices = torch.topk(action_scores, k = self.slate_size, dim = 1)
-        if self.remap_exploration_noise and random.random() < self.remap_eps:
+        if random.random() < self.remap_eps:
             for indice in indices:
                 indice[0] = random.randint(0, len(action_scores[0])-1)
         item_ids = torch.arange(self.n_items).to(self.device)

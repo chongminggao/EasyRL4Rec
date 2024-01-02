@@ -41,6 +41,7 @@ def get_args_A2C():
     parser.add_argument('--max-grad-norm', type=float, default=None)
     parser.add_argument('--gae-lambda', type=float, default=1.)
 
+    parser.set_defaults(exploration_noise=False)
     parser.add_argument('--remap_eps', default=0.01, type=float)
     parser.add_argument('--rew-norm', action="store_true", default=False)
 

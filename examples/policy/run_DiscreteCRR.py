@@ -9,7 +9,7 @@ import torch
 
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
-from policy_offline_utils import prepare_buffer_via_offline_data
+from policy_offline_utils import prepare_buffer_via_offline_data, get_args_offline
 from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -73,6 +73,7 @@ def setup_policy_model(args, state_tracker, buffer, test_envs_dict):
         buffer=buffer,
         action_space=Discrete(args.action_shape),
     ).to(args.device)
+    policy.set_eps(args.explore_eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 
@@ -108,6 +109,7 @@ def main(args):
 if __name__ == '__main__':
     trainer = "offline"
     args_all = get_args_all(trainer)
+    args_all = get_args_offline(args_all)
     args = get_env_args(args_all)
     args_CRR = get_args_CRR()
     args_all.__dict__.update(args.__dict__)

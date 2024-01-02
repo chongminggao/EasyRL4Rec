@@ -5,7 +5,7 @@ from gymnasium.spaces import Discrete
 
 import torch
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
-from policy_offline_utils import prepare_buffer_via_offline_data
+from policy_offline_utils import prepare_buffer_via_offline_data, get_args_offline
 from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
@@ -102,6 +102,7 @@ def main(args):
 if __name__ == '__main__':
     trainer = "offline"
     args_all = get_args_all(trainer)
+    args_all = get_args_offline(args_all)
     args = get_env_args(args_all)
     args_CQL = get_args_CQL()
     args_all.__dict__.update(args.__dict__)

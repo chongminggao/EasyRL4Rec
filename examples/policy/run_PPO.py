@@ -99,6 +99,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         action_bound_method="",  # not clip  # follow A2C?
         action_scaling=False
     )
+    policy.set_eps(args.explore_eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 

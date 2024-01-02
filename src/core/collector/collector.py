@@ -361,8 +361,6 @@ class Collector(object):
                     act = self.policy.exploration_noise(act, self.data)
                 self.data.update(policy=policy, act=act)
 
-            # add noise only in train env
-            self.policy.remap_exploration_noise = self.exploration_noise
             # get bounded and remapped actions first (not saved into buffer)
             action_remap = self.policy.map_action(self.data)  # RecPolicy transform!
 

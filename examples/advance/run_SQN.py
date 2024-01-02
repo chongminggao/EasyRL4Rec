@@ -6,8 +6,8 @@ from gymnasium.spaces import Discrete
 import torch
 
 sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
-from ..policy.policy_offline_utils import prepare_buffer_via_offline_data
-from ..policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
+from policy.policy_offline_utils import prepare_buffer_via_offline_data, get_args_offline
+from policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -34,13 +34,9 @@ def get_args_SQN():
     parser.add_argument('--which_head', type=str, default='qhead')  # in {"shead", "qhead", "bcq"}
 
     # bcq
-    parser.add_argument("--n-step", type=int, default=3)
     parser.add_argument("--target-update-freq", type=int, default=320)
     parser.add_argument("--unlikely-action-threshold", type=float, default=0.6)
     parser.add_argument("--imitation-logits-penalty", type=float, default=0.01)
-    parser.add_argument("--explore_eps", type=float, default=0.01)
-    # parser.add_argument('--step-per-epoch', type=int, default=1000)
-    parser.add_argument('--step-per-epoch', type=int, default=1000)
 
     # parser.add_argument("--read_message", type=str, default="UM")
     parser.add_argument("--message", type=str, default="SQN")
@@ -107,6 +103,7 @@ def main(args):
 if __name__ == '__main__':
     trainer = "offline"
     args_all = get_args_all(trainer)
+    args_all = get_args_offline(args_all)
     args = get_env_args(args_all)
     args_SQN = get_args_SQN()
     args_all.__dict__.update(args.__dict__)

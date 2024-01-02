@@ -83,6 +83,7 @@ def setup_policy_model(args, state_tracker, train_envs, test_envs_dict):
         action_scaling=args.action_scaling,
         action_bound_method=args.action_bound_method,  # clip by default
     )
+    policy.set_eps(args.explore_eps)
 
     rec_policy = RecPolicy(args, policy, state_tracker)
 
