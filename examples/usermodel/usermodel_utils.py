@@ -13,7 +13,7 @@ from deepctr_torch.inputs import DenseFeat
 from core.util.static_dataset import StaticDataset
 from core.util.utils import negative_sampling, create_dir
 
-from environments.KuaiRec.KuaiData import compute_exposure_effect_kuaiRec
+from environments.BaseData import compute_exposure_effect
 
 CODEPATH = os.path.dirname(__file__)
 
@@ -129,7 +129,7 @@ def get_args_dataset_specific(envname):
         parser.add_argument('--num_leave_compute', default=3, type=int)
     else:
         raise (
-            "envname should be in the following four datasets: {'CoatEnv-v0', 'YahooEnv-v0', 'KuaiEnv-v0', 'KuaiRand-v0'}")
+            "envname should be in the following four datasets: {'CoatEnv-v0', 'YahooEnv-v0', 'KuaiEnv-v0', 'KuaiRand-v0', 'MovieLensEnv-v0'}")
 
     args = parser.parse_known_args()[0]
     return args
@@ -174,10 +174,14 @@ def prepare_dir_log(args):
     return MODEL_SAVE_PATH, logger_path
 
 
-def load_dataset_train(args, dataset, tau, entity_dim, feature_dim,
-                       MODEL_SAVE_PATH, DATAPATH):
+def load_dataset_train(args, dataset, tau, entity_dim, feature_dim, MODEL_SAVE_PATH, DATAPATH):
     user_features, item_features, reward_features = dataset.get_features(args.is_userinfo)
     df_train, df_user, df_item, list_feat = dataset.get_train_data()
+
+    if "time_ms" in df_train.columns:
+        df_train.rename(columns={"time_ms": "timestamp"}, inplace=True)
+    if "timestamp" in df_train.columns:
+        df_train = df_train.sort_values(by=["user_id", "timestamp"], ascending=True)
 
     assert user_features[0] == "user_id"
     assert item_features[0] == "item_id"
@@ -192,6 +196,7 @@ def load_dataset_train(args, dataset, tau, entity_dim, feature_dim,
     df_pos, df_neg = negative_sampling(df_train, df_item, df_user, reward_features[0], is_rand=True, neg_in_train=neg_in_train, neg_K=args.neg_K, sample_neg_popularity=args.sample_neg_popularity)
 
     df_x = df_pos[user_features + item_features]
+
     if reward_features[0] == "hybrid":  # for kuairand
         a = df_pos["long_view"] + df_pos["is_like"] + df_pos["is_click"]
         df_y = a > 0
@@ -208,9 +213,10 @@ def load_dataset_train(args, dataset, tau, entity_dim, feature_dim,
     if tau == 0:
         exposure_pos = np.zeros([len(df_x_all), 1])
     else:
-        timestamp = df_pos['timestamp']
-        exposure_pos = compute_exposure_effect_kuaiRec(df_x, timestamp, list_feat, tau, MODEL_SAVE_PATH, DATAPATH)
-
+        # timestamp = df_pos['timestamp']
+        # Note that we use step as the proxy of timestamp
+        timestamp = range(len(df_pos))
+        exposure_pos = compute_exposure_effect(dataset, df_pos, timestamp, list_feat, tau, MODEL_SAVE_PATH, DATAPATH)
     dataset = StaticDataset(x_columns, y_columns, num_workers=4)
     dataset.compile_dataset(df_x_all, df_y, exposure_pos)
 

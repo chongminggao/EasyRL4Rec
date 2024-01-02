@@ -80,7 +80,7 @@ def get_args_all(trainer="onpolicy"):
 
     parser.add_argument('--is_exploration_noise', dest='exploration_noise', action='store_true')
     parser.add_argument('--no_exploration_noise', dest='exploration_noise', action='store_false')
-    parser.set_defaults(exploration_noise=True)
+    parser.set_defaults(exploration_noise=(False if trainer == "onpolicy" else True))
     parser.add_argument('--explore_eps', default=0.01, type=float)
 
     parser.add_argument('--is_need_state_norm', dest='need_state_norm', action='store_true')

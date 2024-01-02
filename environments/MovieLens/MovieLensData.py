@@ -38,6 +38,8 @@ class MovieLensData(BaseData):
         # df_data = pd.read_csv(filename, sep="\s+", header=None, names=["user_id", "item_id", "rating"])
         df_data = pd.read_csv(filename, header=0, names=["user_id", "item_id", "rating", "timestamp"])
 
+        df_data = df_data.sort_values(["user_id", "timestamp"])
+
         # df_data["user_id"] -= 1
         # df_data["item_id"] -= 1
         df_user = MovieLensData.load_user_feat()
@@ -94,7 +96,7 @@ class MovieLensData(BaseData):
             item_pop_df = item_pop_df.merge(df_pop, how="left", on="item_id")
             item_pop_df['popularity'].fillna(0, inplace=True)
             item_popularity = item_pop_df['popularity']
-            item_popularity_add1 = np.nan * np.ones([item_popularity.shape[0] + 1])  # This is very important since the item_id of Movielens starts from 1. And similarity use the raw ids as index.
+            item_popularity_add1 = np.nan * np.ones([item_popularity.shape[0] + 1])   # This is very important since the item_id of Movielens starts from 1. And popularity use the raw ids as index.
             item_popularity_add1[1:] = item_popularity
 
             pickle.dump(item_popularity_add1, open(item_popularity_path, 'wb'))

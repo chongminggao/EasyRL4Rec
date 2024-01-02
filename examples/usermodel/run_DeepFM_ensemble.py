@@ -25,13 +25,11 @@ os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
 def prepare_dataset(args, dataset, MODEL_SAVE_PATH, DATAPATH):
     dataset_train, df_user, df_item, x_columns, y_columns, ab_columns = \
-        load_dataset_train(args, dataset,
-                           args.tau, args.entity_dim, args.feature_dim, MODEL_SAVE_PATH, DATAPATH)
+        load_dataset_train(args, dataset, args.tau, args.entity_dim, args.feature_dim, MODEL_SAVE_PATH, DATAPATH)
     if not args.is_ab:
         ab_columns = None
 
-    dataset_val, df_user_val, df_item_val = load_dataset_val(args, dataset,
-                                                             args.entity_dim, args.feature_dim)
+    dataset_val, df_user_val, df_item_val = load_dataset_val(args, dataset, args.entity_dim, args.feature_dim)
     
     assert dataset_train.x_columns[1].vocabulary_size >= dataset_val.x_columns[1].vocabulary_size  # item_ids of training set should cover the test set!
 

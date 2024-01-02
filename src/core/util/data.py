@@ -52,7 +52,7 @@ def get_env_args(args):
         parser.set_defaults(need_transform=True)
         parser.set_defaults(use_auxiliary=True)
         # args.entropy_on_user = True
-        parser.add_argument("--entropy_window", type=int, nargs="*", default=[])
+        parser.add_argument("--entropy_window", type=int, nargs="*", default=[1,2])
         parser.add_argument("--rating_threshold", type=float, default=4)
         parser.add_argument("--yfeat", type=str, default="rating")
 

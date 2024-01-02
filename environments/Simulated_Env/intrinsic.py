@@ -40,18 +40,26 @@ class IntrinsicSimulatedEnv(BaseSimulatedEnv):
         div_reward = self._cal_diversity(action)
         # get novelty
         nov_reward = self._cal_novelty(action)
-        intrinsic_reward = self.lambda_diversity * div_reward + \
-                           self.lambda_novelty * nov_reward
+        intrinsic_reward = self.lambda_diversity * div_reward + self.lambda_novelty * nov_reward
         final_reward = pred_reward + intrinsic_reward - self.MIN_R
         return final_reward
 
     def _cal_diversity(self, action):
+        if hasattr(self.env_task, "lbe_item"):
+            p_id = self.env_task.lbe_item.inverse_transform([action])[0]
+        else:
+            p_id = action
+
         l = len(self.history_action)
         div = 0.0
         if l <= 1:
             return 0.0
         for i in range(l-1):
-            div += (1 - self.item_similarity[self.history_action[i], action])
+            if hasattr(self.env_task, "lbe_item"):
+                q_id = self.env_task.lbe_item.inverse_transform([self.history_action[i]])[0]
+            else:
+                q_id = self.history_action[i]
+            div += (1 - self.item_similarity[q_id, p_id])
         div /= (l-1)
         return div
     

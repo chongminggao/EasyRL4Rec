@@ -191,7 +191,7 @@ class KuaiRandData(BaseData):
         return mat
 
     @staticmethod
-    def load_category():
+    def load_category(tag_label="tags"):
         print("load item feature")
         filepath = os.path.join(DATAPATH, 'video_features_basic_pure.csv')
         df_item = pd.read_csv(filepath, usecols=["tag"], dtype=str)
@@ -206,6 +206,7 @@ class KuaiRandData(BaseData):
         df_feat[df_feat.isna()] = -1
         df_feat = df_feat + 1
         df_feat = df_feat.astype(int)
+        df_feat[tag_label] = list_feat
 
         return list_feat, df_feat
 

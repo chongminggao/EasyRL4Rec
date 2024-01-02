@@ -6,6 +6,7 @@
 # python examples/usermodel/run_LinUCB.py          --env MovieLensEnv-v0  --seed 2023 --cuda 3  --epoch 5 --loss "point" --message "UCB-point" &
 
 python examples/usermodel/run_DeepFM_ensemble.py --env MovieLensEnv-v0  --seed 2023 --cuda 1  --epoch 5 --n_models 3 --loss "pointneg" --message "pointneg"
+python examples/usermodel/run_DeepFM_ensemble.py --env MovieLensEnv-v0  --seed 2023 --cuda 1  --epoch 5 --tau 100 --n_models 1 --loss "pointneg" --message "CIRS_UM"
 python examples/usermodel/run_DeepFM_IPS.py      --env MovieLensEnv-v0  --seed 2023 --cuda 0  --epoch 5 --loss "pointneg" --message "DeepFM-IPS"
 python examples/usermodel/run_Egreedy.py         --env MovieLensEnv-v0  --seed 2023 --cuda 2  --epoch 5 --loss "pointneg" --message "epsilon-greedy"
 python examples/usermodel/run_LinUCB.py          --env MovieLensEnv-v0  --seed 2023 --cuda 3  --epoch 5 --loss "pointneg" --message "UCB"

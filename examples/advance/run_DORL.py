@@ -20,7 +20,7 @@ from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_us
 from core.collector.collector_set import CollectorSet
 from core.util.data import get_env_args, get_true_env
 from core.collector.collector import Collector
-from environments.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv
+from environments.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv, get_features_of_last_n_items_features
 from core.policy.RecPolicy import RecPolicy
 
 from tianshou.data import VectorReplayBuffer
@@ -52,6 +52,15 @@ def get_args_DORL():
     parser.add_argument('--no_exposure_intervention', dest='use_exposure_intervention', action='store_false')
     parser.set_defaults(use_exposure_intervention=False)
 
+    parser.add_argument('--is_feature_level', dest='use_feature_level', action='store_true')
+    parser.add_argument('--no_feature_level', dest='use_feature_level', action='store_false')
+    parser.set_defaults(feature_level=True)
+
+    parser.add_argument('--is_sorted', dest='is_sorted', action='store_true')
+    parser.add_argument('--no_sorted', dest='is_sorted', action='store_false')
+    parser.set_defaults(is_sorted=True)
+
+    parser.add_argument("--entropy_window", type=int, nargs="*", default=[1, 2])
     parser.add_argument("--version", type=str, default="v1")
     parser.add_argument('--tau', default=0, type=float)
     parser.add_argument('--gamma_exposure', default=10, type=float)
@@ -64,82 +73,99 @@ def get_args_DORL():
     args = parser.parse_known_args()[0]
     return args
 
-def get_save_entropy_mat(dataset, entropy_window, ent_savepath):
-        df_train, df_user, df_item, list_feat = dataset.get_train_data()
 
-        num_item = df_train["item_id"].nunique()
-        if not "timestamp" in df_train.columns:
-            df_train.rename(columns={"time_ms": "timestamp"}, inplace=True)
+def get_entropy(mylist, need_count=True):
+    if len(mylist) <= 1:
+        return 1
+    if need_count:
+        cnt_dict = Counter(mylist)
+    else:
+        cnt_dict = mylist
+    prob = np.array(list(cnt_dict.values())) / sum(cnt_dict.values())
+    log_prob = np.log2(prob)
+    entropy = - np.sum(log_prob * prob) / np.log2(len(cnt_dict))
+    # entropy = - np.sum(log_prob * prob) / np.log2(len(cnt_dict) + 1)
+    return entropy
 
-        def get_entropy(mylist, need_count=True):
-            if len(mylist) <= 1:
-                return 1
-            if need_count:
-                cnt_dict = Counter(mylist)
-            else:
-                cnt_dict = mylist
-            prob = np.array(list(cnt_dict.values())) / sum(cnt_dict.values())
-            log_prob = np.log2(prob)
-            entropy = - np.sum(log_prob * prob) / np.log2(len(cnt_dict))
-            # entropy = - np.sum(log_prob * prob) / np.log2(len(cnt_dict) + 1)
-            return entropy
+def get_save_entropy_mat(dataset, entropy_window, ent_savepath, feature_level=True, is_sorted=True):
+    df_train, df_user, df_item, list_feat = dataset.get_train_data()
+    assert list_feat is not None
+    map_item_feat = dict(zip(df_item.index, df_item["tags"])) if feature_level else None
 
-        entropy_user, map_entropy = None, None
+    # if os.path.exists(ent_savepath):
+    #     map_entropy = pickle.load(open(ent_savepath, 'rb'))
+    #     return map_entropy, map_item_feat
 
-        # if 0 in entropy_window:
-        #     df_train = df_train.sort_values("user_id")
-        #     interaction_list = df_train[["user_id", "item_id"]].groupby("user_id").agg(list)
-        #     entropy_user = interaction_list["item_id"].map(partial(get_entropy))
-        #
-        #     savepath = os.path.join(self.Entropy_PATH, "user_entropy.csv")
-        #     entropy_user.to_csv(savepath, index=True)
+    # num_item = df_train["item_id"].nunique()
+    if not "timestamp" in df_train.columns:
+        df_train.rename(columns={"time_ms": "timestamp"}, inplace=True)
 
-        if len(set(entropy_window) - set([0])):
+    map_entropy = None
 
+    # entropy_user = None
+    # if 0 in entropy_window:
+    #     df_train = df_train.sort_values("user_id")
+    #     interaction_list = df_train[["user_id", "item_id"]].groupby("user_id").agg(list)
+    #     entropy_user = interaction_list["item_id"].map(partial(get_entropy))
+    #
+    #     savepath = os.path.join(self.Entropy_PATH, "user_entropy.csv")
+    #     entropy_user.to_csv(savepath, index=True)
+
+    if len(set(entropy_window) - set([0])):
+
+        if "timestamp" in df_train.columns:
+            df_uit = df_train[["user_id", "item_id", "timestamp"]].sort_values(["user_id", "timestamp"])
+        else:
+            df_uit = df_train[["user_id", "item_id"]].sort_values(["user_id"])
+
+        map_hist_count = defaultdict(lambda: defaultdict(int))
+        lastuser = int(-1)
+
+        def update_map(map_hist_count, hist_tra, item, require_len, is_sort=True):
+            if len(hist_tra) < require_len:
+                return
+
+            history = tuple(sorted(hist_tra[-require_len:]) if is_sort else hist_tra[-require_len:])
+            map_hist_count[history][item] += 1
+
+        hist_tra = []
+
+        # for k, (user, item, time) in tqdm(df_uit.iterrows(), total=len(df_uit), desc="count frequency..."):
+        for row in tqdm(df_uit.to_numpy(), total=len(df_uit), desc="count frequency..."):
             if "timestamp" in df_train.columns:
-                df_uit = df_train[["user_id", "item_id", "timestamp"]].sort_values(["user_id", "timestamp"])
+                (user, item, time) = row
             else:
-                df_uit = df_train[["user_id", "item_id"]].sort_values(["user_id"])
+                (user, item) = row
+            user = int(user)
+            item = int(item)
+            if feature_level:
+                features = map_item_feat[item]
 
-            map_hist_count = defaultdict(lambda: defaultdict(int))
-            lastuser = int(-1)
+            if user != lastuser:
+                lastuser = user
+                hist_tra = []
 
-            def update_map(map_hist_count, hist_tra, item, require_len):
-                if len(hist_tra) < require_len:
-                    return
-                # if require_len == 0:
-                #     map_hist_count[tuple()][item] += 1
-                # else:
-                map_hist_count[tuple(sorted(hist_tra[-require_len:]))][item] += 1
-
-            hist_tra = []
-            # for k, (user, item, time) in tqdm(df_uit.iterrows(), total=len(df_uit), desc="count frequency..."):
-            for row in tqdm(df_uit.to_numpy(), total=len(df_uit), desc="count frequency..."):
-                if "timestamp" in df_train.columns:
-                    (user, item, time) = row
-                else:
-                    (user, item) = row
-                user = int(user)
-                item = int(item)
-
-                if user != lastuser:
-                    lastuser = user
-                    hist_tra = []
-
+            if feature_level:
+                for feat in features:
+                    for require_len in set(entropy_window) - set([0]):
+                        hist_feats = get_features_of_last_n_items_features(require_len, hist_tra, map_item_feat, is_sort=is_sorted)
+                        for hist_feat_list in hist_feats:
+                            update_map(map_hist_count, hist_feat_list, feat, require_len)
+            else: # item level
                 for require_len in set(entropy_window) - set([0]):
                     update_map(map_hist_count, hist_tra, item, require_len)
-                hist_tra.append(item)
+            hist_tra.append(item)
 
-            map_entropy = {}
-            for k, v in tqdm(map_hist_count.items(), total=len(map_hist_count), desc="compute entropy..."):
-                map_entropy[k] = get_entropy(v, need_count=False)
+        map_entropy = {}
+        for k, v in tqdm(map_hist_count.items(), total=len(map_hist_count), desc="compute entropy..."):
+            map_entropy[k] = get_entropy(v, need_count=False)
 
-            # savepath = os.path.join(self.Entropy_PATH, "map_entropy.pickle")
-            pickle.dump(map_entropy, open(ent_savepath, 'wb'))
+        # savepath = os.path.join(self.Entropy_PATH, "map_entropy.pickle")
+        # pickle.dump(map_entropy, open(ent_savepath, 'wb'))
 
-            # print(map_hist_count)
+        # print(map_hist_count)
+    return map_entropy, map_item_feat
 
-        return entropy_user, map_entropy
 
 def prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um):
     entropy_dict = dict()
@@ -151,10 +177,8 @@ def prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um):
     #     entropy_dict.update({"on_user": entropy_mat_0})
     if len(set(args.entropy_window) - set([0])):
         savepath = os.path.join(ensemble_models.Entropy_PATH, "map_entropy.pickle")
-        if not os.path.exists(savepath):
-            entropy_user, map_entropy = get_save_entropy_mat(dataset, args.entropy_window, savepath)
-        else:
-            map_entropy = pickle.load(open(savepath, 'rb'))
+        map_entropy, map_item_feat = get_save_entropy_mat(dataset, args.entropy_window, savepath, args.feature_level, args.is_sorted)
+
         entropy_dict.update({"map": map_entropy})
 
     entropy_set = set(args.entropy_window)
@@ -162,8 +186,8 @@ def prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um):
     entropy_max = 0
     if len(entropy_set):
         for entropy_term in entropy_set:
-            entropy_min += min([v for k, v in entropy_dict["map"].items() if len(k) == entropy_term])
-            entropy_max += max([v for k, v in entropy_dict["map"].items() if len(k) == entropy_term])
+            entropy_min += min([v for k, v in entropy_dict["map"].items() if len(k) == entropy_term] + [1])
+            entropy_max += max([v for k, v in entropy_dict["map"].items() if len(k) == entropy_term] + [1])
 
     with open(ensemble_models.PREDICTION_MAT_PATH, "rb") as file:
         predicted_mat = pickle.load(file)
@@ -176,7 +200,6 @@ def prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um):
         "task_env_param": kwargs_um,
         "task_name": args.env,
         "predicted_mat": predicted_mat,
-
         "version": args.version,
         "tau": args.tau,
         "use_exposure_intervention": args.use_exposure_intervention,
@@ -189,6 +212,9 @@ def prepare_train_envs(args, ensemble_models, env, dataset, kwargs_um):
         "step_n_actions": max(args.entropy_window) if len(args.entropy_window) else 0,
         "entropy_min": entropy_min,
         "entropy_max": entropy_max,
+        "feature_level": args.feature_level,
+        "map_item_feat": map_item_feat,
+        "is_sorted": args.is_sorted
     }
 
     train_envs = DummyVectorEnv(

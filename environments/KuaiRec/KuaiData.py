@@ -8,8 +8,10 @@ from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix
 
+
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
-from environments.BaseData import BaseData
+from ..BaseData import BaseData
+from .preprocessing_kuairec import get_df_data
 
 ROOTPATH = os.path.dirname(__file__)
 DATAPATH = os.path.join(ROOTPATH, "data_raw")
@@ -34,7 +36,7 @@ class KuaiData(BaseData):
 
     def get_df(self, name="big_matrix_processed.csv"):
         filename = os.path.join(DATAPATH, name)
-        df_data = pd.read_csv(filename,
+        df_data = get_df_data(filename,
                               usecols=['user_id', 'item_id', 'timestamp', 'watch_ratio_normed', 'duration_normed'])
 
         # df_data['duration_normed'] = df_data['duration_ms'] / 1000
@@ -87,7 +89,7 @@ class KuaiData(BaseData):
             item_popularity = pickle.load(open(item_popularity_path, 'rb'))
         else:
             filename = os.path.join(DATAPATH, "big_matrix_processed.csv")
-            df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'timestamp', 'watch_ratio'])
+            df_data = get_df_data(filename, usecols=['user_id', 'item_id', 'timestamp', 'watch_ratio'])
             n_users = df_data['user_id'].nunique()
             n_items = df_data['item_id'].nunique()
             
@@ -163,7 +165,7 @@ class KuaiData(BaseData):
         if not os.path.isfile(os.path.join(DATAPATH, "user_id_small.csv")) or not os.path.isfile(
                 os.path.join(DATAPATH, "item_id_small.csv")):
             small_path = os.path.join(DATAPATH, "small_matrix_processed.csv")
-            df_small = pd.read_csv(small_path, header=0, usecols=['user_id', 'item_id'])
+            df_small = get_df_data(small_path, usecols=['user_id', 'item_id'])
 
             user_id_small = pd.DataFrame(df_small["user_id"].unique(), columns=["user_id_small"])
             item_id_small = pd.DataFrame(df_small["item_id"].unique(), columns=["item_id_small"])
@@ -186,7 +188,7 @@ class KuaiData(BaseData):
     @staticmethod
     def load_mat():
         small_path = os.path.join(DATAPATH, "small_matrix_processed.csv")
-        df_small = pd.read_csv(small_path, header=0, usecols=['user_id', 'item_id', 'watch_ratio'])
+        df_small = get_df_data(small_path, usecols=['user_id', 'item_id', 'watch_ratio'])
         # df_small['watch_ratio'][df_small['watch_ratio'] > 5] = 5
         df_small.loc[df_small['watch_ratio'] > 5, 'watch_ratio'] = 5
 
@@ -207,7 +209,7 @@ class KuaiData(BaseData):
         return mat, lbe_user, lbe_item
 
     @staticmethod
-    def load_category():
+    def load_category(tag_label="tags"):
         # load categories:
         print("load item feature")
         filepath = os.path.join(DATAPATH, 'item_categories.csv')
@@ -221,6 +223,7 @@ class KuaiData(BaseData):
         df_feat[df_feat.isna()] = -1
         df_feat = df_feat + 1
         df_feat = df_feat.astype(int)
+        df_feat[tag_label] = list_feat
 
         return list_feat, df_feat
 
@@ -231,9 +234,9 @@ class KuaiData(BaseData):
             video_mean_duration = pd.read_csv(duration_path, header=0)["duration_normed"]
         else:
             small_path = os.path.join(DATAPATH, "small_matrix_processed.csv")
-            small_duration = pd.read_csv(small_path, header=0, usecols=["item_id", 'duration_normed'])
+            small_duration = get_df_data(small_path, usecols=["item_id", 'duration_normed'])
             big_path = os.path.join(DATAPATH, "big_matrix_processed.csv")
-            big_duration = pd.read_csv(big_path, header=0, usecols=["item_id", 'duration_normed'])
+            big_duration = get_df_data(big_path, usecols=["item_id", 'duration_normed'])
             duration_all = small_duration.append(big_duration)
             video_mean_duration = duration_all.groupby("item_id").agg(lambda x: sum(list(x)) / len(x))[
                 "duration_normed"]
@@ -295,64 +298,7 @@ class KuaiData(BaseData):
         return None
 
 
-@njit
-def compute_exposure_each_user(start_index: int,
-                               distance_mat: np.ndarray,
-                               timestamp: np.ndarray,
-                               exposure_all: np.ndarray,
-                               index_u: np.ndarray,
-                               video_u: np.ndarray,
-                               tau: float
-                               ):
-    for i in range(1, len(index_u)):
-        video = video_u[i]
-        t_diff = timestamp[index_u[i]] - timestamp[start_index:index_u[i]]
-        t_diff[t_diff == 0] = 1  # important!
-        # dist_hist = np.fromiter(map(lambda x: distance_mat[x, video], video_u[:i]), np.float)
 
-        dist_hist = np.zeros(i)
-        for j in range(i):
-            video_j = video_u[j]
-            dist_hist[j] = distance_mat[video_j, video]
-
-        exposure = np.sum(np.exp(- t_diff * dist_hist / tau))
-        exposure_all[start_index + i] = exposure
-
-def compute_exposure_effect_kuaiRec(df_x, timestamp, list_feat, tau, MODEL_SAVE_PATH, DATAPATH):
-    exposure_path = os.path.join(MODEL_SAVE_PATH, "..", "saved_exposure", "exposure_pos_{:.1f}.csv".format(tau))
-
-    if os.path.isfile(exposure_path):
-        print("loading saved exposure scores: ", exposure_path)
-        exposure_pos_df = pd.read_csv(exposure_path)
-        exposure_pos = exposure_pos_df.to_numpy()
-        return exposure_pos
-
-    similarity_mat = KuaiData.get_similarity_mat(list_feat)
-
-    distance_mat = 1 / similarity_mat
-
-    exposure_pos = np.zeros([len(df_x), 1])
-
-    user_list = df_x["user_id"].unique()
-
-    timestamp = timestamp.to_numpy()
-
-    print("Compute the exposure effect (for the first time and will be saved for later usage)")
-    for user in tqdm(user_list, desc="Computing exposure effect of historical data"):
-        df_user = df_x[df_x['user_id'] == user]
-        start_index = df_user.index[0]
-        index_u = df_user.index.to_numpy()
-        video_u = df_user['video_id'].to_numpy()
-        compute_exposure_each_user(start_index, distance_mat, timestamp, exposure_pos,
-                                   index_u, video_u, tau)
-
-    exposure_pos_df = pd.DataFrame(exposure_pos)
-
-    if not os.path.exists(os.path.dirname(exposure_path)):
-        os.mkdir(os.path.dirname(exposure_path))
-    exposure_pos_df.to_csv(exposure_path, index=False)
-
-    return exposure_pos
 
 
 if __name__ == "__main__":
