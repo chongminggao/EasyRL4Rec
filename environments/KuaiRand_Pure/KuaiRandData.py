@@ -6,6 +6,8 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from scipy.sparse import csr_matrix
 
+from environments.KuaiRand_Pure.preprocessing_kuairand import get_df_data
+
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 from environments.BaseData import BaseData, get_distance_mat
 
@@ -37,7 +39,7 @@ class KuaiRandData(BaseData):
     
     def get_df(self, name, is_sort=True):
         filename = os.path.join(DATAPATH, name)
-        df_data = pd.read_csv(filename,
+        df_data = get_df_data(filename,
                               usecols=['user_id', 'item_id', 'time_ms', 'is_like', 'is_click', 'long_view',
                                        'duration_normed', "watch_ratio_normed"])
 
@@ -97,7 +99,7 @@ class KuaiRandData(BaseData):
             item_popularity = pickle.load(open(item_popularity_path, 'rb'))
         else:
             filename = os.path.join(DATAPATH, "train_processed.csv")
-            df_data = pd.read_csv(filename, usecols=['user_id', 'item_id', 'is_click'])
+            df_data = get_df_data(filename, usecols=['user_id', 'item_id', 'is_click'])
 
             n_users = df_data['user_id'].nunique()
             n_items = df_data['item_id'].nunique()
@@ -217,9 +219,9 @@ class KuaiRandData(BaseData):
             video_mean_duration = pd.read_csv(duration_path, header=0)["duration_normed"]
         else:
             small_path = os.path.join(DATAPATH, "test_processed.csv")
-            small_duration = pd.read_csv(small_path, header=0, usecols=["item_id", 'duration_normed'])
+            small_duration = get_df_data(small_path, usecols=["item_id", 'duration_normed'])
             big_path = os.path.join(DATAPATH, "train_processed.csv")
-            big_duration = pd.read_csv(big_path, header=0, usecols=["item_id", 'duration_normed'])
+            big_duration = get_df_data(big_path, usecols=["item_id", 'duration_normed'])
             duration_all = small_duration.append(big_duration)
             video_mean_duration = duration_all.groupby("item_id").agg(lambda x: sum(list(x)) / len(x))[
                 "duration_normed"]
