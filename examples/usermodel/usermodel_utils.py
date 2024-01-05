@@ -8,10 +8,10 @@ import logzero
 import numpy as np
 import pandas as pd
 
-from core.util.inputs import SparseFeatP
+from src.core.util.inputs import SparseFeatP
 from deepctr_torch.inputs import DenseFeat
-from core.util.static_dataset import StaticDataset
-from core.util.utils import negative_sampling, create_dir
+from src.core.util.static_dataset import StaticDataset
+from src.core.util.utils import negative_sampling, create_dir
 
 from environments.BaseData import compute_exposure_effect
 

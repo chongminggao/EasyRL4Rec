@@ -11,13 +11,13 @@ from policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, pre
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.collector.collector_set import CollectorSet
-from core.util.layers import Actor_Linear
-from core.util.data import get_env_args
-from core.policy.RecPolicy import RecPolicy
+from src.core.collector.collector_set import CollectorSet
+from src.core.util.layers import Actor_Linear
+from src.core.util.data import get_env_args
+from src.core.policy.RecPolicy import RecPolicy
 
-from tianshou.utils.net.common import ActorCritic
-from tianshou.policy import SQNPolicy
+from src.tianshou.tianshou.utils.net.common import ActorCritic
+from src.tianshou.tianshou.policy import SQNPolicy
 
 # from util.upload import my_upload
 import logzero
@@ -31,7 +31,7 @@ except ImportError:
 def get_args_SQN():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, default="SQN")
-    parser.add_argument('--which_head', type=str, default='qhead')  # in {"shead", "qhead", "bcq"}
+    parser.add_argument('--which_head', type=str, default='shead')  # in {"shead", "qhead", "bcq"}
 
     # bcq
     parser.add_argument("--target-update-freq", type=int, default=320)

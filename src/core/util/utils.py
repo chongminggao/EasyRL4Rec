@@ -12,7 +12,7 @@ from numba import njit
 from scipy.sparse import csr_matrix
 from tqdm import tqdm
 
-from core.util.inputs import SparseFeatP
+from src.core.util.inputs import SparseFeatP
 from deepctr_torch.inputs import DenseFeat, VarLenSparseFeat
 
 

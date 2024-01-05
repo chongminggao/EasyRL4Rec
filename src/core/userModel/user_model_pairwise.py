@@ -8,10 +8,10 @@ from deepctr_torch.inputs import combined_dnn_input, build_input_features
 from deepctr_torch.layers import DNN, PredictionLayer, FM
 from torch import nn
 
-from core.util.inputs import input_from_feature_columns
-from core.util.layers import Linear, create_embedding_matrix
-from core.userModel.user_model import UserModel
-from core.util.utils import compute_input_dim
+from src.core.util.inputs import input_from_feature_columns
+from src.core.util.layers import Linear, create_embedding_matrix
+from src.core.userModel.user_model import UserModel
+from src.core.util.utils import compute_input_dim
 
 
 class UserModel_Pairwise(UserModel):

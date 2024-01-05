@@ -10,13 +10,13 @@ from torch import nn
 
 sys.path.extend([".", "./src", "./src/DeepCTR-Torch"])
 
-from core.evaluation.evaluator_static import test_static_model_in_RL_env
-from core.evaluation.loggers import LoggerEval_UserModel
-from core.util.data import get_env_args, get_true_env
-from core.userModel.user_model_ensemble import EnsembleModel
-from core.evaluation.metrics import get_ranking_results
+from src.core.evaluation.evaluator_static import test_static_model_in_RL_env
+from src.core.evaluation.loggers import LoggerEval_UserModel
+from src.core.util.data import get_env_args, get_true_env
+from src.core.userModel.user_model_ensemble import EnsembleModel
+from src.core.evaluation.metrics import get_ranking_results
 
-from core.util.loss import loss_pointwise_negative, loss_pointwise, loss_pairwise, loss_pairwise_pointwise
+from src.core.util.loss import loss_pointwise_negative, loss_pointwise, loss_pairwise, loss_pairwise_pointwise
 from usermodel_utils import get_datapath, prepare_dir_log, load_dataset_train, load_dataset_val, get_task, get_args_all, \
     get_args_dataset_specific
 

@@ -4,9 +4,9 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import numpy as np
-from tianshou.policy import BasePolicy
+from src.tianshou.tianshou.policy import BasePolicy
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
-from tianshou.data import Batch, ReplayBuffer
+from src.tianshou.tianshou.data import Batch, ReplayBuffer
 
 class RecPolicy(ABC, nn.Module):
     @staticmethod

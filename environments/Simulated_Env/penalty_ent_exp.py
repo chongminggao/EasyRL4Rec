@@ -3,7 +3,7 @@ import torch
 
 from environments.Simulated_Env.base import BaseSimulatedEnv
 from torch import FloatTensor
-from core.util.utils import compute_action_distance, clip0, compute_exposure
+from src.core.util.utils import compute_action_distance, clip0, compute_exposure
 
 
 # from virtualTB.model.UserModel import UserModel

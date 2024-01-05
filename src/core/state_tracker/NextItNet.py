@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from core.state_tracker.base import StateTracker_Base, extract_axis_1
+from src.core.state_tracker.base import StateTracker_Base, extract_axis_1
 
 
 class StateTracker_NextItNet(StateTracker_Base):

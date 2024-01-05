@@ -14,8 +14,8 @@ from sklearn.metrics import *
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from core.util.inputs import SparseFeatP, create_embedding_matrix
-from core.util.layers import Linear
+from src.core.util.inputs import SparseFeatP, create_embedding_matrix
+from src.core.util.layers import Linear
 
 
 # try:

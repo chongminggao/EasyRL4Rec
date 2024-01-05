@@ -17,9 +17,9 @@ from sklearn.preprocessing import LabelEncoder
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from core.util.inputs import input_from_feature_columns
-from core.util.static_dataset import StaticDataset
-from core.userModel.user_model_pairwise_variance import UserModel_Pairwise_Variance
+from src.core.util.inputs import input_from_feature_columns
+from src.core.util.static_dataset import StaticDataset
+from src.core.userModel.user_model_pairwise_variance import UserModel_Pairwise_Variance
 from logzero import logger
 
 from deepctr_torch.inputs import combined_dnn_input, build_input_features

@@ -5,9 +5,9 @@ import warnings
 import numpy as np
 from typing import Any, Dict, List, Union, Optional, Callable
 
-from tianshou.policy import BasePolicy
-from tianshou.env import BaseVectorEnv, DummyVectorEnv
-from tianshou.data import (
+from src.tianshou.tianshou.policy import BasePolicy
+from src.tianshou.tianshou.env import BaseVectorEnv, DummyVectorEnv
+from src.tianshou.tianshou.data import (
     Batch,
     ReplayBuffer,
     ReplayBufferManager,
@@ -248,7 +248,7 @@ class Collector(object):
         gym_reset_kwargs: Optional[Dict[str, Any]] = None,
         is_train=True,
     ) -> Dict[str, Any]:
-        """Collect a specified number of step or episode. Revised from tianshou.data.collector
+        """Collect a specified number of step or episode. Revised from src.tianshou.tianshou.data.collector
 
         To ensure unbiased sampling result with n_episode option, this function will
         first collect ``n_episode - env_num`` episodes, then for the last ``env_num``

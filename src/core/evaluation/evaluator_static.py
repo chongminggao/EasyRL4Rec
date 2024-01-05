@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from core.evaluation.utils import get_feat_dominate_dict
+from src.core.evaluation.utils import get_feat_dominate_dict
 
 def interactive_evaluation(model, env, dataset_val, is_softmax, epsilon, is_ucb, k, need_transform,
                            num_trajectory, item_feat_domination, remove_recommended, force_length=0, top_rate=0.8, draw_bar=False):

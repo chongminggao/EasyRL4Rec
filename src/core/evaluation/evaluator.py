@@ -6,8 +6,8 @@ import numpy as np
 import torch
 
 
-from core.evaluation.utils import get_feat_dominate_dict
-from core.evaluation.metrics import get_diversity, get_novelty
+from src.core.evaluation.utils import get_feat_dominate_dict
+from src.core.evaluation.metrics import get_diversity, get_novelty
 
 class Evaluator_Feat():
     def __init__(self, test_collector_set, df_item_val, need_transform, item_feat_domination, lbe_item, top_rate, draw_bar=False):

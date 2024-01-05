@@ -11,8 +11,8 @@ from typing import Any, Dict, Optional, Sequence, Tuple, Union
 import torch.nn.functional as F
 
 
-from core.util.inputs import SparseFeatP
-from core.util.inputs import create_embedding_matrix
+from src.core.util.inputs import SparseFeatP
+from src.core.util.inputs import create_embedding_matrix
 from deepctr_torch.inputs import DenseFeat, VarLenSparseFeat, get_varlen_pooling_list, varlen_embedding_lookup
 from torch import Tensor
 

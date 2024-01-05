@@ -15,28 +15,28 @@ import torch
 
 sys.path.extend(["./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from core.state_tracker.Caser import StateTracker_Caser
-from core.state_tracker.Average import StateTrackerAvg
-from core.state_tracker.GRU import StateTracker_GRU
-from core.state_tracker.NextItNet import StateTracker_NextItNet
-from core.state_tracker.SASRec import StateTracker_SASRec
-from core.util.inputs import get_dataset_columns
-from core.userModel.user_model_ensemble import EnsembleModel
+from src.core.state_tracker.Caser import StateTracker_Caser
+from src.core.state_tracker.Average import StateTrackerAvg
+from src.core.state_tracker.GRU import StateTracker_GRU
+from src.core.state_tracker.NextItNet import StateTracker_NextItNet
+from src.core.state_tracker.SASRec import StateTracker_SASRec
+from src.core.util.inputs import get_dataset_columns
+from src.core.userModel.user_model_ensemble import EnsembleModel
 from environments.Simulated_Env.base import BaseSimulatedEnv
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.util.data import get_true_env
-from core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
-from core.evaluation.loggers import LoggerEval_Policy
+from src.core.util.data import get_true_env
+from src.core.evaluation.evaluator import Evaluator_Feat, Evaluator_Coverage_Count, Evaluator_User_Experience, save_model_fn
+from src.core.evaluation.loggers import LoggerEval_Policy
 
-from tianshou.data.buffer.base import ReplayBuffer
-from tianshou.data import VectorReplayBuffer, Batch
-from tianshou.env import DummyVectorEnv
-from tianshou.trainer import onpolicy_trainer, offpolicy_trainer
-from tianshou.trainer.offline import offline_trainer
+# from src.tianshou.tianshou.data.buffer.base import 
+from src.tianshou.tianshou.data import ReplayBuffer, VectorReplayBuffer, Batch
+from src.tianshou.tianshou.env import DummyVectorEnv
+from src.tianshou.tianshou.trainer import onpolicy_trainer, offpolicy_trainer
+from src.tianshou.tianshou.trainer.offline import offline_trainer
 
-from core.util.utils import create_dir
+from src.core.util.utils import create_dir
 import logzero
 from logzero import logger
 

@@ -12,17 +12,17 @@ from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_us
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.collector.collector_set import CollectorSet
-from core.util.data import get_env_args
-from core.collector.collector import Collector
-from core.policy.RecPolicy import RecPolicy
+from src.core.collector.collector_set import CollectorSet
+from src.core.util.data import get_env_args
+from src.core.collector.collector import Collector
+from src.core.policy.RecPolicy import RecPolicy
 
-from tianshou.data import VectorReplayBuffer
+from src.tianshou.tianshou.data import VectorReplayBuffer
 
-from tianshou.utils.net.common import Net
-from tianshou.utils.net.continuous import Actor, Critic
-from tianshou.policy import DDPGPolicy
-from tianshou.exploration import GaussianNoise
+from src.tianshou.tianshou.utils.net.common import Net
+from src.tianshou.tianshou.utils.net.continuous import Actor, Critic
+from src.tianshou.tianshou.policy import DDPGPolicy
+from src.tianshou.tianshou.exploration import GaussianNoise
 
 # from util.upload import my_upload
 import logzero

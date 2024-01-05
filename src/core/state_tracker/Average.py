@@ -1,10 +1,10 @@
-from core.state_tracker.base import StateTracker_Base
+from src.core.state_tracker.base import StateTracker_Base
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
 
-from core.util.utils import compute_input_dim
+from src.core.util.utils import compute_input_dim
 
 FLOAT = torch.FloatTensor
 

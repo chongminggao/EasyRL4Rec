@@ -10,13 +10,13 @@ from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_us
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
-from core.collector.collector_set import CollectorSet
+from src.core.collector.collector_set import CollectorSet
 
-from core.util.data import get_env_args
-from core.policy.RecPolicy import RecPolicy
+from src.core.util.data import get_env_args
+from src.core.policy.RecPolicy import RecPolicy
 
-from tianshou.utils.net.common import Net
-from tianshou.policy import DiscreteCQLPolicy
+from src.tianshou.tianshou.utils.net.common import Net
+from src.tianshou.tianshou.policy import DiscreteCQLPolicy
 
 import logzero
 
