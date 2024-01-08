@@ -193,18 +193,22 @@ def prepare_train_envs(args, ensemble_models, env, kwargs_um):
         "predicted_mat": predicted_mat,
     }
 
-    train_envs = DummyVectorEnv(
-        [lambda: BaseSimulatedEnv(**kwargs) for _ in range(args.training_num)])
-
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+
+    train_envs = DummyVectorEnv(
+        [lambda: BaseSimulatedEnv(**kwargs) for _ in range(args.training_num)])
     train_envs.seed(args.seed)
 
     return train_envs
 
 
 def prepare_test_envs(args, env, kwargs_um):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+
     env_task_class = type(env)
     test_envs = DummyVectorEnv(
         [lambda: env_task_class(**kwargs_um) for _ in range(args.test_num)])
@@ -212,14 +216,14 @@ def prepare_test_envs(args, env, kwargs_um):
         [lambda: env_task_class(**kwargs_um) for _ in range(args.test_num)])
     test_envs_NX_x = DummyVectorEnv(
         [lambda: env_task_class(**kwargs_um) for _ in range(args.test_num)])
+    test_envs.seed(args.seed)
+    test_envs_NX_0.seed(args.seed)
+    test_envs_NX_x.seed(args.seed)
 
     test_envs_dict = {"FB": test_envs, "NX_0": test_envs_NX_0, f"NX_{args.force_length}": test_envs_NX_x}
 
     # seed
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    test_envs.seed(args.seed)
+
 
     return test_envs_dict
 
