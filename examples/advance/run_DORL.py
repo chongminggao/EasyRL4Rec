@@ -11,9 +11,9 @@ import torch
 from gymnasium.spaces import Discrete
 from tqdm import tqdm
 
-sys.path.extend([".", "./examples", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
+sys.path.extend([".", "./examples/policy", "./src", "./src/DeepCTR-Torch", "./src/tianshou"])
 
-from ..policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
+from policy_utils import get_args_all, learn_policy, prepare_dir_log, prepare_user_model, prepare_test_envs, setup_state_tracker
 
 # os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 
@@ -52,8 +52,8 @@ def get_args_DORL():
     parser.add_argument('--no_exposure_intervention', dest='use_exposure_intervention', action='store_false')
     parser.set_defaults(use_exposure_intervention=False)
 
-    parser.add_argument('--is_feature_level', dest='use_feature_level', action='store_true')
-    parser.add_argument('--no_feature_level', dest='use_feature_level', action='store_false')
+    parser.add_argument('--is_feature_level', dest='feature_level', action='store_true')
+    parser.add_argument('--no_feature_level', dest='feature_level', action='store_false')
     parser.set_defaults(feature_level=True)
 
     parser.add_argument('--is_sorted', dest='is_sorted', action='store_true')
@@ -89,7 +89,7 @@ def get_entropy(mylist, need_count=True):
 
 def get_save_entropy_mat(dataset, entropy_window, ent_savepath, feature_level=True, is_sorted=True):
     df_train, df_user, df_item, list_feat = dataset.get_train_data()
-    assert list_feat is not None
+    # assert list_feat is not None
     map_item_feat = dict(zip(df_item.index, df_item["tags"])) if feature_level else None
 
     # if os.path.exists(ent_savepath):

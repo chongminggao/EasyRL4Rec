@@ -40,7 +40,8 @@ python examples/policy/run_TD3.py     --env MovieLensEnv-v0  --seed 2023 --cuda 
 
 # run advance
 python examples/advance/run_A2C_IPS.py    --env MovieLensEnv-v0  --seed 2023 --cuda 3 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "DeepFM-IPS"  --message "IPS"
-python examples/advance/run_SQN.py        --env MovieLensEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat"  --window_size 3 --read_message "pointneg"  --message "SQN"
+python examples/advance/run_SQN.py        --env MovieLensEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "SQN"
 python examples/advance/run_MOPO.py       --env MovieLensEnv-v0  --seed 2023 --cuda 2 --epoch 100 --which_tracker avg --reward_handle "cat" --lambda_variance 0.05 --window_size 3 --read_message "pointneg"  --message "MOPO"
 python examples/advance/run_DORL.py       --env MovieLensEnv-v0  --seed 2023 --cuda 1 --epoch 100 --which_tracker avg --reward_handle "cat" --lambda_entropy 5     --window_size 3 --read_message "pointneg"  --message "DORL"
 python examples/advance/run_Intrinsic.py  --env MovieLensEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --lambda_diversity 0.1 --lambda_novelty 0.1 --window_size 3 --read_message "pointneg"  --message "Intrinsic"
+python examples/advance/run_CIRS.py       --env MovieLensEnv-v0  --seed 2023 --cuda 0 --epoch 100 --which_tracker avg --reward_handle "cat" --tau 100 --window_size 3 --read_message "CIRS_UM"  --message "CIRS"
