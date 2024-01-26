@@ -1,6 +1,7 @@
 import argparse
 import random
 from collections import defaultdict
+import math
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -12,10 +13,8 @@ def get_args_offline(args):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--step-per-epoch', type=int, default=1000)
-    parser.add_argument('--is_offline_counterfactual_permutate', dest='offline_counterfactual_permutate', action='store_true')
-    parser.add_argument('--no_offline_counterfactual_permutate', dest='offline_counterfactual_permutate', action='store_false')
-    parser.set_defaults(offline_counterfactual_permutate=False)
-
+    parser.add_argument('--constrcution_method', type=str, default='normal') # in {'normal', 'counterfactual', 'convolution'}
+    parser.add_argument("--convolution_slice_num", type=int, default=10)
     parser.add_argument("--offline_repeat_num", type=int, default=10)
 
     args_new = parser.parse_known_args()[0]
@@ -95,7 +94,12 @@ def construct_buffer_from_offline_data(args, df_train, env):
 
     bins_ind, max_size, buffer_size = evenly_distribute_trajectories_to_bins(df_user_num_mapped, num_bins)
 
-    buffer_size_final = buffer_size * args.offline_repeat_num if args.offline_counterfactual_permutate else buffer_size
+    if args.construction_method == 'normal':
+        buffer_size_final = buffer_size
+    elif args.construction_method == 'counterfactual':
+        buffer_size_final = buffer_size * args.offline_repeat_num
+    elif args.construction_method == 'convolution':
+        buffer_size_final = buffer_size * args.convolution_slice_num
     buffer = VectorReplayBuffer(buffer_size_final, num_bins)
 
 
@@ -109,55 +113,58 @@ def construct_buffer_from_offline_data(args, df_train, env):
             (user_reset, item_reset), info = env.reset()
             env.cur_user = user
 
-            items = df_user_items.loc[user]["item_id"]
-            rewards = df_user_items.loc[user][args.yfeat]
+            full_items = df_user_items.loc[user]["item_id"] 
+            full_rewards = df_user_items.loc[user][args.yfeat]
+            for head in range(0, len(full_items), math.ceil(len(full_items)/args.convolution_slice_num)):
+                items = full_items[head:]
+                rewards = full_rewards[head:]
+                if args.offline_counterfactual_permutate:
+                    item_reward_list = list(zip(items, rewards))
+                    item_reward_numpy = np.array(item_reward_list).repeat(args.offline_repeat_num, axis=0)
+                    item_reward_repeat = np.random.permutation(item_reward_numpy)
+                    items = item_reward_repeat[:, 0].astype(int)
+                    rewards = item_reward_repeat[:, 1].tolist()
 
-            if args.offline_counterfactual_permutate:
-                item_reward_list = list(zip(items, rewards))
-                item_reward_numpy = np.array(item_reward_list).repeat(args.offline_repeat_num, axis=0)
-                item_reward_repeat = np.random.permutation(item_reward_numpy)
-                items = item_reward_repeat[:, 0].astype(int)
-                rewards = item_reward_repeat[:, 1].tolist()
+                np_ui_pair = np.vstack([np.ones_like(items) * user, items]).T
 
-            np_ui_pair = np.vstack([np.ones_like(items) * user, items]).T
+                terminateds = np.zeros(len(rewards), dtype=bool)
+                truncateds = np.zeros(len(rewards), dtype=bool)
+                rew_prevs = [0] + rewards[:-1]
+                is_starts = np.zeros(len(rewards), dtype=bool)
+                obs_items = np.zeros(len(rewards), dtype=int)
+                # obs_next_items = np.zeros(len(rewards), dtype=int)
+                
+                set_is_start = True
+              
+                for k, item in enumerate(items):
+                    if set_is_start:
+                        is_starts[k] = True
+                        obs_items[k] = item_reset
+                        rew_prevs[k] = 0 
+                        set_is_start = False
+                    else:
+                        obs_items[k] = items[k-1] 
+                        assert rew_prevs[k] == rewards[k-1]
+                        
+                    obs_next, rew, terminated, truncated, info = env.step(item)
+                    if terminated or truncated:  
+                        (user_reset, item_reset), info = env.reset()
+                        set_is_start = True
+                        # env.cur_user = user_reset
+                    terminateds[k] = terminated
+                    truncateds[k] = truncated
+                    # print(env.cur_user, obs_next, rew, done, info)
 
-            terminateds = np.zeros(len(rewards), dtype=bool)
-            truncateds = np.zeros(len(rewards), dtype=bool)
-            rew_prevs = [0] + rewards[:-1]
-            is_starts = np.zeros(len(rewards), dtype=bool)
-            obs_items = np.zeros(len(rewards), dtype=int)
-            # obs_next_items = np.zeros(len(rewards), dtype=int)
+                terminateds[-1] = True
+                
+                obs = np.vstack([np.ones_like(items) * user, obs_items]).T
 
-            set_is_start = True
+                batch = Batch(obs=obs, obs_next=np_ui_pair, act=items, is_start=is_starts,
+                            policy={}, info={}, rew=rewards, rew_prev=rew_prevs, terminated=terminateds, truncated=truncateds)
+                ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * indices)
 
-            for k, item in enumerate(items):
-                if set_is_start:
-                    is_starts[k] = True
-                    obs_items[k] = item_reset
-                    rew_prevs[k] = 0
-                    set_is_start = False
-                else:
-                    obs_items[k] = items[k - 1]
-                    assert rew_prevs[k] == rewards[k - 1]
-
-                obs_next, rew, terminated, truncated, info = env.step(item)
-                if terminated or truncated:
-                    (user_reset, item_reset), info = env.reset()
-                    set_is_start = True
-                    # env.cur_user = user_reset
-                terminateds[k] = terminated
-                truncateds[k] = truncated
-                # print(env.cur_user, obs_next, rew, done, info)
-
-            terminateds[-1] = True
-
-            obs = np.vstack([np.ones_like(items) * user, obs_items]).T
-
-            batch = Batch(obs=obs, obs_next=np_ui_pair, act=items, is_start=is_starts,
-                          policy={}, info={}, rew=rewards, rew_prev=rew_prevs, terminated=terminateds,
-                          truncated=truncateds)
-
-            ptr, ep_rew, ep_len, ep_idx = buffer.add(batch, buffer_ids=np.ones([len(batch)], dtype=int) * indices)
+                if(args.construction_method != 'convolution'): 
+                    break
 
     return buffer
 
