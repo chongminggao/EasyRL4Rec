@@ -1,98 +1,106 @@
 import os
-import re
 import pandas as pd
+from results_utils import create_dir, load_dfs, handle_table
 
-from visual_utils import walk_paths, organize_df, loaddata, create_dir, handle_table
-
-def combile_two_tables(dfs, used_way, save_table_dir, methods, 
-                       metrics = [r"$\text{R}_\text{cumu}$", r"$\text{R}_\text{avg}$", "Length"], 
+def combile_tables(dfs, used_way, save_table_dir, datasets, methods,
+                       metrics = [r"$\text{R}_\text{cumu}$", "Length", r"$\text{R}_\text{avg}$"], 
                        final_rate=0.25,
-                       savename="main_result"):
-    datasets = ["Coat"]  # , "MovieLens"
+                       savename="table",
+                       precision=4):
     indices = [datasets, metrics]
     df_all = pd.DataFrame(columns=pd.MultiIndex.from_product(indices))
 
     for (df, dataset) in zip(dfs, datasets):
-        # df = df[used_way]
-        # methods = df.columns.levels[1].to_list()
-        # methods_list.update(methods)
-
-        df_latex, df_excel, df_avg = handle_table(df, final_rate=final_rate, methods=methods)
-        # df_latex2, df_excel2, df_avg2 = handle_table(df2, final_rate=final_rate, methods=methods)
-
+        df_latex, df_excel, df_avg = handle_table(df, final_rate, methods, precision)
         df_all[dataset] = df_latex[used_way]
 
     methods_order = dict(zip(methods, list(range(len(methods)))))
     df_all.sort_index(key=lambda index: [methods_order[x] for x in index.to_list()], inplace=True)
 
     # save
-    filepath_latex = os.path.join(save_table_dir, f"{savename}_table.tex")
+    filepath_latex = os.path.join(save_table_dir, f"{savename}.tex")
     with open(filepath_latex, "w") as file:
-        file.write(df_all.to_latex(escape=False, column_format='lccc', multicolumn_format='c'))
-    print("latex tex file produced!")
+        file.write(df_all.style.to_latex(column_format='lccc', multicol_align='c'))
+    print(f"{savename} latex tex file produced!")
 
-def load_dfs(load_filepath_list, 
-             ways = {'FB', 'NX_0_', 'NX_10_'},
-             metrics = {'ctr', 'len_tra', 'R_tra'},
-             rename_cols=None):
-    
-    dfs = []
-    for load_path in load_filepath_list:
-        # result_dir1 = os.path.join(dirpath, envname)
-        filenames = walk_paths(load_path)
-        dfs1 = loaddata(load_path, filenames)
-        df1 = organize_df(dfs1, ways, metrics, rename_cols=rename_cols)
-
-        # remove_redundent(df1, level=2)
-        dfs.append(df1)
-    
-    return dfs
 
 def main():
-    realpath = os.path.dirname(__file__)
     final_rate = 0.25
     force_length = 10
-    random_seed = 2023
-    env_list = ["CoatEnv-v0"]
-    ways = ['FB', 'NX_0_', 'NX_{}_'.format(force_length)]
+    rename_ways = ['Free', 'No Overlapping', "No Overlapping with {} turns".format(force_length)]
+    _used_way = rename_ways[0]
 
-    dirpath = os.path.join(realpath, "result_logs")
-    load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
-
+    realpath = os.path.dirname(__file__)
     save_table_dir = os.path.join(realpath, "tables")
     create_dirs = [save_table_dir]
     create_dir(create_dirs)
 
-    
-    metrics = {'ctr', 'len_tra', 'R_tra'}
-    latex_metrics = [r"$\text{R}_\text{cumu}$", r"$\text{R}_\text{avg}$", "Length"]
-    # metrics = {'CV', 'Diversity', 'Novelty'}
-    # latex_metrics = ["Cov", "Div", "Nov"]
+    # 1. Batch RL
+    env_list = ["Coat", "ML-1m", "KuaiRec"]
+    metrics = {'R_tra', 'len_tra', 'ctr'}
+    latex_metrics = [r"$\text{R}_\text{cumu}$", "Length", r"$\text{R}_\text{avg}$"]
 
+    dirpath = os.path.join(realpath, "result_logs/1-batchRL")
+    load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
+    savename = "table_1-batchRL"
     rename_cols = {
         "DiscreteBCQ": "BCQ",
         "DiscreteCQL": "CQL",
-        "DiscreteCRR-softmax": "CRR",
+        "DiscreteCRR": "CRR",
+        "SQN": "SQN"
+    }
+    dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
+    combile_tables(dfs, _used_way, save_table_dir, env_list, list(rename_cols.values()), latex_metrics, final_rate, savename, precision=2)
+
+    # 2. model-free RL
+    env_list = ["Coat", "ML-1m", "KuaiRec"]
+    metrics = {'R_tra', 'len_tra', 'ctr'}
+    latex_metrics = [r"$\text{R}_\text{cumu}$", "Length", r"$\text{R}_\text{avg}$"]
+
+    dirpath = os.path.join(realpath, "result_logs/2-model-freeRL")
+    load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
+    savename = "table_2-model-freeRL"
+    rename_cols = {
         "DQN": "DQN",
         "C51": "C51",
         "DDPG": "DDPG",
         "TD3": "TD3",
         "PG": "PG",
         "A2C": "A2C",
-        "A2C-remove": "A2C-remove",
         "DiscretePPO": "PPO",
         "ContinuousPG": "PG(C)",
         "ContinuousA2C": "A2C(C)",
         "ContinuousPPO": "PPO(C)",
+        "DORL": "DORL",
+        "Intrinsic": "Intrinsic",
     }
-
     dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
+    combile_tables(dfs, _used_way, save_table_dir, env_list, list(rename_cols.values()), latex_metrics, final_rate, savename)
 
-    rename_ways = ['Free', 'No Overlapping', "No Overlapping with {} turns".format(force_length)]
-    _used_way = rename_ways[0]
-    savename = "table_{}_{}".format(ways[0], random_seed)
+    # 3. Coverage, Diversity, Novelty
+    env_list = ["KuaiRec"]
+    metrics = {'CV', 'Diversity', 'Novelty'}
+    latex_metrics = ["Coverage", "Diversity", "Novelty"]
 
-    combile_two_tables(dfs, used_way=_used_way, save_table_dir=save_table_dir, methods=list(rename_cols.values()), metrics=latex_metrics, final_rate=final_rate, savename=savename)
+    dirpath = os.path.join(realpath, "result_logs/2-model-freeRL")
+    load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
+    savename = "table_3-Coverage"
+    rename_cols = {
+        "DQN": "DQN",
+        "C51": "C51",
+        "DDPG": "DDPG",
+        "TD3": "TD3",
+        "PG": "PG",
+        "A2C": "A2C",
+        "DiscretePPO": "PPO",
+        "ContinuousPG": "PG(C)",
+        "ContinuousA2C": "A2C(C)",
+        "ContinuousPPO": "PPO(C)",
+        "DORL": "DORL",
+        "Intrinsic": "Intrinsic",
+    }
+    dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
+    combile_tables(dfs, _used_way, save_table_dir, env_list, list(rename_cols.values()), latex_metrics, final_rate, savename)
 
 
 if __name__ == '__main__':

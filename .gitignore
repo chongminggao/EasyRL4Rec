@@ -13,26 +13,24 @@ __pycache__/
 src/tianshou
 
 #!environments/KuaiRec/data/.gitkeep
-environments/VirtualTaobao
-environments/RL4Rec/*
 
 saved_models/
 
 *.zip
-*.pdf
 *.pth
-*.png
-results_for_paper/
 
 *.egg*
 events.*
 
-
-
 *.log
+!/visual_results/**/*.log
 *.xlsx
 *.tex
+!/visual_results/**/*.tex
 *.pdf
+!/visual_results/**/*.pdf
+*.png
+!/visual_results/**/*.png
 
 # for excluding the uncompressed dataset files.
 *.tar.gz
