@@ -80,7 +80,7 @@ def loaddata(dirpath, filenames, use_filename=True):
 def load_dfs(load_filepath_list, 
              ways = {'FB', 'NX_0_', 'NX_10_'},
              metrics = {'R_tra', 'len_tra', 'ctr'},
-             rename_cols=None):
+             rename_cols=dict()):
     dfs = []
     for load_path in load_filepath_list:
         filenames = walk_paths(load_path)
@@ -109,18 +109,17 @@ def organize_df(dfs, ways, metrics, rename_cols=None):
     for method in all_method:
         res = re.match("\[([KT]_)?(.+?)(_len.+)?\]", method)
         if res:
-            all_method_map[method] = res.group(2)
-
+            if res.group(2) in rename_cols.keys():
+                all_method_map[method] = rename_cols[res.group(2)]
+            else:
+                all_method_map[method] = res.group(2)
+            
     df_all.rename(
         columns=all_method_map,
         level=2, inplace=True)
-    
     if rename_cols:
         df_all.drop(columns=[method for method in all_method_map.values() if method not in rename_cols.values()], 
                     level=2, inplace=True)
-        df_all.rename(
-            columns=rename_cols,
-            level=2, inplace=True)
     return df_all
 
 # utils for latex table

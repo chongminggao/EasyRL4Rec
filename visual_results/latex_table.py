@@ -102,6 +102,40 @@ def main():
     dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
     combile_tables(dfs, _used_way, save_table_dir, env_list, list(rename_cols.values()), latex_metrics, final_rate, savename)
 
+    # 4. StateTracker
+    env_list = ["KuaiRec"]
+    metrics = {'R_tra', 'len_tra', 'ctr'}
+    latex_metrics = [r"$\text{R}_\text{cumu}$", "Length", r"$\text{R}_\text{avg}$"]
+
+    dirpath = os.path.join(realpath, "result_logs/4-statetracker")
+    load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
+    savename = "table_4-statetracker"
+    rename_cols = {
+        "A2C_gru": "GRU",
+        "A2C_caser": "Caser",
+        "A2C_sasrec": "SASRec",
+        "A2C_avg": "Average",
+        "A2C_nextitnet": "NextItNet",
+    }
+    dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
+    combile_tables(dfs, _used_way, save_table_dir, env_list, list(rename_cols.values()), latex_metrics, final_rate, savename)
+
+    # 5. Construction Method
+    env_list = ["KuaiRec"]
+    metrics = {'R_tra', 'len_tra', 'ctr'}
+    latex_metrics = [r"$\text{R}_\text{cumu}$", "Length", r"$\text{R}_\text{avg}$"]
+
+    dirpath = os.path.join(realpath, "result_logs/5-construction")
+    load_filepath_list = [os.path.join(dirpath, envname) for envname in env_list]
+    savename = "table_5-construction"
+    rename_cols = {
+        "CRR": "Sequential",
+        "CRR_convolution": "Convolution",
+        "CRR_counterfactual": "Counterfactual",
+    }
+    dfs = load_dfs(load_filepath_list, metrics = metrics, rename_cols=rename_cols)
+    combile_tables(dfs, _used_way, save_table_dir, env_list, list(rename_cols.values()), latex_metrics, final_rate, savename)
+
 
 if __name__ == '__main__':
     main()
