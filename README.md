@@ -4,6 +4,8 @@
 
 # EasyRL4Rec
 
+[![LICENSE](https://img.shields.io/badge/license-MIT-green)](https://github.com/chongminggao/EasyRL4Rec/blob/main/LICENSE)
+
 EasyRL4Rec is a comprehensive and easy-to-use library designed specifically for Reinforcement Learning (RL)-based Recommender Systems (RSs).
 This library provides lightweight and diverse RL environments based on five public datasets and includes core modules with rich options, simplifying model development. It provides unified evaluation standards focusing on long-term outcomes and offers tailored designs for state modeling and action representation for recommendation scenarios.
 The main contributions and key features of this library can be summarized as follows
@@ -26,27 +28,27 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
 
 ## Key Components
 
-* Lightweight Environment.
+* **Lightweight Environment**.
 
   * bulit on five public datasets: Coat, MovieLens, Yahoo, KuaiRec, KuaiRand
 
-* StateTracker with rich options.
+* **StateTracker with rich options**.
 
   * Encompassing popular methods in sequential modeling: Average, GRU, Caser, SASRec, NextItNet
 
-* Comprehensive RL **Policies**.
+* **Comprehensive RL Policies**.
 
   * extend RL policies in [Tianshou](https://github.com/thu-ml/tianshou). 
   
   * include a mechanism to convert continuous actions to discrete items. 
 
-* Two **Training** Paradigms.
+* **Two Training Paradigms**.
 
   * Learning directly from offline logs.
 
   * Learning with a user model. 
 
-* Unified **Evaluation**.
+* **Unified Evaluation**.
 
   * Offline Evaluation focusing on long-term outcomes.
   * Three modes:
@@ -54,9 +56,7 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
     * NX_0: prohibit repeated recommendations, interactions are terminated by quit mechanism.
     * NX_X: prohibit repeated recommendations, interactions are fixed as X rounds without quit mechanism.
 
-<div style="text-align: center;">
-<img src="figs/framework.png" height=600 alt="introduction" style="zoom:40%;" />
-</div>
+<img src="figs/framework.png" alt="framework" style="zoom:40%;" />
 
 ## Installation
 
@@ -180,16 +180,12 @@ Considering a complete interaction from time $1$ to time $T$,  the observations,
 
 Visualzation of data/trajectories stored in Buffer, which support simultaneous interactions in multiple environments:
 
-<div style="text-align: center;">
-<img src="figs/buffer-2.jpg" height=900 alt="introduction" style="zoom:15%;" />
-</div>
+<img src="figs/buffer-2.jpg" alt="buffer-2" style="zoom:15%;" />
 
 
 ### Training
 
-<div style="text-align: center;">
-<img src="figs/pipeline-train.jpg" height=900 alt="introduction" style="zoom:20%;" />
-</div>
+<img src="figs/pipeline-train.jpg" alt="pipeline-train" style="zoom:20%;" />
 
 EasyRL4Rec offers two training settings: 
 
@@ -199,9 +195,8 @@ This setting is similar to ChatGPT's RLHF learning paradigm, in which a reward m
 Its learning pipeline is as the following figure. We first learn a user model $\phi_M$ via supervised learning (which is a traditional recommendation model such as DeepFM), and use $\phi_M$ to provide rewards for learning the core policy $\pi_\theta$.
 
 The implementation of this paradigm in this package is as follows:
-<div style="text-align: center;">
-<img src="figs/pipeline1.png" alt="introduction" style="zoom:50%;" />
-</div>
+
+<img src="figs/pipeline1.png" alt="pipeline1" style="zoom:50%;" />
 
 
 #### 2. Learning directly from offline logs
@@ -215,29 +210,19 @@ In EasyRL4Rec, we implement three buffer construction methods:
 
 Note that compared with the first setting, this setting has no planning stage in training. And its implementation is as follows:
 
-<div style="text-align: center;">
-<img src="figs/pipeline2.png" alt="introduction" style="zoom:50%;" />
-</div>
+<img src="figs/pipeline2.png" alt="pipeline2" style="zoom:50%;" />
 
 ---
-### Evaluation
-
-Here, we emphasize the most notable difference between the interactive recommendation setting and traditional sequential recommendation settings.  The following figure illustrates the learning and evaluation processes in sequential and interactive recommendation settings. Sequential recommendation uses the philosophy of supervised learning, i.e., evaluating the top-$k$ results by comparing them with a set of "*correct*" answers in the test set and computing metrics such as Precision, Recall, NDCG, and Hit Rate. By contrast, interactive recommendation evaluates the results by accumulating the rewards along the interaction trajectories. There is no standard answer in interactive recommendation, which is challenging.
-
+### Offline Evaluation
 
 In offline evaluation, we cannot obtain users' real-time feedback towards the recommended items. The are two options that we can choose to construct the test environment:
    1. Option 1: Use the offline test data to evaluate the policy directly through off-policy evaluation, such as [paper](https://arxiv.org/abs/2212.02779), [paper](https://arxiv.org/abs/2206.02620).
    2. Option 2: Creat a simulated environment using a simulated model. For example, using a MF model to predict the missing values in the user-itemp matrix ([paper](https://dl.acm.org/doi/10.1145/3383313.3412252)) and define a certain quit mechanism for ending the interaction, such as [KuaiEnv](https://github.com/chongminggao/CIRS-codes/#kuaishouenv). 
 
 The implementation is as follows:
-<div style="text-align: center;">
-<img src="figs/eval_pipeline.png" height=900 alt="introduction" style="zoom:50%;" />
-</div>
 
+<img src="figs/eval_pipeline.png" alt="eval_pipeline" style="zoom:50%;" />
 
-
-<!-- ---
-#### TODO: The following description is only for development purposes. It follows its foundation repo [DORL-codes](https://github.com/chongminggao/DORL-codes): and will be changed in the future. -->
 
 
 
