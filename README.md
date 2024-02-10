@@ -8,11 +8,13 @@ EasyRL4Rec is a comprehensive and easy-to-use library designed specifically for 
 This library provides lightweight and diverse RL environments based on five public datasets and includes core modules with rich options, simplifying model development. It provides unified evaluation standards focusing on long-term outcomes and offers tailored designs for state modeling and action representation for recommendation scenarios.
 The main contributions and key features of this library can be summarized as follows
 
-* **Easy-to-use Framework**
+* **An Easy-to-use Framework.**
 
 * **Unified Evaluation Standards**
 
 * **Tailored Designs for Recommendation Scenarios**
+
+  * customizable modules for state modeling and action representation.
 
 * **Insightful Experiments for RL-based RSs**
 
@@ -24,15 +26,15 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
 
 ## Key Components
 
-* Lightweight **Environment**.
+* Lightweight Environment.
 
   * bulit on five public datasets: Coat, MovieLens, Yahoo, KuaiRec, KuaiRand
 
-* Rich options of **StateTracker**.
+* StateTracker with rich options.
 
   * Encompassing popular methods in sequential modeling: Average, GRU, Caser, SASRec, NextItNet
 
-* Support comprehensive RL **Policies**.
+* Comprehensive RL **Policies**.
 
   * extend RL policies in [Tianshou](https://github.com/thu-ml/tianshou). 
   
@@ -52,6 +54,9 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
     * NX_0: prohibit repeated recommendations, interactions are terminated by quit mechanism.
     * NX_X: prohibit repeated recommendations, interactions are fixed as X rounds without quit mechanism.
 
+<div style="text-align: center;">
+<img src="figs/framework.png" alt="introduction" style="zoom:40%;" />
+</div>
 
 ## Installation
 
@@ -110,13 +115,12 @@ If things go well, you can run the following examples now！Or you can just repr
 ---
 
 
-## QuickStart
+## Runing commands
 
-All scripts 
+All running commands are saved in script files, which can be found in script/
+Here presents some running examples.
 
-Examples to run the code
-
-The argument `env` of all experiments can be set to one of the four environments: `CoatEnv-v0, Yahoo-v0, KuaiEnv-v0, KuaiRand-v0`. The former two datasets (coat and yahoo) are small so the models can run very quickly.
+The argument `env` of all experiments can be set to one of the five environments: `CoatEnv-v0, Yahoo-v0, MovieLensEnv-v0, KuaiEnv-v0, KuaiRand-v0`. The former two datasets (coat and yahoo) are small so the models can run very quickly.
 
 
 ### Run user model
@@ -156,7 +160,7 @@ python examples/policy/run_A2C.py     --env KuaiEnv-v0  --seed 2023 --cuda 1 --e
 python examples/policy/run_DQN.py     --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --is_random_init --read_message "pointneg"  --message "DQN-test" 
 ```
 
-### run advance
+### Run Advance models
 ```shell
 python examples/advance/run_MOPO.py   --env KuaiEnv-v0  --seed 2023 --cuda 3 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --lambda_variance 0.05 --window_size 3 --read_message "pointneg"  --message "MOPO"
 
@@ -166,34 +170,7 @@ python examples/advance/run_Intrinsic.py --env KuaiEnv-v0  --seed 2023 --cuda 0 
 ```
 
 
-## Introduction
-
-### Architecture
-
-<div style="text-align: center;">
-<img src="figs/Framework-EasyRL4Rec.png" alt="introduction" style="zoom:40%;" />
-</div>
-
-#### **Environments**:
-
-Datasets currently involved in the EasyRL4Rec.
-
-TODO: Table 2.
-
-#### **Policy**:
-We implement this module by extending RL policies in the [Tianshou](https://github.com/thu-ml/tianshou). 
-
-Tailored designs for recommendation scenarios:
-
-* Convert continuous actions to discrete items.
-* Encoding the state via StateTracker.
-  * The encoded state embeddings are optimized simultaneously with policies.
-* Option of allowing repeated recommendations.
-
-#### **StateTracker**:
-Unlike traditional application fields such as games, the state in recommended scenarios cannot be directly obtained from the environment, which requires artificial modeling of the state. The StateTracker module is responsible for modeling and encoding states. 
-
-TODO: StateTrackers in EasyRL4Rec: Average, GRU, Caser, SASRec, NextItNet
+## More Details of this Library
 
 #### **Collector**:
 
@@ -204,16 +181,15 @@ Considering a complete interaction from time $1$ to time $T$,  the observations,
 Visualzation of data/trajectories stored in Buffer, which support simultaneous interactions in multiple environments:
 
 <div style="text-align: center;">
-<img src="figs/buffer-2.pdf" alt="introduction" style="zoom:40%;" />
+<img src="figs/buffer-2.jpg" alt="introduction" style="zoom:15%;" />
 </div>
 
 
 ### Training
 
 <div style="text-align: center;">
-<img src="figs/pipeline-train.pdf" alt="introduction" style="zoom:30%;" />
+<img src="figs/pipeline-train.jpg" alt="introduction" style="zoom:20%;" />
 </div>
-
 
 EasyRL4Rec offers two training settings: 
 
@@ -248,9 +224,6 @@ Note that compared with the first setting, this setting has no planning stage in
 
 Here, we emphasize the most notable difference between the interactive recommendation setting and traditional sequential recommendation settings.  The following figure illustrates the learning and evaluation processes in sequential and interactive recommendation settings. Sequential recommendation uses the philosophy of supervised learning, i.e., evaluating the top-$k$ results by comparing them with a set of "*correct*" answers in the test set and computing metrics such as Precision, Recall, NDCG, and Hit Rate. By contrast, interactive recommendation evaluates the results by accumulating the rewards along the interaction trajectories. There is no standard answer in interactive recommendation, which is challenging.
 
-<div style="text-align: center;">
-<img src="figs/IRS_eval.png" alt="introduction" style="zoom:50%;" />
-</div>
 
 In offline evaluation, we cannot obtain users' real-time feedback towards the recommended items. The are two options that we can choose to construct the test environment:
    1. Option 1: Use the offline test data to evaluate the policy directly through off-policy evaluation, such as [paper](https://arxiv.org/abs/2212.02779), [paper](https://arxiv.org/abs/2206.02620).

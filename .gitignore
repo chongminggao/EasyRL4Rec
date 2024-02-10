@@ -31,6 +31,7 @@ events.*
 !/visual_results/**/*.pdf
 *.png
 !/visual_results/**/*.png
+!/figs/**/*.png
 
 # for excluding the uncompressed dataset files.
 *.tar.gz
