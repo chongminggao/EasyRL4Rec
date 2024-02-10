@@ -55,7 +55,7 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
     * NX_X: prohibit repeated recommendations, interactions are fixed as X rounds without quit mechanism.
 
 <div style="text-align: center;">
-<img src="figs/framework.png" alt="introduction" style="zoom:40%;" />
+<img src="figs/framework.png" height=600 alt="introduction" style="zoom:40%;" />
 </div>
 
 ## Installation
@@ -181,14 +181,14 @@ Considering a complete interaction from time $1$ to time $T$,  the observations,
 Visualzation of data/trajectories stored in Buffer, which support simultaneous interactions in multiple environments:
 
 <div style="text-align: center;">
-<img src="figs/buffer-2.jpg" alt="introduction" style="zoom:15%;" />
+<img src="figs/buffer-2.jpg" height=900 alt="introduction" style="zoom:15%;" />
 </div>
 
 
 ### Training
 
 <div style="text-align: center;">
-<img src="figs/pipeline-train.jpg" alt="introduction" style="zoom:20%;" />
+<img src="figs/pipeline-train.jpg" height=900 alt="introduction" style="zoom:20%;" />
 </div>
 
 EasyRL4Rec offers two training settings: 
@@ -231,7 +231,7 @@ In offline evaluation, we cannot obtain users' real-time feedback towards the re
 
 The implementation is as follows:
 <div style="text-align: center;">
-<img src="figs/eval_pipeline.png" alt="introduction" style="zoom:50%;" />
+<img src="figs/eval_pipeline.png" height=900 alt="introduction" style="zoom:50%;" />
 </div>
 
 
