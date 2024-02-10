@@ -56,7 +56,9 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
     * NX_0: prohibit repeated recommendations, interactions are terminated by quit mechanism.
     * NX_X: prohibit repeated recommendations, interactions are fixed as X rounds without quit mechanism.
 
+<div style="text-align: center;">
 <img src="figs/framework.png" alt="framework" style="zoom:40%;" />
+</div>
 
 ## Installation
 
@@ -180,12 +182,14 @@ Considering a complete interaction from time $1$ to time $T$,  the observations,
 
 Visualzation of data/trajectories stored in Buffer, which support simultaneous interactions in multiple environments:
 
+<div style="text-align: center;">
 <img src="figs/buffer-2.jpg" alt="buffer-2" style="zoom:15%;" />
-
+</div>
 
 ### Training
-
+<div style="text-align: center;">
 <img src="figs/pipeline-train.jpg" alt="pipeline-train" style="zoom:20%;" />
+</div>
 
 EasyRL4Rec offers two training settings: 
 
@@ -196,8 +200,9 @@ Its learning pipeline is as the following figure. We first learn a user model $\
 
 The implementation of this paradigm in this package is as follows:
 
+<div style="text-align: center;">
 <img src="figs/pipeline1.png" alt="pipeline1" style="zoom:50%;" />
-
+</div>
 
 #### 2. Learning directly from offline logs
 This setting assume all data are users' behavior logs (instead of ratings). The policy directly learns from offline logs, which have been collected in the Buffer in advance. 
@@ -210,7 +215,9 @@ In EasyRL4Rec, we implement three buffer construction methods:
 
 Note that compared with the first setting, this setting has no planning stage in training. And its implementation is as follows:
 
+<div style="text-align: center;">
 <img src="figs/pipeline2.png" alt="pipeline2" style="zoom:50%;" />
+</div>
 
 ---
 ### Offline Evaluation
@@ -221,8 +228,9 @@ In offline evaluation, we cannot obtain users' real-time feedback towards the re
 
 The implementation is as follows:
 
+<div style="text-align: center;">
 <img src="figs/eval_pipeline.png" alt="eval_pipeline" style="zoom:50%;" />
-
+</div>
 
 
 
