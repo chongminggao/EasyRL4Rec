@@ -1,31 +1,36 @@
-# run user model
+# Run User Model
 python examples/usermodel/run_DeepFM_ensemble.py --env KuaiEnv-v0  --seed 2023 --cuda 0     --epoch 5 --n_models 5 --loss "pointneg" --message "pointneg"
 python examples/usermodel/run_DeepFM_IPS.py      --env KuaiEnv-v0  --seed 2023 --cuda 1     --epoch 5 --loss "pointneg" --message "DeepFM-IPS"
 # python examples/usermodel/run_DeepFM_ensemble.py --env KuaiEnv-v0  --seed 2023 --cuda 0     --epoch 5 --tau 100 --n_models 1 --loss "pointneg" --message "CIRS_UM"
 # python examples/usermodel/run_Egreedy.py         --env KuaiEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 5 --seed 2023 --cuda 2 --loss "pointneg" --message "epsilon-greedy"
 # python examples/usermodel/run_LinUCB.py          --env KuaiEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 5 --seed 2023 --cuda 3 --loss "pointneg" --message "UCB"
 
-# run policy
-# 1. Offline RL(Batch RL) (offpolicy)
-python examples/policy/run_SQN.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat"  --window_size 3 --read_message "pointneg"  --message "SQN"
-python examples/policy/run_CRR.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat"  --window_size 3 --read_message "pointneg"  --message "CRR"
-python examples/policy/run_CQL.py --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat"  --num-quantiles 20 --min-q-weight 10 --window_size 3 --read_message "pointneg"  --message "CQL"
-python examples/policy/run_BCQ.py --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat"  --unlikely-action-threshold 0.6 --window_size 3 --read_message "pointneg"  --message "BCQ"
+# Run Policy
+# 1. Offline RL (Batch RL)
+python examples/policy/run_DiscreteBCQ.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --unlikely-action-threshold 0.2 --explore_eps 0.4 --read_message "pointneg"  --message "BCQ"
+python examples/policy/run_DiscreteCQL.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --min-q-weight 0.3 --explore_eps 0.4 --read_message "pointneg"  --message "CQL"
+python examples/policy/run_DiscreteCRR.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --explore_eps 0.01 --read_message "pointneg"  --message "CRR"
+python examples/advance/run_SQN.py        --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --unlikely-action-threshold 0.6 --explore_eps 0.4 --read_message "pointneg"  --message "SQN"
 
-# 2. Online RL with User Model (Model-based or simulation-based RL) 
-# 2.1 onpolicy
-python examples/policy/run_A2C_IPS.py --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "DeepFM-IPS"  --message "IPS"
-python examples/policy/run_A2C.py     --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C-new"
-python examples/policy/run_PG.py      --env KuaiEnv-v0  --seed 2023 --cuda 2 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "PG"
-python examples/policy/run_PPO.py     --env KuaiEnv-v0  --seed 2023 --cuda 2 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "PPO"
-# 2.2 offpolicy
-python examples/policy/run_DQN.py     --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "DQN"
-python examples/policy/run_QRDQN.py   --env KuaiEnv-v0  --seed 2023 --cuda 3 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "QRDQN"
-python examples/policy/run_C51.py     --env KuaiEnv-v0  --seed 2023 --cuda 2 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "C51"
+# 2. Online RL with User Model
+# 2.1 offpolicy
+python examples/policy/run_DQN.py  --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --target-update-freq 80 --explore_eps 0.001 --read_message "pointneg"  --message "DQN"
+python examples/policy/run_C51.py  --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --v-min 0. --v-max 1. --explore_eps 0.005 --read_message "pointneg"  --message "C51"
+python examples/policy/run_DDPG.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --remap 0.001 --explore_eps 1.2 --read_message "pointneg"  --message "DDPG"    
+python examples/policy/run_TD3.py  --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3 --remap 0.001 --explore_eps 1.5 --read_message "pointneg"  --message "TD3" 
+
+# 2.2 onpolicy
+python examples/policy/run_PG.py            --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --read_message "pointneg"  --message "PG"
+python examples/policy/run_A2C.py           --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --read_message "pointneg"  --message "A2C"
+python examples/policy/run_PPO.py           --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --vf-coef 0.25 --max-grad-norm 0.2 --read_message "pointneg"  --message "PPO"
+python examples/policy/run_ContinuousPG.py  --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --lr 0.002 --remap_eps 0.002 --read_message "pointneg"  --message "PG(C)"
+python examples/policy/run_ContinuousA2C.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --read_message "pointneg"  --message "A2C(C)"
+python examples/policy/run_ContinuousPPO.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --read_message "pointneg"  --message "PPO(C)"
+
+python examples/advance/run_DORL.py         --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --read_message "pointneg"  --message "DORL"
+python examples/advance/run_Intrinsic.py    --env KuaiEnv-v0  --seed 2023 --cuda 0 --which_tracker avg --reward_handle "cat" --window_size 3  --step-per-epoch 30000 --lambda_diversity 0.005 --lambda_novelty 0.001 --read_message "pointneg"  --message "Intrinsic"
 
 
-# run advance
-python examples/advance/run_MOPO.py   --env KuaiEnv-v0  --seed 2023 --cuda 3 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --lambda_variance 0.05 --window_size 3 --read_message "pointneg"  --message "MOPO"
-python examples/advance/run_DORL.py   --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --lambda_entropy 5     --window_size 3 --read_message "pointneg"  --message "DORL"
-python examples/advance/run_Intrinsic.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker avg --reward_handle "cat" --lambda_diversity 0.1 --lambda_novelty 0.1 --window_size 3 --read_message "pointneg"  --message "Intrinsic"
-python examples/advance/run_CIRS.py      --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10 --which_tracker avg --reward_handle "cat" --tau 100 --window_size 3 --read_message "CIRS_UM"  --message "CIRS"
+# Others
+python examples/advance/run_MOPO.py --env KuaiEnv-v0  --seed 2023 --cuda 3 --epoch 10 --which_tracker avg --reward_handle "cat" --lambda_variance 0.05 --window_size 3 --read_message "pointneg"  --message "MOPO"
+python examples/advance/run_CIRS.py --env KuaiEnv-v0  --seed 2023 --cuda 0 --epoch 10 --which_tracker avg --reward_handle "cat" --tau 100 --window_size 3 --read_message "CIRS_UM"  --message "CIRS"
