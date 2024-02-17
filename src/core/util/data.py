@@ -17,7 +17,6 @@ def get_env_args(args):
     parser.add_argument('--no_use_auxiliary', dest='use_auxiliary', action='store_false')
     parser.set_defaults(use_auxiliary=False)
 
-
     if env == "CoatEnv-v0":
         parser.set_defaults(is_userinfo=True)
         parser.set_defaults(is_binarize=True)
@@ -101,8 +100,8 @@ def get_env_args(args):
 
 def get_true_env(args, read_user_num=None):
     if args.env == "CoatEnv-v0":
-        from environments.coat.CoatEnv import CoatEnv
-        from environments.coat.CoatData import CoatData
+        from src.core.envs.Coat.CoatEnv import CoatEnv
+        from src.core.envs.Coat.CoatData import CoatData
         mat, df_item, mat_distance = CoatEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "df_item": df_item,
@@ -114,8 +113,8 @@ def get_true_env(args, read_user_num=None):
         env = CoatEnv(**kwargs_um)
         dataset = CoatData()
     elif args.env == "YahooEnv-v0":
-        from environments.YahooR3.YahooEnv import YahooEnv
-        from environments.YahooR3.YahooData import YahooData
+        from src.core.envs.YahooR3.YahooEnv import YahooEnv
+        from src.core.envs.YahooR3.YahooData import YahooData
         mat, mat_distance = YahooEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "mat_distance": mat_distance,
@@ -127,8 +126,8 @@ def get_true_env(args, read_user_num=None):
         env = YahooEnv(**kwargs_um)
         dataset = YahooData()
     elif args.env == "MovieLensEnv-v0":
-        from environments.MovieLens.MovieLensEnv import MovieLensEnv
-        from environments.MovieLens.MovieLensData import MovieLensData
+        from src.core.envs.MovieLens.MovieLensEnv import MovieLensEnv
+        from src.core.envs.MovieLens.MovieLensData import MovieLensData
         mat, lbe_user, lbe_item, mat_distance = MovieLensEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "lbe_user": lbe_user,
@@ -142,8 +141,8 @@ def get_true_env(args, read_user_num=None):
         env = MovieLensEnv(**kwargs_um)
         dataset = MovieLensData()
     elif args.env == "KuaiRand-v0":
-        from environments.KuaiRand_Pure.KuaiRandEnv import KuaiRandEnv
-        from environments.KuaiRand_Pure.KuaiRandData import KuaiRandData
+        from src.core.envs.KuaiRand_Pure.KuaiRandEnv import KuaiRandEnv
+        from src.core.envs.KuaiRand_Pure.KuaiRandData import KuaiRandData
         mat, list_feat, mat_distance = KuaiRandEnv.load_env_data(args.yfeat, read_user_num=read_user_num)
         kwargs_um = {"yname": args.yfeat,
                      "mat": mat,
@@ -156,8 +155,8 @@ def get_true_env(args, read_user_num=None):
         env = KuaiRandEnv(**kwargs_um)
         dataset = KuaiRandData()
     elif args.env == "KuaiEnv-v0":
-        from environments.KuaiRec.KuaiEnv import KuaiEnv
-        from environments.KuaiRec.KuaiData import KuaiData
+        from src.core.envs.KuaiRec.KuaiEnv import KuaiEnv
+        from src.core.envs.KuaiRec.KuaiData import KuaiData
         mat, lbe_user, lbe_item, list_feat, df_dist_small = KuaiEnv.load_env_data()
         kwargs_um = {"mat": mat,
                      "lbe_user": lbe_user,

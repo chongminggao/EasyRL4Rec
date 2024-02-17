@@ -13,7 +13,7 @@ def get_args_offline(args):
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--step-per-epoch', type=int, default=1000)
-    parser.add_argument('--constrcution_method', type=str, default='normal') # in {'normal', 'counterfactual', 'convolution'}
+    parser.add_argument('--construction_method', type=str, default='normal') # in {'normal', 'counterfactual', 'convolution'}
     parser.add_argument("--convolution_slice_num", type=int, default=10)
     parser.add_argument("--offline_repeat_num", type=int, default=10)
 
@@ -118,7 +118,7 @@ def construct_buffer_from_offline_data(args, df_train, env):
             for head in range(0, len(full_items), math.ceil(len(full_items)/args.convolution_slice_num)):
                 items = full_items[head:]
                 rewards = full_rewards[head:]
-                if args.offline_counterfactual_permutate:
+                if args.construction_method == 'counterfactual':
                     item_reward_list = list(zip(items, rewards))
                     item_reward_numpy = np.array(item_reward_list).repeat(args.offline_repeat_num, axis=0)
                     item_reward_repeat = np.random.permutation(item_reward_numpy)

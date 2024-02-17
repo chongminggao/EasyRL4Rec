@@ -29,5 +29,6 @@ python examples/policy/run_PG.py --env KuaiEnv-v0 --cuda 0 --which_tracker sasre
 python examples/policy/run_PG.py --env KuaiEnv-v0 --cuda 0 --which_tracker nextitnet --read_message "pointneg"  --message "PG_nextitnet"
 
 # 4. Construction methods
-python examples/policy/run_DiscreteCRR.py --env KuaiEnv-v0  --cuda 0 --explore_eps 0.01 --no_offline_counterfactual_permutate --read_message "pointneg"  --message "CRR"
-python examples/policy/run_DiscreteCRR.py --env KuaiEnv-v0  --cuda 0 --explore_eps 0.01 --is_offline_counterfactual_permutate --offline_repeat_num 10 --read_message "pointneg"  --message "CRR_counterfactual"
+python examples/policy/run_DiscreteCRR.py --env KuaiEnv-v0  --cuda 0 --explore_eps 0.01 --construction_method normal --read_message "pointneg"  --message "CRR"
+python examples/policy/run_DiscreteCRR.py --env KuaiEnv-v0  --cuda 0 --explore_eps 0.01 --construction_method counterfactual --read_message "pointneg"  --message "CRR_counterfactual"
+python examples/policy/run_DiscreteCRR.py --env KuaiEnv-v0  --cuda 0 --explore_eps 0.01 --construction_method convolution --read_message "pointneg"  --message "CRR_convolution"

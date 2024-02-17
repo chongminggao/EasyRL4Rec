@@ -216,7 +216,7 @@ In EasyRL4Rec, we implement three buffer construction methods:
 Note that compared with the first setting, this setting has no planning stage in training. And its implementation is as follows:
 
 <div style="text-align: center;">
-<img src="figs/pipeline2.png" alt="pipeline2" style="50%" />
+<img src="figs/pipeline2.png" alt="pipeline2" width="60%" />
 </div>
 
 ---

@@ -1,5 +1,5 @@
 # run user model
-python examples/usermodel/run_DeepFM_ensemble.py --env KuaiRand-v0  --seed 2023 --cuda 6     --epoch 3 --n_models 3 --loss "pointneg" --message "pointneg"
+python examples/usermodel/run_DeepFM_ensemble.py --env KuaiRand-v0  --seed 2023 --cuda 6 --epoch 5 --n_models 5 --loss "pointneg" --message "pointneg"
 
 # test state_tracker
 

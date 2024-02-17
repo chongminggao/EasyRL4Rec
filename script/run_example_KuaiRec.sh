@@ -1,15 +1,9 @@
 # run user model
-python examples/usermodel/run_DeepFM_ensemble.py --env KuaiEnv-v0  --seed 2023 --cuda 0     --epoch 3 --n_models 3 --loss "pointneg" --message "pointneg"
-python examples/usermodel/run_DeepFM_ensemble.py --env KuaiEnv-v0  --seed 2023 --cuda 0     --epoch 3 --tau 100 --n_models 1 --loss "pointneg" --message "CIRS_UM"
-python examples/usermodel/run_DeepFM_IPS.py      --env KuaiEnv-v0  --seed 2023 --cuda 1     --epoch 3 --loss "pointneg" --message "DeepFM-IPS"
-python examples/usermodel/run_Egreedy.py         --env KuaiEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 3 --seed 2023 --cuda 2 --loss "pointneg" --message "epsilon-greedy"
-python examples/usermodel/run_LinUCB.py          --env KuaiEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 3 --seed 2023 --cuda 3 --loss "pointneg" --message "UCB"
-
-# test state_tracker
-python examples/policy/run_A2C.py     --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker caser --reward_handle "cat" --window_size 5 --read_message "pointneg"  --message "A2C_caser"
-python examples/policy/run_A2C.py     --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker gru --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C_gru"
-python examples/policy/run_A2C.py     --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker sasrec --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C_sasrec"
-python examples/policy/run_A2C.py     --env KuaiEnv-v0  --seed 2023 --cuda 1 --epoch 10  --num_leave_compute 1 --leave_threshold 0 --which_tracker nextitnet --reward_handle "cat" --window_size 3 --read_message "pointneg"  --message "A2C_nextitnet"
+python examples/usermodel/run_DeepFM_ensemble.py --env KuaiEnv-v0  --seed 2023 --cuda 0     --epoch 5 --n_models 5 --loss "pointneg" --message "pointneg"
+python examples/usermodel/run_DeepFM_IPS.py      --env KuaiEnv-v0  --seed 2023 --cuda 1     --epoch 5 --loss "pointneg" --message "DeepFM-IPS"
+# python examples/usermodel/run_DeepFM_ensemble.py --env KuaiEnv-v0  --seed 2023 --cuda 0     --epoch 5 --tau 100 --n_models 1 --loss "pointneg" --message "CIRS_UM"
+# python examples/usermodel/run_Egreedy.py         --env KuaiEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 5 --seed 2023 --cuda 2 --loss "pointneg" --message "epsilon-greedy"
+# python examples/usermodel/run_LinUCB.py          --env KuaiEnv-v0  --num_leave_compute 4  --leave_threshold 0 --epoch 5 --seed 2023 --cuda 3 --loss "pointneg" --message "UCB"
 
 # run policy
 # 1. Offline RL(Batch RL) (offpolicy)

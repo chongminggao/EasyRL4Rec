@@ -13,7 +13,7 @@ from deepctr_torch.inputs import DenseFeat
 from src.core.util.static_dataset import StaticDataset
 from src.core.util.utils import negative_sampling, create_dir
 
-from environments.BaseData import compute_exposure_effect
+from src.core.envs.BaseData import compute_exposure_effect
 
 CODEPATH = os.path.dirname(__file__)
 

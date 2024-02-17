@@ -21,7 +21,7 @@ from ..policy.policy_utils import get_args_all, learn_policy, prepare_dir_log, p
 from src.core.collector.collector_set import CollectorSet
 from src.core.util.data import get_env_args, get_true_env
 from src.core.collector.collector import Collector
-from environments.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv, get_features_of_last_n_items_features
+from src.core.envs.Simulated_Env.penalty_ent_exp import PenaltyEntExpSimulatedEnv, get_features_of_last_n_items_features
 from src.core.policy.RecPolicy import RecPolicy
 
 from src.tianshou.tianshou.data import VectorReplayBuffer

@@ -1,14 +1,8 @@
 # run user model
-
-# python examples/usermodel/run_DeepFM_ensemble.py --env YahooEnv-v0  --seed 2023 --cuda 2 --epoch 5 --n_models 3 --loss "point" --message "point" 
-# python examples/usermodel/run_DeepFM_IPS.py      --env YahooEnv-v0  --seed 2023 --cuda 4 --epoch 5 --loss "point" --message "DeepFM-IPS-point" 
-# python examples/usermodel/run_Egreedy.py         --env YahooEnv-v0  --seed 2023 --cuda 5 --epoch 5 --loss "point" --message "epsilon-greedy-point" 
-# python examples/usermodel/run_LinUCB.py          --env YahooEnv-v0  --seed 2023 --cuda 7 --epoch 5 --loss "point" --message "UCB-point" 
-
-python examples/usermodel/run_DeepFM_ensemble.py --env YahooEnv-v0  --seed 2023 --cuda 2 --epoch 5 --n_models 3 --loss "pointneg" --message "pointneg" &
-python examples/usermodel/run_DeepFM_IPS.py      --env YahooEnv-v0  --seed 2023 --cuda 4 --epoch 5 --loss "pointneg" --message "DeepFM-IPS-pointneg" &
-python examples/usermodel/run_Egreedy.py         --env YahooEnv-v0  --seed 2023 --cuda 5 --epoch 5 --loss "pointneg" --message "epsilon-greedy-pointneg" &
-python examples/usermodel/run_LinUCB.py          --env YahooEnv-v0  --seed 2023 --cuda 7 --epoch 5 --loss "pointneg" --message "UCB-pointneg" &
+python examples/usermodel/run_DeepFM_ensemble.py --env YahooEnv-v0  --seed 2023 --cuda 2 --epoch 5 --n_models 5 --loss "pointneg" --message "pointneg" 
+python examples/usermodel/run_DeepFM_IPS.py      --env YahooEnv-v0  --seed 2023 --cuda 4 --epoch 5 --loss "pointneg" --message "DeepFM-IPS-pointneg" 
+# python examples/usermodel/run_Egreedy.py         --env YahooEnv-v0  --seed 2023 --cuda 5 --epoch 5 --loss "pointneg" --message "epsilon-greedy-pointneg" 
+# python examples/usermodel/run_LinUCB.py          --env YahooEnv-v0  --seed 2023 --cuda 7 --epoch 5 --loss "pointneg" --message "UCB-pointneg" 
 
 # run policy
 # 1. Offline RL(Batch RL) (offpolicy)
