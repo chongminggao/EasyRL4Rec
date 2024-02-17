@@ -12,8 +12,6 @@ __pycache__/
 
 src/tianshou
 
-#!environments/KuaiRec/data/.gitkeep
-
 saved_models/
 
 *.zip
@@ -31,7 +29,7 @@ events.*
 !/visual_results/**/*.pdf
 *.png
 !/visual_results/**/*.png
-!/figs/**/*.png
+!/assets/**/*.png
 
 # for excluding the uncompressed dataset files.
 *.tar.gz
