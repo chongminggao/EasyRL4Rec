@@ -57,7 +57,7 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
     * NX_X: prohibit repeated recommendations, interactions are fixed as X rounds without quit mechanism.
 
 <div style="text-align: center;">
-<img src="figs/framework.png" alt="framework" style="zoom:40%;" />
+<img src="figs/framework.png" alt="framework" width="50%" />
 </div>
 
 ## Installation
@@ -104,7 +104,7 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
    
 
 
-2. Uncompress the downloaded `environments.tar.gz` and put the files to their corresponding positions.
+2. Uncompress the downloaded `environments.tar.gz` and put the files (`data_raw/` folders) to **their corresponding positions** (for each dataset).
 
    ```bash
    tar -zxvf environments.tar.gz
@@ -183,12 +183,12 @@ Considering a complete interaction from time $1$ to time $T$,  the observations,
 Visualzation of data/trajectories stored in Buffer, which support simultaneous interactions in multiple environments:
 
 <div style="text-align: center;">
-<img src="figs/buffer-2.jpg" alt="buffer-2" style="zoom:15%;" />
+<img src="figs/buffer-2.jpg" alt="buffer-2" width="50%" />
 </div>
 
 ### Training
 <div style="text-align: center;">
-<img src="figs/pipeline-train.jpg" alt="pipeline-train" style="zoom:20%;" />
+<img src="figs/pipeline-train.jpg" alt="pipeline-train" width="50%" />
 </div>
 
 EasyRL4Rec offers two training settings: 
@@ -201,7 +201,7 @@ Its learning pipeline is as the following figure. We first learn a user model $\
 The implementation of this paradigm in this package is as follows:
 
 <div style="text-align: center;">
-<img src="figs/pipeline1.png" alt="pipeline1" style="zoom:50%;" />
+<img src="figs/pipeline1.png" alt="pipeline1" width="70%" />
 </div>
 
 #### 2. Learning directly from offline logs
@@ -216,7 +216,7 @@ In EasyRL4Rec, we implement three buffer construction methods:
 Note that compared with the first setting, this setting has no planning stage in training. And its implementation is as follows:
 
 <div style="text-align: center;">
-<img src="figs/pipeline2.png" alt="pipeline2" style="zoom:50%;" />
+<img src="figs/pipeline2.png" alt="pipeline2" style="50%" />
 </div>
 
 ---
@@ -229,7 +229,7 @@ In offline evaluation, we cannot obtain users' real-time feedback towards the re
 The implementation is as follows:
 
 <div style="text-align: center;">
-<img src="figs/eval_pipeline.png" alt="eval_pipeline" style="zoom:50%;" />
+<img src="figs/eval_pipeline.png" alt="eval_pipeline" width="70%" />
 </div>
 
 
