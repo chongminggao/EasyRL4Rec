@@ -22,15 +22,15 @@ The main contributions and key features of this library can be summarized as fol
 
 We hope EasyRL4Rec can facilitate the model development and experimental process in the domain of RL-based RSs. More descriptions are available via this [paper](https://arxiv.org/pdf/2402.15164.pdf)
 
-If this work helps you, please kindly cite our papers:
+If this work helps you, please kindly cite our paper:
 ```tex
-@inproceedings{yu2024easyrl4rec,
-  title = {EasyRL4Rec: A User-Friendly Code Library for Reinforcement Learning Based Recommender Systems},
-  author = {Yuanqing Yu and Chongming Gao and Jiawei Chen and Heng Tang and Yuefeng Sun and Qian Chen and Weizhi Ma and Min Zhang},
-  year={2024},
-  eprint={2402.15164},
-  archivePrefix={arXiv},
-  primaryClass={cs.IR}
+@misc{yu2024easyrl4rec,
+      title={EasyRL4Rec: A User-Friendly Code Library for Reinforcement Learning Based Recommender Systems}, 
+      author={Yuanqing Yu and Chongming Gao and Jiawei Chen and Heng Tang and Yuefeng Sun and Qian Chen and Weizhi Ma and Min Zhang},
+      year={2024},
+      eprint={2402.15164},
+      archivePrefix={arXiv},
+      primaryClass={cs.IR}
 }
 ```
 
