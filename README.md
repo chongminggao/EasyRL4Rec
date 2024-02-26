@@ -20,9 +20,19 @@ The main contributions and key features of this library can be summarized as fol
 
 * **Insightful Experiments for RL-based RSs**
 
-We hope EasyRL4Rec can facilitate the model development and experimental process in the domain of RL-based RSs.
+We hope EasyRL4Rec can facilitate the model development and experimental process in the domain of RL-based RSs. More descriptions are available via this [paper](https://arxiv.org/pdf/2402.15164.pdf)
 
-<!-- [![LICENSE](https://img.shields.io/badge/license-MIT-green)](https://github.com/chongminggao/DORL-codes/blob/main/LICENSE) -->
+If this work helps you, please kindly cite our papers:
+```tex
+@inproceedings{yu2024easyrl4rec,
+  title = {EasyRL4Rec: A User-Friendly Code Library for Reinforcement Learning Based Recommender Systems},
+  author = {Yuanqing Yu and Chongming Gao and Jiawei Chen and Heng Tang and Yuefeng Sun and Qian Chen and Weizhi Ma and Min Zhang},
+  year={2024},
+  eprint={2402.15164},
+  archivePrefix={arXiv},
+  primaryClass={cs.IR}
+}
+```
 
 
 
@@ -94,22 +104,24 @@ We hope EasyRL4Rec can facilitate the model development and experimental process
    ```
 
 ## Download the data
+
 1. Download the compressed dataset
 
     ```bash 
-    wget https://nas.chongminggao.top:4430/openrl4rec/environments.tar.gz
+    wget https://nas.chongminggao.top:4430/easyrl4rec/data.tar.gz
     ```
    or you can manually download it from this website:
-   https://rec.ustc.edu.cn/share/a0b07110-91c0-11ee-891e-b77696d6db51
+   https://rec.ustc.edu.cn/share/a3bdc320-d48e-11ee-8c50-4b1c32c31e9c
    
 
 
-2. Uncompress the downloaded `environments.tar.gz` and put the files (`data_raw/` folders) to **their corresponding positions** (for each dataset).
+2. Uncompress the downloaded `data.tar.gz`. The following command will directly extract `data.tar.gz` into the `.data/` directory and merge it with the existing files under `.data/`.
 
    ```bash
-   tar -zxvf environments.tar.gz
+   tar -zxvf data.tar.gz
    ```
-   Please note that the decompressed file size is as high as 12GB. This is due to the large space occupied by the ground-truth of the user-item interaction matrix. 
+   Please note that the decompressed file size is as high as 8.1GB. This is due to the large space occupied by the ground-truth of the user-item interaction matrix. 
+   
    
 
 If things go well, you can run the following examples now！Or you can just reproduce the results in the paper.
