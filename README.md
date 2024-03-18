@@ -8,7 +8,6 @@
 
 <p align="center">
   <a href="#Installation">Installation</a> •
-  <a href="#Runing commands">Quick Start</a> •
   <a href="https://yuyq18.github.io/EasyRL4Rec-doc">Documentation</a> •
   <a href="#Citation">Citation</a>
 </p>
