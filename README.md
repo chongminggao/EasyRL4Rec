@@ -1,10 +1,15 @@
 ![EasyRL4Rec Logo](assets/logo.jpg)
 
 --------------------------------------------------------------------------------
+<div align= "center">
+    <h1>EasyRL4Rec</h1>
+</div>
 
-# EasyRL4Rec
+<div align="center">
 
 [![LICENSE](https://img.shields.io/badge/license-MIT-green)](https://github.com/chongminggao/EasyRL4Rec/blob/main/LICENSE)
+
+</div>
 
 <p align="center">
   <a href="#Installation">Installation</a> •
