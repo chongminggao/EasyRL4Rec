@@ -7,10 +7,10 @@
 [![LICENSE](https://img.shields.io/badge/license-MIT-green)](https://github.com/chongminggao/EasyRL4Rec/blob/main/LICENSE)
 
 <p align="center">
-  <a href="##Installation">Installation</a> •
-  <a href="##Runing commands">Quick Start</a> •
+  <a href="#Installation">Installation</a> •
+  <a href="#Runing commands">Quick Start</a> •
   <a href="https://yuyq18.github.io/EasyRL4Rec-doc">Documentation</a> •
-  <a href="####Citation">Citation</a>
+  <a href="#Citation">Citation</a>
 </p>
 
 EasyRL4Rec is a comprehensive and easy-to-use library designed specifically for Reinforcement Learning (RL)-based Recommender Systems (RSs).
