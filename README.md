@@ -120,24 +120,15 @@ If this work helps you, please kindly cite our paper:
 
 ## Download the data
 
-1. Download the compressed dataset
+1. Download `data.tar.gz` from [Google Drive](https://drive.google.com/file/d/1JpyavRQg2jP9sEIfFlk0Y-_PJajrVZeD/view?usp=sharing).
 
-    ```bash 
-    wget https://nas.chongminggao.top:4430/easyrl4rec/data.tar.gz
-    ```
-   or you can manually download it from this website:
-   https://rec.ustc.edu.cn/share/a3bdc320-d48e-11ee-8c50-4b1c32c31e9c
-   
-
-
-2. Uncompress the downloaded `data.tar.gz`. The following command will directly extract `data.tar.gz` into the `.data/` directory and merge it with the existing files under `.data/`.
+2. Place `data.tar.gz` in the root directory of this repository, then extract it:
 
    ```bash
    tar -zxvf data.tar.gz
    ```
-   Please note that the decompressed file size is as high as 8.1GB. This is due to the large space occupied by the ground-truth of the user-item interaction matrix. 
-   
-   
+
+   The archive extracts into `data/` and merges with its existing files. The extracted data requires approximately 8.6 GB of disk space, mainly for the user-item interaction matrices.
 
 If things go well, you can run the following examples now！Or you can just reproduce the results in the paper.
 
